@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MicroSee — Microbiome Visualisation Suite</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,700&family=Nunito:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FEF3EC;--card:#fff;--surface:#FFF8F4;--border:#F0D5C8;--border2:#E8C0AD;
+  --rose:#C05070;--rose-dark:#8B3A52;--rose-light:#FFE6DF;--peach:#F5C4AE;
+  --choc:#3E1A0E;--choc2:#6B3220;--text:#2A1410;--text2:#8B5860;--text3:#C4A0A8;
+  --sh0:0 2px 12px rgba(180,80,100,.07);--sh1:0 6px 28px rgba(180,80,100,.13);
+}
+body{font-family:'Nunito',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--peach);border-radius:3px}
+
+/* ═══ SPLASH ═══ */
+#splash{position:fixed;inset:0;z-index:200;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;transition:opacity .8s ease,transform .8s ease}
+#splash.out{opacity:0;transform:translateY(-40px);pointer-events:none}
+.ice-wrap{position:relative;width:180px;height:300px;margin-bottom:4px}
+@keyframes coneUp{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
+@keyframes layerPop{from{opacity:0;transform:scale(.1)}to{opacity:1;transform:scale(1)}}
+@keyframes dripDown{0%{stroke-dashoffset:80;opacity:0}100%{stroke-dashoffset:0;opacity:1}}
+@keyframes logoFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.cone-g{animation:coneUp .55s cubic-bezier(.34,1.56,.64,1) .25s both}
+.l6{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) .85s both}
+.l5{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) 1.0s both}
+.l4{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) 1.15s both}
+.l3{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) 1.3s both}
+.l2{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) 1.45s both}
+.l1{transform-box:fill-box;transform-origin:center;animation:layerPop .3s cubic-bezier(.34,1.56,.64,1) 1.57s both}
+.l0{transform-box:fill-box;transform-origin:center;animation:layerPop .4s cubic-bezier(.34,1.56,.64,1) 1.7s both}
+.drip-p{stroke-dasharray:80;animation:dripDown .55s ease 2.05s both}
+.ice-float{animation:float 3.5s ease-in-out 2.4s infinite}
+.splash-logo{font-family:'Playfair Display',Georgia,serif;font-size:58px;font-weight:700;color:var(--choc);letter-spacing:-.03em;line-height:1;animation:logoFade .55s ease 2.1s both}
+.splash-sub{font-size:15px;color:var(--text2);font-weight:500;margin-top:10px;margin-bottom:30px;animation:logoFade .5s ease 2.4s both}
+.splash-btn{background:var(--choc);color:#FFF9F6;border:none;border-radius:50px;padding:15px 40px;font-family:'Nunito',system-ui;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.01em;transition:background .2s,transform .15s;animation:logoFade .5s ease 2.7s both}
+.splash-btn:hover{background:#1E0A05;transform:translateY(-3px)}
+
+/* ═══ APP ═══ */
+#app{display:grid;grid-template-columns:260px 1fr;min-height:100vh;opacity:0;transition:opacity .7s ease .2s}
+#app.in{opacity:1}
+
+/* SIDEBAR */
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:20px 16px;display:flex;flex-direction:column;gap:18px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.sb-logo{display:flex;align-items:center;gap:9px;padding-bottom:16px;border-bottom:1px solid var(--border)}
+.sb-logo h2{font-family:'Playfair Display',Georgia,serif;font-size:20px;font-weight:700;color:var(--choc)}
+.sb-section h3{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px}
+.data-pills{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+.d-pill{font-size:11px;font-weight:700;background:var(--rose-light);color:var(--rose-dark);border-radius:20px;padding:3px 9px}
+.upload-stack{display:flex;flex-direction:column;gap:6px}
+.btn-up{display:block;text-align:center;padding:8px 12px;border-radius:8px;background:var(--rose);color:#fff;border:none;font-family:'Nunito',system-ui;font-size:12px;font-weight:700;cursor:pointer;transition:background .15s}
+.btn-up:hover{background:var(--rose-dark)}
+.btn-tpl{padding:7px 12px;border-radius:8px;background:transparent;border:1px solid var(--border2);color:var(--text2);font-family:'Nunito',system-ui;font-size:12px;font-weight:600;cursor:pointer;transition:background .15s}
+.btn-tpl:hover{background:var(--rose-light)}
+.err-note{font-size:11px;color:#C03030;min-height:14px}
+.src-note{font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.g-pills{display:flex;flex-direction:column;gap:6px}
+.g-pill{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:9px;border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);user-select:none;transition:all .15s}
+.g-pill.on{border-color:transparent;background:var(--rose-light);color:var(--text)}
+.g-pill:not(.on){opacity:.45}
+.g-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.g-ck{margin-left:auto;font-size:12px;color:var(--rose);opacity:0;transition:opacity .15s}
+.g-pill.on .g-ck{opacity:1}
+.t-list{display:flex;flex-direction:column;gap:4px}
+.t-lbl{display:flex;align-items:center;gap:7px;font-size:12px;font-weight:500;color:var(--text2);cursor:pointer}
+.t-lbl input{accent-color:var(--rose)}
+.t-sq{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* MAIN */
+.main{padding:22px 26px 56px;overflow-y:auto;min-width:0}
+.mh{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:8px}
+.mh-title{font-family:'Playfair Display',Georgia,serif;font-size:28px;font-weight:700;color:var(--choc);letter-spacing:-.02em}
+.mh-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.mh-err{font-size:11px;color:#C03030}
+.stats-bar{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;min-width:90px;box-shadow:var(--sh0);display:flex;flex-direction:column;align-items:center}
+.stat-n{font-family:'Playfair Display',Georgia,serif;font-size:26px;font-weight:700;color:var(--rose);line-height:1}
+.stat-l{font-size:10px;font-weight:700;color:var(--text3);margin-top:2px;text-transform:uppercase;letter-spacing:.06em}
+
+/* SECTION NAV */
+.sec-nav{display:flex;gap:5px;padding:10px 0;margin-bottom:22px;overflow-x:auto;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:5;background:var(--bg);scrollbar-width:none}
+.sec-nav::-webkit-scrollbar{display:none}
+.sec-btn{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--text2);cursor:pointer;font-size:11px;font-weight:700;white-space:nowrap;font-family:'Nunito',system-ui;transition:all .15s;letter-spacing:.04em;text-transform:uppercase}
+.sec-btn:hover,.sec-btn.active{background:var(--rose-light);color:var(--rose-dark);border-color:var(--rose)}
+
+/* SECTION */
+section{margin-bottom:32px;scroll-margin-top:52px}
+.sec-hdr{font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:700;color:var(--choc);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.sec-hdr::after{content:'';flex:1;height:1px;background:linear-gradient(to right,var(--border),transparent)}
+
+/* GRIDS */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-grid-1{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+
+/* CHART CARD */
+.cc{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:var(--sh0);transition:box-shadow .2s;min-width:0}
+.cc:hover{box-shadow:var(--sh1)}
+.cc-comp{border-top:3px solid #D84E6A}
+.cc-topn{border-top:3px solid #9058C4}
+.cc-donut{border-top:3px solid #C4960A}
+.cc-sunburst{border-top:3px solid #D97A3A}
+.cc-alpha{border-top:3px solid #D97A3A}
+.cc-box{border-top:3px solid #2FA896}
+.cc-violin{border-top:3px solid #8CAD70}
+.cc-rar{border-top:3px solid #C4960A}
+.cc-pcoa{border-top:3px solid #4A7ED4}
+.cc-nmds{border-top:3px solid #9058C4}
+.cc-dendro{border-top:3px solid #D84E6A}
+.cc-diff{border-top:3px solid #D84E6A}
+.cc-volc{border-top:3px solid #D97A3A}
+.cc-heat{border-top:3px solid #2FA896}
+.cc-corr{border-top:3px solid #4A7ED4}
+.cc-long{border-top:3px solid #C05070}
+.cc-stats{border-top:3px solid #9058C4}
+.ct{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;gap:8px}
+.ct-left h2{font-size:13px;font-weight:700}
+.ct-left p{font-size:10px;color:var(--text3);margin-top:2px}
+.ct-right{display:flex;gap:5px;align-items:center;flex-shrink:0;flex-wrap:wrap}
+.c-sel{font-size:11px;padding:4px 7px;background:var(--surface);border:1px solid var(--border);border-radius:6px;color:var(--text2);font-family:'Nunito',system-ui;cursor:pointer}
+.c-btn{font-size:11px;padding:4px 9px;background:transparent;border:1px solid var(--border2);border-radius:6px;color:var(--text2);cursor:pointer;font-family:'Nunito',system-ui;font-weight:700;transition:background .15s}
+.c-btn:hover{background:var(--rose-light);color:var(--rose-dark)}
+.cw{position:relative;width:100%;height:255px}
+.leg{display:flex;flex-wrap:wrap;gap:8px;padding-top:8px;font-size:11px;color:var(--text2)}
+.li{display:flex;align-items:center;gap:5px}
+.ld{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* Compare control */
+.cmp-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cmp-row label{font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em}
+
+/* Donut row */
+.donut-row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;align-items:flex-start}
+.donut-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+.donut-item span{font-size:11px;font-weight:700;color:var(--text2)}
+
+/* Heatmap (existing) */
+.hm-s{width:100%;overflow-x:auto;padding-bottom:4px}
+.hm{display:inline-block;white-space:nowrap}
+.hr{display:flex;align-items:center}
+.hl{min-width:138px;padding-right:10px;text-align:right;font-size:10px;font-weight:600;color:var(--text2);flex-shrink:0}
+.hch{width:54px;flex-shrink:0;height:88px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5px;overflow:hidden}
+.hct{writing-mode:vertical-rl;transform:rotate(180deg);font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-height:78px;line-height:1.2;display:block}
+.hc{width:54px;height:32px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.7);cursor:default;transition:filter .1s}
+.hc:hover{filter:brightness(.88)}
+.hv{font-size:9px;font-weight:700;pointer-events:none}
+.hscale{display:flex;align-items:center;gap:5px;margin:9px 0 0 138px}
+.hscale span{font-size:10px;color:var(--text3)}
+.hsw{display:inline-block;width:12px;height:8px}
+
+/* Correlation cell */
+.cc-cell{width:46px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.7);cursor:default;transition:filter .1s;font-size:9px;font-weight:700}
+.cc-cell:hover{filter:brightness(.88)}
+
+/* Stats table */
+.stat-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.stat-tbl th{padding:8px 10px;text-align:left;color:var(--text3);border-bottom:1px solid var(--border);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.stat-tbl td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2)}
+.stat-tbl tr:last-child td{border-bottom:none}
+
+/* Tooltip */
+#tt{position:fixed;background:white;border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:11px;color:var(--text2);pointer-events:none;opacity:0;transition:opacity .1s;z-index:300;box-shadow:var(--sh0);max-width:220px;white-space:nowrap;font-family:'Nunito',system-ui}
+#tt.show{opacity:1}
+
+/* Info note */
+.info-note{padding:10px 14px;border-radius:10px;background:var(--rose-light);font-size:11px;color:var(--text2);border:1px solid var(--border)}
+
+/* Alpha mini stats */
+#sTbl table{width:100%;border-collapse:collapse;font-size:11px;margin-top:8px}
+#sTbl th{padding:5px 8px;text-align:left;color:var(--text3);border-bottom:1px solid var(--border);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+#sTbl td{padding:5px 8px;border-bottom:1px solid var(--border);color:var(--text2)}
+
+/* Canvas custom charts */
+canvas.cust{display:block;width:100%;height:255px}
+
+/* SVG custom charts */
+svg.cssvg{display:block;width:100%}
+
+footer{text-align:center;padding:18px;font-size:11px;color:var(--text3);border-top:1px solid var(--border);margin-top:10px}
+
+@media(max-width:1100px){.chart-grid-3{grid-template-columns:1fr 1fr}}
+@media(max-width:900px){#app{grid-template-columns:1fr}.sidebar{position:relative;height:auto;border-right:none;border-bottom:1px solid var(--border)}.chart-grid,.chart-grid-3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══════════ SPLASH ══════════ -->
+<div id="splash">
+  <div class="ice-wrap">
+    <svg class="ice-float" viewBox="0 0 100 175" xmlns="http://www.w3.org/2000/svg" style="width:160px;height:280px;overflow:visible" aria-hidden="true">
+      <g class="cone-g">
+        <polygon points="50,165 18,95 82,95" fill="#C4803A"/>
+        <line x1="50" y1="165" x2="34" y2="95" stroke="#A86C28" stroke-width="1.2" opacity=".6"/>
+        <line x1="50" y1="165" x2="50" y2="95" stroke="#A86C28" stroke-width="1.2" opacity=".6"/>
+        <line x1="50" y1="165" x2="66" y2="95" stroke="#A86C28" stroke-width="1.2" opacity=".6"/>
+        <line x1="23" y1="115" x2="77" y2="115" stroke="#A86C28" stroke-width="1" opacity=".5"/>
+        <line x1="27" y1="130" x2="73" y2="130" stroke="#A86C28" stroke-width="1" opacity=".5"/>
+      </g>
+      <ellipse class="l6" cx="50" cy="87" rx="34" ry="14" fill="#5A2614"/>
+      <ellipse class="l5" cx="50" cy="73" rx="28" ry="12" fill="#4A1E10"/>
+      <ellipse class="l4" cx="50" cy="60" rx="22" ry="10" fill="#D84E6A"/>
+      <ellipse class="l3" cx="50" cy="49" rx="16" ry="8" fill="#4A7ED4"/>
+      <ellipse class="l2" cx="50" cy="40" rx="10" ry="6" fill="#2FA896"/>
+      <ellipse class="l1" cx="50" cy="33" rx="6" ry="4" fill="#D97A3A"/>
+      <ellipse class="l0" cx="50" cy="29" rx="3.5" ry="2.5" fill="#9058C4"/>
+      <path class="drip-p" d="M 77,82 Q 82,96 79,110 Q 77,120 80,128" stroke="#3A1408" stroke-width="3" fill="none" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <h1 class="splash-logo">MicroSee</h1>
+  <p class="splash-sub">Your microbiome visualisation suite &middot; GPA 2026 &middot; UPF</p>
+  <button class="splash-btn" onclick="goApp()">Start exploring →</button>
+</div>
+
+<div id="tt"></div>
+
+<!-- ══════════ APP ══════════ -->
+<div id="app">
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo"><span style="font-size:20px">🍦</span><h2>MicroSee</h2></div>
+  <div class="sb-section">
+    <h3>Dataset</h3>
+    <div class="data-pills">
+      <span class="d-pill" id="dpN">10 samples</span>
+      <span class="d-pill" id="dpG">2 groups</span>
+      <span class="d-pill" id="dpT">7 taxa</span>
+    </div>
+    <div class="upload-stack">
+      <label class="btn-up">↑ Upload CSV / TSV<input type="file" id="csvIn" accept=".csv,.tsv" style="display:none"></label>
+      <button class="btn-tpl" id="btnTpl">↓ Download Template</button>
+      <div class="err-note" id="errNote"></div>
+      <div class="src-note" id="srcNote">Demo data loaded</div>
+    </div>
+  </div>
+  <div class="sb-section"><h3>Groups</h3><div class="g-pills" id="gPills"></div></div>
+  <div class="sb-section"><h3>Taxa</h3><div class="t-list" id="tList"></div></div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="mh">
+    <div><div class="mh-title">MicroSee</div><div class="mh-sub">Microbiome Visualisation Suite &middot; GPA 2026 &middot; UPF</div></div>
+    <div class="mh-err" id="mainErr"></div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat-card"><span class="stat-n" id="stN">10</span><span class="stat-l">Samples</span></div>
+    <div class="stat-card"><span class="stat-n" id="stG">2</span><span class="stat-l">Groups</span></div>
+    <div class="stat-card"><span class="stat-n" id="stT">7</span><span class="stat-l">Taxa</span></div>
+    <div class="stat-card"><span class="stat-n" id="stSh">—</span><span class="stat-l">Mean Shannon</span></div>
+    <div class="stat-card"><span class="stat-n" id="stSi">—</span><span class="stat-l">Mean Simpson</span></div>
+  </div>
+
+  <!-- Section Nav -->
+  <div class="sec-nav">
+    <button class="sec-btn active" onclick="filterSec('all',this)">✦ All</button>
+    <button class="sec-btn" onclick="filterSec('secTaxonomy',this)">🔬 Taxonomy</button>
+    <button class="sec-btn" onclick="filterSec('secAlpha',this)">📊 Alpha Diversity</button>
+    <button class="sec-btn" onclick="filterSec('secBeta',this)">🌐 Beta Diversity</button>
+    <button class="sec-btn" onclick="filterSec('secCompare',this)">⚖️ Comparative</button>
+    <button class="sec-btn" onclick="filterSec('secLong',this)">📈 Longitudinal</button>
+    <button class="sec-btn" onclick="filterSec('secStats',this)">📋 Statistics</button>
+  </div>
+
+  <!-- ─── TAXONOMY ─── -->
+  <section id="secTaxonomy">
+    <div class="sec-hdr">🔬 Taxonomy</div>
+    <div class="chart-grid">
+      <div class="cc cc-comp">
+        <div class="ct"><div class="ct-left"><h2>Taxonomic Composition</h2><p>Relative abundance (%) per sample &middot; Toggle taxa in sidebar</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('comp','composition')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cComp"></canvas></div>
+        <div id="legComp" class="leg"></div>
+      </div>
+      <div class="cc cc-topn">
+        <div class="ct"><div class="ct-left"><h2>Top Taxa Ranking</h2><p>Mean relative abundance across all samples</p></div>
+          <div class="ct-right">
+            <select class="c-sel" id="topNSel" onchange="buildTopN(fData(),+this.value)"><option value="5">Top 5</option><option value="7" selected>Top 7</option><option value="10">Top 10</option></select>
+            <button class="c-btn" onclick="dlC('topn','top-taxa')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cTopN"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="cc cc-donut">
+        <div class="ct"><div class="ct-left"><h2>Composition per Group</h2><p>Average taxa proportions by group &middot; Hover for values</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('donut0','donut')">↓ PNG</button></div></div>
+        <div class="cw" style="height:240px"><div id="donutRow" class="donut-row" style="height:100%;align-items:center"></div></div>
+        <div id="legDonut" class="leg"></div>
+      </div>
+      <div class="cc cc-sunburst">
+        <div class="ct"><div class="ct-left"><h2>Sunburst — Group → Taxa</h2><p>Inner ring = groups &middot; Outer ring = taxa per group &middot; Hover cells</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlSVG('svgSunburst','sunburst')">↓ SVG</button></div></div>
+        <svg id="svgSunburst" class="cssvg" style="height:260px" viewBox="0 0 400 260" preserveAspectRatio="xMidYMid meet"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── ALPHA ─── -->
+  <section id="secAlpha">
+    <div class="sec-hdr">📊 Alpha Diversity</div>
+    <div class="chart-grid">
+      <div class="cc cc-alpha">
+        <div class="ct"><div class="ct-left"><h2>Alpha Diversity — Strip</h2><p>Individual samples &middot; Bar = group mean</p></div>
+          <div class="ct-right">
+            <select class="c-sel" id="mSel" onchange="onMetricChange()"><option value="shannon">Shannon</option><option value="simpson">Simpson</option></select>
+            <button class="c-btn" onclick="dlC('alpha','alpha-strip')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cAlpha"></canvas></div>
+        <div id="sTbl"></div>
+      </div>
+      <div class="cc cc-box">
+        <div class="ct"><div class="ct-left"><h2>Box Plot</h2><p>Quartiles, whiskers (1.5×IQR) &middot; Hover dots for sample ID</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlCanvas('cBox','box-plot')">↓ PNG</button></div></div>
+        <canvas id="cBox" class="cust" height="255"></canvas>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="cc cc-violin">
+        <div class="ct"><div class="ct-left"><h2>Violin Plot</h2><p>Kernel density estimate &middot; Median dot &middot; Hover for value</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlCanvas('cViolin','violin')">↓ PNG</button></div></div>
+        <canvas id="cViolin" class="cust" height="255"></canvas>
+      </div>
+      <div class="cc cc-rar">
+        <div class="ct"><div class="ct-left"><h2>Rarefaction Curves</h2><p>Expected species richness vs sequencing depth &middot; Hover for values</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('rar','rarefaction')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cRar"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── BETA ─── -->
+  <section id="secBeta">
+    <div class="sec-hdr">🌐 Beta Diversity</div>
+    <div class="chart-grid">
+      <div class="cc cc-pcoa">
+        <div class="ct"><div class="ct-left"><h2>PCoA</h2><p>Euclidean distances &middot; PC1 vs PC2 &middot; Hover for sample ID</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('beta','pcoa')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cBeta"></canvas></div>
+        <div id="legBeta" class="leg"></div>
+      </div>
+      <div class="cc cc-nmds">
+        <div class="ct"><div class="ct-left"><h2>NMDS (Bray–Curtis)</h2><p>Classical MDS on Bray–Curtis distances &middot; Hover for sample ID</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('nmds','nmds')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cNmds"></canvas></div>
+        <div id="legNmds" class="leg"></div>
+      </div>
+    </div>
+    <div class="chart-grid-1">
+      <div class="cc cc-dendro">
+        <div class="ct"><div class="ct-left"><h2>Hierarchical Clustering Dendrogram</h2><p>Average-linkage, Bray–Curtis distance &middot; Hover nodes for sample / height</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlSVG('svgDendro','dendrogram')">↓ SVG</button></div></div>
+        <svg id="svgDendro" class="cssvg" style="height:240px"></svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── COMPARATIVE ─── -->
+  <section id="secCompare">
+    <div class="sec-hdr">⚖️ Comparative Analysis</div>
+    <div class="cmp-row">
+      <label>Compare:</label>
+      <select class="c-sel" id="cmpA"></select>
+      <span style="font-size:12px;color:var(--text3);font-weight:700">vs</span>
+      <select class="c-sel" id="cmpB"></select>
+      <button class="c-btn" onclick="rebuildComparative()">Update</button>
+    </div>
+    <div class="chart-grid">
+      <div class="cc cc-diff">
+        <div class="ct"><div class="ct-left"><h2>Differential Abundance</h2><p>Log₂ fold change per taxon &middot; Positive = enriched in Group A</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('diff','diff-abundance')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cDiff"></canvas></div>
+      </div>
+      <div class="cc cc-volc">
+        <div class="ct"><div class="ct-left"><h2>Volcano Plot</h2><p>Log₂ FC vs −log₁₀(p-value) &middot; Dashed lines = thresholds &middot; Hover for taxon</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlC('volc','volcano')">↓ PNG</button></div></div>
+        <div class="cw"><canvas id="cVolc"></canvas></div>
+      </div>
+    </div>
+    <div class="chart-grid">
+      <div class="cc cc-heat">
+        <div class="ct"><div class="ct-left"><h2>Abundance Heatmap</h2><p>Row-scaled relative abundance (%) &middot; Hover cells for exact value</p></div></div>
+        <div class="hm-s" id="hmWrap"></div>
+      </div>
+      <div class="cc cc-corr">
+        <div class="ct"><div class="ct-left"><h2>Taxa Correlation Matrix</h2><p>Pearson r across all samples &middot; Rose = positive &middot; Blue = negative</p></div>
+          <div class="ct-right"><button class="c-btn" onclick="dlSVG('svgCorr','correlation')">↓ SVG</button></div></div>
+        <div class="hm-s" id="corrWrap"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── LONGITUDINAL ─── -->
+  <section id="secLong">
+    <div class="sec-hdr">📈 Longitudinal</div>
+    <div class="chart-grid-1">
+      <div class="cc cc-long">
+        <div class="ct"><div class="ct-left"><h2>Alpha Diversity Over Time</h2><p>Requires a <code>time</code> column in your CSV &middot; Each line = one sample</p></div>
+          <div class="ct-right">
+            <select class="c-sel" id="lSel" onchange="buildLong(fData(),this.value)"><option value="shannon">Shannon</option><option value="simpson">Simpson</option></select>
+            <button class="c-btn" onclick="dlC('long','longitudinal')">↓ PNG</button></div></div>
+        <div id="longNote" class="info-note" style="display:none">Add a <strong>time</strong> column (numeric, e.g. days) to your CSV to enable the longitudinal chart.</div>
+        <div class="cw" id="longWrap"><canvas id="cLong"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── STATISTICS ─── -->
+  <section id="secStats">
+    <div class="sec-hdr">📋 Diversity Statistics</div>
+    <div class="cc cc-stats"><div id="divStatsTable"></div></div>
+  </section>
+
+  <footer>MicroSee &mdash; Interactive Microbiome Visualisation &middot; GPA 2026 &middot; UPF</footer>
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+/* ══════════════════════════════════════
+   CONSTANTS
+══════════════════════════════════════ */
+const TAXA=['Firmicutes','Bacteroidetes','Proteobacteria','Actinobacteria','Verrucomicrobia','Fusobacteria','Others'];
+const TC=['#D84E6A','#4A7ED4','#D97A3A','#9058C4','#2FA896','#C4960A','#8CAD70'];
+const TCMAP=Object.fromEntries(TAXA.map((t,i)=>[t,TC[i]]));
+const GPAL=['#4A7ED4','#D84E6A','#2FA896','#9058C4','#D97A3A','#C4960A'];
+const gCol=(g,all)=>GPAL[all.indexOf(g)%GPAL.length];
+const gC='rgba(196,96,120,.07)',tC='#C4A0A8';
+
+/* ══════════════════════════════════════
+   DEMO DATA (includes time column)
+══════════════════════════════════════ */
+const DEMO=[
+  {id:'CTR_01',group:'Control',time:0, Firmicutes:44,Bacteroidetes:30,Proteobacteria:10,Actinobacteria:7,Verrucomicrobia:4,Fusobacteria:2,Others:3,shannon:2.08,simpson:0.81,pc1:-1.4,pc2:0.6},
+  {id:'CTR_02',group:'Control',time:14,Firmicutes:38,Bacteroidetes:35,Proteobacteria:12,Actinobacteria:6,Verrucomicrobia:5,Fusobacteria:1,Others:3,shannon:2.21,simpson:0.84,pc1:-1.1,pc2:1.0},
+  {id:'CTR_03',group:'Control',time:28,Firmicutes:41,Bacteroidetes:28,Proteobacteria:14,Actinobacteria:8,Verrucomicrobia:3,Fusobacteria:2,Others:4,shannon:2.14,simpson:0.82,pc1:-1.3,pc2:0.3},
+  {id:'CTR_04',group:'Control',time:56,Firmicutes:45,Bacteroidetes:25,Proteobacteria:11,Actinobacteria:9,Verrucomicrobia:5,Fusobacteria:2,Others:3,shannon:2.05,simpson:0.80,pc1:-0.9,pc2:0.7},
+  {id:'CTR_05',group:'Control',time:84,Firmicutes:40,Bacteroidetes:32,Proteobacteria:13,Actinobacteria:7,Verrucomicrobia:4,Fusobacteria:1,Others:3,shannon:2.18,simpson:0.83,pc1:-1.2,pc2:-0.4},
+  {id:'TRT_01',group:'Treatment',time:0, Firmicutes:22,Bacteroidetes:18,Proteobacteria:28,Actinobacteria:14,Verrucomicrobia:9,Fusobacteria:5,Others:4,shannon:2.61,simpson:0.89,pc1:1.2,pc2:0.5},
+  {id:'TRT_02',group:'Treatment',time:14,Firmicutes:18,Bacteroidetes:20,Proteobacteria:32,Actinobacteria:12,Verrucomicrobia:10,Fusobacteria:4,Others:4,shannon:2.58,simpson:0.88,pc1:1.5,pc2:-0.2},
+  {id:'TRT_03',group:'Treatment',time:28,Firmicutes:25,Bacteroidetes:15,Proteobacteria:30,Actinobacteria:13,Verrucomicrobia:8,Fusobacteria:5,Others:4,shannon:2.52,simpson:0.87,pc1:1.0,pc2:1.1},
+  {id:'TRT_04',group:'Treatment',time:56,Firmicutes:20,Bacteroidetes:22,Proteobacteria:29,Actinobacteria:15,Verrucomicrobia:7,Fusobacteria:3,Others:4,shannon:2.64,simpson:0.90,pc1:1.6,pc2:-0.8},
+  {id:'TRT_05',group:'Treatment',time:84,Firmicutes:23,Bacteroidetes:19,Proteobacteria:27,Actinobacteria:16,Verrucomicrobia:9,Fusobacteria:3,Others:3,shannon:2.67,simpson:0.90,pc1:1.3,pc2:0.2},
+];
+
+/* ══════════════════════════════════════
+   STATE
+══════════════════════════════════════ */
+let data=DEMO,rawTaxa=[...TAXA];
+let activeGroups=new Set(getGroups(DEMO));
+let activeTaxa=new Set(TAXA);
+let CHS={};
+
+/* ══════════════════════════════════════
+   BASIC HELPERS
+══════════════════════════════════════ */
+function getGroups(d){return[...new Set(d.map(r=>r.group))]}
+function fData(){return data.filter(r=>activeGroups.has(r.group))}
+function aTaxa(){return rawTaxa.filter(t=>activeTaxa.has(t))}
+function mean(arr){return arr.length?arr.reduce((a,b)=>a+b,0)/arr.length:0}
+function variance(arr){if(arr.length<2)return 0;const m=mean(arr);return arr.reduce((s,v)=>s+(v-m)**2,0)/(arr.length-1)}
+function safeSd(arr){return arr.length<2?'N/A':Math.sqrt(variance(arr)).toFixed(3)}
+function normT(rows,taxa){return rows.map(r=>{const tot=taxa.reduce((s,t)=>s+(+r[t]||0),0);const o={...r};taxa.forEach(t=>o[t]=tot>0?+((+r[t]/tot)*100).toFixed(1):0);return o})}
+function hCol(p){return`rgb(${Math.round(255-p*(255-92))},${Math.round(245-p*(245-32))},${Math.round(240-p*(240-16))})`}
+function hTxt(p){return p>.45?'rgba(255,255,255,.85)':'rgba(70,25,15,.4)'}
+function corrCol(r){if(r>=0){const p=r;return`rgb(${Math.round(255-p*(255-216))},${Math.round(248-p*(248-78))},${Math.round(244-p*(244-106))})`}else{const p=-r;return`rgb(${Math.round(255-p*(255-74))},${Math.round(248-p*(248-126))},${Math.round(244-p*(244-212))})`}}
+function corrTxt(r){return Math.abs(r)>.5?'rgba(255,255,255,.85)':'rgba(42,20,16,.6)'}
+
+/* ══════════════════════════════════════
+   STATISTICAL FUNCTIONS
+══════════════════════════════════════ */
+function brayCurtis(a,b,taxa){let num=0,den=0;taxa.forEach(t=>{num+=Math.abs((+a[t]||0)-(+b[t]||0));den+=(+a[t]||0)+(+b[t]||0)});return den>0?num/den:0}
+
+function computeMDS(rows,taxa){
+  const norm=normT(rows,taxa);const n=norm.length;
+  const D=Array.from({length:n},()=>Array(n).fill(0));
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){D[i][j]=D[j][i]=brayCurtis(norm[i],norm[j],taxa)}
+  const D2=D.map(r=>r.map(d=>d*d));
+  const rM=D2.map(r=>r.reduce((a,b)=>a+b,0)/n);
+  const cM=Array.from({length:n},(_,j)=>D2.reduce((s,r)=>s+r[j],0)/n);
+  const gM=rM.reduce((a,b)=>a+b,0)/n;
+  const B=D2.map((r,i)=>r.map((v,j)=>-0.5*(v-rM[i]-cM[j]+gM)));
+  const mv=(M,v)=>M.map(r=>r.reduce((s,a,j)=>s+a*v[j],0));
+  const nr=v=>{const l=Math.sqrt(v.reduce((s,x)=>s+x*x,0));return v.map(x=>x/(l||1))};
+  const dt=(a,b)=>a.reduce((s,x,i)=>s+x*b[i],0);
+  function pi(def=[]){
+    let v=nr(Array.from({length:n},()=>Math.random()-.5));
+    let ev=0;
+    for(let k=0;k<300;k++){let w=mv(B,v);def.forEach(({vec})=>{const d2=dt(w,vec);w=w.map((x,i)=>x-d2*vec[i])});ev=dt(v,w);v=nr(w)}
+    return{vec:v,val:Math.max(0,ev)}
+  }
+  const e1=pi([]),e2=pi([e1]);
+  return norm.map((r,i)=>({...r,nmds1:e1.vec[i]*Math.sqrt(e1.val),nmds2:e2.vec[i]*Math.sqrt(e2.val)}));
+}
+
+function clusterSamples(rows,taxa){
+  const norm=normT(rows,taxa);const n=norm.length;
+  const D=Array.from({length:n},()=>Array(n).fill(0));
+  for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){D[i][j]=D[j][i]=brayCurtis(norm[i],norm[j],taxa)}
+  let cls=norm.map((r,i)=>({items:[i],label:r.id,group:r.group,height:0,left:null,right:null}));
+  while(cls.length>1){
+    let minD=Infinity,mA=0,mB=1;
+    for(let a=0;a<cls.length;a++)for(let b=a+1;b<cls.length;b++){
+      let s=0,c=0;cls[a].items.forEach(i=>cls[b].items.forEach(j=>{s+=D[i][j];c++}));
+      const d=s/c;if(d<minD){minD=d;mA=a;mB=b}
+    }
+    const mg={items:[...cls[mA].items,...cls[mB].items],label:null,group:null,height:minD,left:cls[mA],right:cls[mB]};
+    cls=cls.filter((_,i)=>i!==mA&&i!==mB);cls.push(mg);
+  }
+  return cls[0];
+}
+
+function boxStats(arr){
+  if(!arr.length)return null;
+  const s=[...arr].sort((a,b)=>a-b);const n=s.length;
+  const q1=s[Math.floor(n*.25)],q2=s[Math.floor(n*.5)],q3=s[Math.floor(n*.75)];
+  const iqr=q3-q1;
+  const lo=Math.max(s[0],q1-1.5*iqr),hi=Math.min(s[n-1],q3+1.5*iqr);
+  const out=s.filter(v=>v<lo||v>hi);
+  return{q1,q2,q3,lo,hi,out,min:s[0],max:s[n-1]}
+}
+
+function erf(x){const a1=0.254829592,a2=-0.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,p=0.3275911;const sg=x<0?-1:1;x=Math.abs(x);const t=1/(1+p*x);const y=1-((((a5*t+a4)*t+a3)*t+a2)*t+a1)*t*Math.exp(-x*x);return sg*y}
+function normCDF(z){return .5*(1+erf(z/Math.sqrt(2)))}
+function tTest(a,b){
+  if(a.length<2||b.length<2)return{t:0,p:1};
+  const m1=mean(a),m2=mean(b);const v1=variance(a),v2=variance(b);
+  const se=Math.sqrt(v1/a.length+v2/b.length);if(!se)return{t:0,p:1};
+  const t=(m1-m2)/se;const p=2*(1-normCDF(Math.abs(t)));
+  return{t,p}
+}
+
+/* ══════════════════════════════════════
+   CHART.JS CHART BUILDERS
+══════════════════════════════════════ */
+function buildComp(d){
+  const ta=aTaxa(),norm=normT(d,ta);
+  if(CHS.comp)CHS.comp.destroy();
+  CHS.comp=new Chart(document.getElementById('cComp'),{type:'bar',
+    data:{labels:norm.map(r=>r.id),datasets:ta.map(t=>({label:t,data:norm.map(r=>r[t]||0),backgroundColor:TCMAP[t]||'#aaa',borderWidth:0}))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${(+c.raw).toFixed(1)}%`}}},
+      scales:{x:{stacked:true,ticks:{maxRotation:42,autoSkip:false,font:{size:10},color:tC},grid:{display:false}},y:{stacked:true,max:100,ticks:{callback:v=>v+'%',font:{size:10},color:tC},grid:{color:gC}}}}});
+  document.getElementById('legComp').innerHTML=ta.map(t=>`<div class="li"><div class="ld" style="background:${TCMAP[t]||'#aaa'}"></div><span>${t}</span></div>`).join('');
+}
+
+function buildTopN(d,n=7){
+  const ta=aTaxa(),norm=normT(d,ta);
+  const avgs=ta.map(t=>({t,v:mean(norm.map(r=>+r[t]||0))})).sort((a,b)=>b.v-a.v).slice(0,n);
+  if(CHS.topn)CHS.topn.destroy();
+  CHS.topn=new Chart(document.getElementById('cTopN'),{type:'bar',
+    data:{labels:avgs.map(a=>a.t),datasets:[{label:'Mean Abundance',data:avgs.map(a=>+a.v.toFixed(2)),backgroundColor:avgs.map(a=>TCMAP[a.t]||'#aaa'),borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${(+c.raw).toFixed(1)}%`}}},
+      scales:{x:{ticks:{callback:v=>v+'%',font:{size:10},color:tC},grid:{color:gC}},y:{ticks:{font:{size:10},color:tC},grid:{display:false}}}}});
+}
+
+function buildDonut(d){
+  const ta=aTaxa(),norm=normT(d,ta),groups=getGroups(d);
+  const row=document.getElementById('donutRow');
+  row.innerHTML='';
+  // Destroy old donut charts
+  Object.keys(CHS).filter(k=>k.startsWith('donut')).forEach(k=>{CHS[k].destroy();delete CHS[k]});
+  groups.forEach((g,gi)=>{
+    const gd=norm.filter(r=>r.group===g);
+    const avgs=ta.map(t=>mean(gd.map(r=>+r[t]||0)));
+    const wrap=document.createElement('div');wrap.className='donut-item';
+    const canvas=document.createElement('canvas');canvas.id=`cDonut${gi}`;canvas.style.cssText='width:140px;height:140px';
+    const lbl=document.createElement('span');lbl.textContent=g;lbl.style.color=gCol(g,groups);
+    wrap.appendChild(canvas);wrap.appendChild(lbl);row.appendChild(wrap);
+    CHS[`donut${gi}`]=new Chart(canvas,{type:'doughnut',
+      data:{labels:ta,datasets:[{data:avgs,backgroundColor:ta.map(t=>TCMAP[t]||'#aaa'),borderColor:'#fff',borderWidth:2}]},
+      options:{responsive:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.label}: ${(+c.raw).toFixed(1)}%`}}}}});
+  });
+  document.getElementById('legDonut').innerHTML=ta.map(t=>`<div class="li"><div class="ld" style="background:${TCMAP[t]||'#aaa'}"></div><span>${t}</span></div>`).join('');
+}
+
+function buildAlpha(d,metric){
+  if(CHS.alpha)CHS.alpha.destroy();
+  const aGrps=getGroups(d);const JIT=[-0.18,-0.06,0.0,0.06,0.18,-0.12,0.12,-0.24,0.24,0.03];const ds=[];
+  aGrps.forEach((g,gi)=>{const gd=d.filter(r=>r.group===g),c=gCol(g,aGrps);
+    ds.push({label:g,data:gd.map((r,i)=>({x:gi+(JIT[i%JIT.length]||0),y:+r[metric],id:r.id})),backgroundColor:c+'cc',borderColor:c,borderWidth:1.5,pointRadius:7,pointHoverRadius:10});
+    const vals=gd.map(r=>+r[metric]),m=mean(vals);
+    ds.push({label:g+'_m',data:[{x:gi-.3,y:m},{x:gi+.3,y:m}],showLine:true,borderColor:c,borderWidth:3.5,pointRadius:0,backgroundColor:'transparent'})});
+  CHS.alpha=new Chart(document.getElementById('cAlpha'),{type:'scatter',data:{datasets:ds},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{filter:i=>!i.dataset.label.endsWith('_m'),callbacks:{label:c=>`${c.raw.id}: ${(+c.raw.y).toFixed(3)}`}}},
+      scales:{x:{type:'linear',min:-.6,max:aGrps.length-.4,ticks:{stepSize:1,callback(v){const i=Math.round(v);return Math.abs(v-i)<.01&&i>=0&&i<aGrps.length?aGrps[i]:''},color:tC},grid:{display:false}},
+        y:{title:{display:true,text:metric==='shannon'?'Shannon Index':'Simpson Index',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}}}}});
+  const sTbl=document.getElementById('sTbl');
+  if(sTbl){const rows=aGrps.map(g=>{const vals=d.filter(r=>r.group===g).map(r=>+r[metric]);const m=mean(vals);return`<tr><td style="color:${gCol(g,aGrps)}">${g}</td><td>${vals.length}</td><td>${m.toFixed(3)}</td><td>${safeSd(vals)}</td></tr>`}).join('');sTbl.innerHTML=`<table><thead><tr><th>Group</th><th>N</th><th>Mean</th><th>SD</th></tr></thead><tbody>${rows}</tbody></table>`}
+}
+
+function buildRar(d){
+  const ta=aTaxa(),norm=normT(d,ta),N=10000,steps=20,depths=Array.from({length:steps+1},(_,i)=>Math.round(i*N/steps));
+  if(CHS.rar)CHS.rar.destroy();
+  const groups=getGroups(d);
+  const datasets=d.map(r=>{
+    const props=ta.map(t=>+r[t]||0);const tot=props.reduce((a,b)=>a+b,0)||1;
+    const pts=depths.map(dep=>({x:dep,y:ta.reduce((s,_,i)=>{const p=props[i]/tot;return s+(p>0?1-Math.pow(1-p,dep):0)},0)}));
+    const c=gCol(r.group,groups);
+    return{label:r.id,data:pts,borderColor:c+'bb',backgroundColor:'transparent',borderWidth:1.5,pointRadius:0,tension:.3};
+  });
+  CHS.rar=new Chart(document.getElementById('cRar'),{type:'line',data:{datasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{mode:'nearest',intersect:false,callbacks:{label:c=>`${c.dataset.label}: ${c.raw.y.toFixed(1)} spp @ ${c.raw.x} reads`}}},
+      scales:{x:{type:'linear',title:{display:true,text:'Reads sampled',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}},
+        y:{title:{display:true,text:'Expected species',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}}}}});
+}
+
+function buildBeta(d){
+  if(CHS.beta)CHS.beta.destroy();
+  const groups=getGroups(d),xs=d.map(r=>+r.pc1),ys=d.map(r=>+r.pc2);
+  const xP=(Math.max(...xs)-Math.min(...xs))*.15,yP=(Math.max(...ys)-Math.min(...ys))*.15;
+  CHS.beta=new Chart(document.getElementById('cBeta'),{type:'scatter',
+    data:{datasets:groups.map(g=>{const gd=d.filter(r=>r.group===g),c=gCol(g,groups);return{label:g,data:gd.map(r=>({x:+r.pc1,y:+r.pc2,id:r.id})),backgroundColor:c+'cc',borderColor:c,borderWidth:1.5,pointRadius:8,pointHoverRadius:11}})},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.id}: (${(+c.raw.x).toFixed(2)}, ${(+c.raw.y).toFixed(2)})`}}},
+      scales:{x:{title:{display:true,text:'PC1',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC},min:Math.min(...xs)-xP,max:Math.max(...xs)+xP},
+        y:{title:{display:true,text:'PC2',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC},min:Math.min(...ys)-yP,max:Math.max(...ys)+yP}}}});
+  document.getElementById('legBeta').innerHTML=groups.map(g=>`<div class="li"><div class="ld" style="background:${gCol(g,groups)};border-radius:50%"></div><span>${g}</span></div>`).join('');
+}
+
+function buildNMDS(d){
+  const ta=aTaxa();if(!ta.length||d.length<3){if(CHS.nmds)CHS.nmds.destroy();return}
+  const mdsRows=computeMDS(d,ta);const groups=getGroups(d);
+  const xs=mdsRows.map(r=>r.nmds1),ys=mdsRows.map(r=>r.nmds2);
+  const xP=(Math.max(...xs)-Math.min(...xs))*.15||.1,yP=(Math.max(...ys)-Math.min(...ys))*.15||.1;
+  if(CHS.nmds)CHS.nmds.destroy();
+  CHS.nmds=new Chart(document.getElementById('cNmds'),{type:'scatter',
+    data:{datasets:groups.map(g=>{const gd=mdsRows.filter(r=>r.group===g),c=gCol(g,groups);return{label:g,data:gd.map(r=>({x:r.nmds1,y:r.nmds2,id:r.id})),backgroundColor:c+'cc',borderColor:c,borderWidth:1.5,pointRadius:8,pointHoverRadius:11}})},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.id}: (${(+c.raw.x).toFixed(3)}, ${(+c.raw.y).toFixed(3)})`}}},
+      scales:{x:{title:{display:true,text:'MDS1 (Bray–Curtis)',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC},min:Math.min(...xs)-xP,max:Math.max(...xs)+xP},
+        y:{title:{display:true,text:'MDS2',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC},min:Math.min(...ys)-yP,max:Math.max(...ys)+yP}}}});
+  document.getElementById('legNmds').innerHTML=groups.map(g=>`<div class="li"><div class="ld" style="background:${gCol(g,groups)};border-radius:50%"></div><span>${g}</span></div>`).join('');
+}
+
+function buildDiff(d,g1,g2){
+  const ta=aTaxa(),norm=normT(d,ta);
+  const d1=norm.filter(r=>r.group===g1),d2=norm.filter(r=>r.group===g2);
+  if(!d1.length||!d2.length)return;
+  const lfc=ta.map(t=>{const m1=mean(d1.map(r=>+r[t]||0)),m2=mean(d2.map(r=>+r[t]||0));return{t,lfc:Math.log2((m1+.1)/(m2+.1))}}).sort((a,b)=>b.lfc-a.lfc);
+  if(CHS.diff)CHS.diff.destroy();
+  CHS.diff=new Chart(document.getElementById('cDiff'),{type:'bar',
+    data:{labels:lfc.map(x=>x.t),datasets:[{label:'Log₂FC',data:lfc.map(x=>+x.lfc.toFixed(3)),backgroundColor:lfc.map(x=>x.lfc>=0?gCol(g1,getGroups(d))+'cc':gCol(g2,getGroups(d))+'cc'),borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`Log₂FC = ${(+c.raw).toFixed(3)}\n${+c.raw>=0?'↑ '+g1:'↑ '+g2}`}}},
+      scales:{x:{title:{display:true,text:'Log₂ Fold Change',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}},y:{ticks:{font:{size:10},color:tC},grid:{display:false}}}}});
+}
+
+function buildVolc(d,g1,g2){
+  const ta=aTaxa(),norm=normT(d,ta);
+  const d1=norm.filter(r=>r.group===g1),d2=norm.filter(r=>r.group===g2);
+  if(!d1.length||!d2.length)return;
+  const pts=ta.map(t=>{
+    const v1=d1.map(r=>+r[t]||0),v2=d2.map(r=>+r[t]||0);
+    const m1=mean(v1),m2=mean(v2);const lfc=Math.log2((m1+.1)/(m2+.1));
+    const {p}=tTest(v1,v2);const nlp=-Math.log10(Math.max(p,1e-6));
+    const sig=Math.abs(lfc)>1&&p<.05;
+    return{x:+lfc.toFixed(3),y:+nlp.toFixed(3),t,sig,p};
+  });
+  const sig=pts.filter(p=>p.sig),ns=pts.filter(p=>!p.sig);
+  if(CHS.volc)CHS.volc.destroy();
+  CHS.volc=new Chart(document.getElementById('cVolc'),{type:'scatter',
+    data:{datasets:[
+      {label:'Significant',data:sig.map(p=>({x:p.x,y:p.y,t:p.t})),backgroundColor:'#D84E6Acc',borderColor:'#D84E6A',borderWidth:1,pointRadius:7},
+      {label:'Not significant',data:ns.map(p=>({x:p.x,y:p.y,t:p.t})),backgroundColor:'#C4A0A8aa',borderColor:'#C4A0A8',borderWidth:1,pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.t}: LFC=${c.raw.x}, −log₁₀p=${c.raw.y}`}}},
+      scales:{x:{title:{display:true,text:'Log₂ Fold Change',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}},
+        y:{title:{display:true,text:'−log₁₀(p-value)',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}}}}});
+  // Draw threshold lines via plugin workaround (annotation via afterDraw)
+  const orig=CHS.volc.options.animation;CHS.volc.options.animation={onComplete(){const{ctx,chartArea,scales}=this;if(!chartArea)return;const xS=scales.x,yS=scales.y;ctx.save();ctx.setLineDash([5,4]);ctx.strokeStyle='#C4A0A855';ctx.lineWidth=1;[-1,1].forEach(v=>{const px=xS.getPixelForValue(v);ctx.beginPath();ctx.moveTo(px,chartArea.top);ctx.lineTo(px,chartArea.bottom);ctx.stroke()});const py=yS.getPixelForValue(-Math.log10(.05));ctx.beginPath();ctx.moveTo(chartArea.left,py);ctx.lineTo(chartArea.right,py);ctx.stroke();ctx.restore()},duration:orig?.duration};CHS.volc.update();
+}
+
+function buildLong(d,metric){
+  const hasTime=d.some(r=>r.time!=null&&r.time!=='');
+  const note=document.getElementById('longNote'),wrap=document.getElementById('longWrap');
+  if(!hasTime){note.style.display='block';wrap.style.display='none';return}
+  note.style.display='none';wrap.style.display='block';
+  const groups=getGroups(d);
+  if(CHS.long)CHS.long.destroy();
+  CHS.long=new Chart(document.getElementById('cLong'),{type:'line',
+    data:{datasets:d.map(r=>{const c=gCol(r.group,groups);return{label:r.id,data:[{x:+r.time,y:+r[metric]}],borderColor:c+'cc',backgroundColor:c+'33',pointRadius:6,pointHoverRadius:9,borderWidth:1.5}})},
+    options:{responsive:true,maintainAspectRatio:false,showLine:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${(+c.raw.y).toFixed(3)} (t=${c.raw.x})`}}},
+      scales:{x:{type:'linear',title:{display:true,text:'Time (days)',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}},
+        y:{title:{display:true,text:metric==='shannon'?'Shannon Index':'Simpson Index',color:tC,font:{size:11}},ticks:{font:{size:10},color:tC},grid:{color:gC}}}}});
+  // Add group mean lines
+  groups.forEach(g=>{const gd=d.filter(r=>r.group===g).sort((a,b)=>+a.time-+b.time);const c=gCol(g,groups);CHS.long.data.datasets.push({label:g+' mean',data:gd.map(r=>({x:+r.time,y:+r[metric]})),borderColor:c,backgroundColor:'transparent',borderWidth:2.5,pointRadius:0,showLine:true,tension:.3})});
+  CHS.long.update();
+}
+
+/* ══════════════════════════════════════
+   CUSTOM CANVAS CHARTS
+══════════════════════════════════════ */
+function setupCanvas(id){
+  const cv=document.getElementById(id);const rect=cv.getBoundingClientRect();
+  const dpr=window.devicePixelRatio||1;const W=rect.width||500,H=rect.height||255;
+  cv.width=W*dpr;cv.height=H*dpr;const ctx=cv.getContext('2d');ctx.scale(dpr,dpr);
+  return{ctx,W,H,cv}
+}
+
+function buildBox(d,metric){
+  const {ctx,W,H}=setupCanvas('cBox');const groups=getGroups(d);
+  const pad={l:50,r:18,t:16,b:32};const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
+  const allV=d.map(r=>+r[metric]);const vMin=Math.min(...allV)*.97,vMax=Math.max(...allV)*1.03;
+  const toY=v=>pad.t+plotH-(v-vMin)/(vMax-vMin)*plotH;
+  const slotW=plotW/(groups.length);
+  ctx.clearRect(0,0,W,H);
+  ctx.font='11px Nunito,system-ui';ctx.textAlign='center';
+  groups.forEach((g,i)=>{
+    const gd=d.filter(r=>r.group===g).map(r=>+r[metric]);
+    const bs=boxStats(gd);if(!bs)return;
+    const c=gCol(g,groups);const cx=pad.l+slotW*i+slotW/2;const bw=slotW*.35;
+    const q1y=toY(bs.q1),q3y=toY(bs.q3),q2y=toY(bs.q2),loy=toY(bs.lo),hiy=toY(bs.hi);
+    // Box fill
+    ctx.fillStyle=c+'28';ctx.fillRect(cx-bw/2,q3y,bw,q1y-q3y);
+    // Box stroke
+    ctx.strokeStyle=c;ctx.lineWidth=2;ctx.strokeRect(cx-bw/2,q3y,bw,q1y-q3y);
+    // Median
+    ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(cx-bw/2,q2y);ctx.lineTo(cx+bw/2,q2y);ctx.stroke();
+    // Whiskers
+    ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(cx,q3y);ctx.lineTo(cx,hiy);ctx.moveTo(cx-bw*.2,hiy);ctx.lineTo(cx+bw*.2,hiy);ctx.moveTo(cx,q1y);ctx.lineTo(cx,loy);ctx.moveTo(cx-bw*.2,loy);ctx.lineTo(cx+bw*.2,loy);ctx.stroke();
+    // Individual points (jittered)
+    const pts=d.filter(r=>r.group===g);pts.forEach((r,j)=>{const jit=(j%3-.5)*.18*slotW;ctx.beginPath();ctx.arc(cx+jit,toY(+r[metric]),3.5,0,Math.PI*2);ctx.fillStyle=c+'99';ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1;ctx.stroke()});
+    // Outlier rings
+    bs.out.forEach(v=>{ctx.beginPath();ctx.arc(cx,toY(v),5,0,Math.PI*2);ctx.strokeStyle=c;ctx.lineWidth=2;ctx.stroke()});
+    // Label
+    ctx.fillStyle=tC;ctx.fillText(g,cx,H-pad.b+18);
+  });
+  // Y axis ticks
+  ctx.textAlign='right';ctx.fillStyle=tC;ctx.font='10px Nunito,system-ui';
+  const nt=5;for(let i=0;i<=nt;i++){const v=vMin+i*(vMax-vMin)/nt;ctx.fillText(v.toFixed(2),pad.l-5,toY(v)+3);ctx.strokeStyle='rgba(196,96,120,.07)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pad.l,toY(v));ctx.lineTo(W-pad.r,toY(v));ctx.stroke()}
+  // Interactive tooltip
+  const cv=document.getElementById('cBox');
+  cv.onmousemove=e=>{const rect2=cv.getBoundingClientRect();const mx=e.clientX-rect2.left,my=e.clientY-rect2.top;let found=null;groups.forEach((g,i)=>{const cx=pad.l+slotW*i+slotW/2;const pts=d.filter(r=>r.group===g);pts.forEach(r=>{const jit=(pts.indexOf(r)%3-.5)*.18*slotW;const py=toY(+r[metric]);if(Math.abs(mx-cx-jit)<7&&Math.abs(my-py)<7)found=`${r.id}: ${(+r[metric]).toFixed(3)}`})});
+    if(found)showTip(e,found);else hideTip()};
+  cv.onmouseleave=hideTip;
+}
+
+function buildViolin(d,metric){
+  const {ctx,W,H}=setupCanvas('cViolin');const groups=getGroups(d);
+  const pad={l:48,r:18,t:16,b:32};const plotW=W-pad.l-pad.r,plotH=H-pad.t-pad.b;
+  const allV=d.map(r=>+r[metric]);const vMin=Math.min(...allV)-.05,vMax=Math.max(...allV)+.05;
+  const toY=v=>pad.t+plotH-(v-vMin)/(vMax-vMin)*plotH;
+  const slotW=plotW/groups.length;
+  ctx.clearRect(0,0,W,H);
+  ctx.font='11px Nunito,system-ui';ctx.textAlign='center';
+  groups.forEach((g,i)=>{
+    const vals=d.filter(r=>r.group===g).map(r=>+r[metric]);
+    if(vals.length<3){ctx.fillStyle=tC;ctx.fillText('n<3',pad.l+slotW*i+slotW/2,H/2);return}
+    const c=gCol(g,groups);const cx=pad.l+slotW*i+slotW/2;const vW=slotW*.38;
+    const m=mean(vals),sd=Math.sqrt(vals.reduce((s,v)=>s+(v-m)**2,0)/vals.length);
+    const bw=Math.max(.01,1.06*sd*Math.pow(vals.length,-.2));
+    const nGrid=60;
+    const ys=Array.from({length:nGrid},(_,k)=>vMin+k*(vMax-vMin)/(nGrid-1));
+    const dens=ys.map(y=>vals.reduce((s,v)=>s+Math.exp(-.5*((y-v)/bw)**2)/(bw*Math.sqrt(2*Math.PI)),0)/vals.length);
+    const maxD=Math.max(...dens)||1;
+    ctx.beginPath();
+    ys.forEach((y,k)=>{const px=cx+dens[k]/maxD*vW;if(k===0)ctx.moveTo(px,toY(y));else ctx.lineTo(px,toY(y))});
+    [...ys].reverse().forEach((y,k)=>{const ri=nGrid-1-k;const px=cx-dens[ri]/maxD*vW;ctx.lineTo(px,toY(y))});
+    ctx.closePath();ctx.fillStyle=c+'40';ctx.fill();ctx.strokeStyle=c;ctx.lineWidth=1.5;ctx.stroke();
+    // Median
+    const med=[...vals].sort((a,b)=>a-b)[Math.floor(vals.length/2)];
+    ctx.beginPath();ctx.arc(cx,toY(med),5,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.stroke();
+    // Mean line
+    ctx.strokeStyle=c;ctx.lineWidth=1;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(cx-vW*.5,toY(m));ctx.lineTo(cx+vW*.5,toY(m));ctx.stroke();ctx.setLineDash([]);
+    // Label
+    ctx.fillStyle=tC;ctx.fillText(g,cx,H-pad.b+18);
+  });
+  ctx.textAlign='right';ctx.fillStyle=tC;ctx.font='10px Nunito,system-ui';
+  const nt=5;for(let k=0;k<=nt;k++){const v=vMin+k*(vMax-vMin)/nt;ctx.fillText(v.toFixed(2),pad.l-4,toY(v)+3)}
+  const cv=document.getElementById('cViolin');
+  cv.onmousemove=e=>{const r=cv.getBoundingClientRect();const my=e.clientY-r.top;const val=(1-(my-pad.t)/plotH)*(vMax-vMin)+vMin;showTip(e,`~${Math.max(vMin,Math.min(vMax,val)).toFixed(3)}`)};
+  cv.onmouseleave=hideTip;
+}
+
+/* ══════════════════════════════════════
+   SVG CHARTS
+══════════════════════════════════════ */
+function buildSunburst(d){
+  const ta=aTaxa(),norm=normT(d,ta),groups=getGroups(d);
+  const svgEl=document.getElementById('svgSunburst');
+  const W=400,H=260,cx=W*.42,cy=H/2,r1=Math.min(W,H)*.15,r2=Math.min(W,H)*.27,r3=Math.min(W,H)*.41;
+  let html='';const tips=[];
+  let sa=-Math.PI/2;
+  groups.forEach(g=>{
+    const gd=norm.filter(r=>r.group===g);const frac=gd.length/d.length;const ea=sa+frac*2*Math.PI;const gc=gCol(g,groups);
+    html+=arc(cx,cy,r1,r2,sa,ea,gc,'white',g);
+    const avgT={};ta.forEach(t=>{avgT[t]=mean(gd.map(r=>+r[t]||0))});const tot=ta.reduce((s,t)=>s+(avgT[t]||0),0)||1;
+    let ts=sa;ta.forEach(t=>{if(!avgT[t])return;const tf=(avgT[t]/tot)*(ea-sa);const te=ts+tf;html+=arc(cx,cy,r2+2,r3,ts,te,TCMAP[t]||'#aaa','white',`${g} · ${t}: ${avgT[t].toFixed(1)}%`);ts=te});
+    const mid=(sa+ea)/2,lr=(r1+r2)/2;html+=`<text x="${cx+lr*Math.cos(mid)}" y="${cy+lr*Math.sin(mid)+3.5}" text-anchor="middle" fill="white" font-size="9" font-family="Nunito" font-weight="700">${g}</text>`;
+    sa=ea;
+  });
+  // Legend
+  let ly=22;ta.forEach(t=>{html+=`<rect x="${W*.82}" y="${ly-7}" width="9" height="9" rx="2" fill="${TCMAP[t]||'#aaa'}"/>`;html+=`<text x="${W*.82+13}" y="${ly+1}" fill="#8B5860" font-size="9" font-family="Nunito">${t}</text>`;ly+=14});
+  svgEl.innerHTML=html;
+  // Hover tip on paths
+  svgEl.querySelectorAll('path[data-tip]').forEach(el=>{el.addEventListener('mouseenter',e=>{el.setAttribute('opacity','.7');showTip(e,el.getAttribute('data-tip'))});el.addEventListener('mousemove',e=>showTip(e,el.getAttribute('data-tip')));el.addEventListener('mouseleave',()=>{el.setAttribute('opacity','1');hideTip()})});
+}
+function arc(cx,cy,r1,r2,sa,ea,fill,stroke,tip){
+  if(Math.abs(ea-sa)<.001)return'';const la=(ea-sa)>Math.PI?1:0;
+  const p=`M${cx+r2*Math.cos(sa)} ${cy+r2*Math.sin(sa)} A${r2} ${r2} 0 ${la} 1 ${cx+r2*Math.cos(ea)} ${cy+r2*Math.sin(ea)} L${cx+r1*Math.cos(ea)} ${cy+r1*Math.sin(ea)} A${r1} ${r1} 0 ${la} 0 ${cx+r1*Math.cos(sa)} ${cy+r1*Math.sin(sa)} Z`;
+  return`<path d="${p}" fill="${fill}" stroke="${stroke}" stroke-width="1.5" data-tip="${tip}" style="cursor:default;transition:opacity .1s"></path>`;
+}
+
+function buildDendro(d){
+  const ta=aTaxa();if(!ta.length||d.length<2){document.getElementById('svgDendro').innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#C4A0A8" font-size="12" font-family="Nunito">Need ≥ 2 samples with taxa data</text>';return}
+  const root=clusterSamples(d,ta);const groups=getGroups(d);
+  const svgEl=document.getElementById('svgDendro');const W=svgEl.clientWidth||700,H=240;
+  const padL=20,padR=100,padT=20,padB=20;const plotW=W-padL-padR,plotH=H-padT-padB;
+  const leaves=[];function getLeaves(n){if(!n.left&&!n.right){leaves.push(n);return}if(n.left)getLeaves(n.left);if(n.right)getLeaves(n.right)}getLeaves(root);
+  const leafY={};leaves.forEach((l,i)=>{leafY[l.label]=padT+(i+.5)*plotH/leaves.length});
+  const maxH=root.height||1;
+  let paths='',labels='';
+  function draw(node){
+    if(!node.left&&!node.right){const x=padL+plotW,y=leafY[node.label],c=gCol(node.group,groups);labels+=`<circle cx="${x}" cy="${y}" r="4" fill="${c}"/><text x="${x+8}" y="${y+3.5}" fill="${c}" font-size="10" font-family="Nunito" font-weight="600">${node.label}</text>`;return y}
+    const myX=padL+plotW*(1-node.height/maxH);const lY=draw(node.left),rY=draw(node.right);const myY=(lY+rY)/2;
+    const lX=padL+plotW*(1-(node.left.height||0)/maxH);const rX=padL+plotW*(1-(node.right.height||0)/maxH);
+    paths+=`<line x1="${myX}" y1="${lY}" x2="${lX}" y2="${lY}" stroke="#D9C0B8" stroke-width="1.5"/>`;
+    paths+=`<line x1="${myX}" y1="${rY}" x2="${rX}" y2="${rY}" stroke="#D9C0B8" stroke-width="1.5"/>`;
+    paths+=`<line x1="${myX}" y1="${lY}" x2="${myX}" y2="${rY}" stroke="#D9C0B8" stroke-width="1.5"/>`;
+    paths+=`<circle cx="${myX}" cy="${myY}" r="3" fill="#F0D5C8" stroke="#D9C0B8" stroke-width="1"><title>d = ${node.height.toFixed(3)}</title></circle>`;
+    return myY;
+  }
+  draw(root);
+  svgEl.setAttribute('viewBox',`0 0 ${W} ${H}`);svgEl.innerHTML=paths+labels;
+}
+
+function buildHeatmap(d){
+  const ta=aTaxa(),norm=normT(d,ta),groups=getGroups(d),stats={};
+  ta.forEach(t=>{const v=norm.map(r=>+r[t]||0);stats[t]={mn:Math.min(...v),mx:Math.max(...v)}});
+  let h='<div class="hm"><div class="hr"><div class="hl" style="height:88px"></div>';
+  norm.forEach(r=>{h+=`<div class="hch"><span class="hct" style="color:${gCol(r.group,groups)}">${r.id}</span></div>`});
+  h+='</div>';
+  ta.forEach(t=>{h+=`<div class="hr"><div class="hl">${t}</div>`;
+    norm.forEach(r=>{const v=+r[t]||0,{mn,mx}=stats[t],p=mx>mn?(v-mn)/(mx-mn):0;h+=`<div class="hc" style="background:${hCol(p)}" title="${r.id} · ${t}: ${v}%"><span class="hv" style="color:${hTxt(p)}">${v}%</span></div>`});h+='</div>'});
+  const sw=Array.from({length:8},(_,i)=>`<span class="hsw" style="background:${hCol(i/7)}"></span>`).join('');
+  h+=`<div class="hscale"><span>Low</span>${sw}<span>High</span></div></div>`;
+  document.getElementById('hmWrap').innerHTML=h;
+}
+
+function buildCorr(d){
+  const ta=aTaxa(),norm=normT(d,ta);
+  if(ta.length<2){document.getElementById('corrWrap').innerHTML='<div class="info-note">Need ≥ 2 taxa for correlation.</div>';return}
+  const R={};ta.forEach(t1=>ta.forEach(t2=>{const v1=norm.map(r=>+r[t1]||0),v2=norm.map(r=>+r[t2]||0);const m1=mean(v1),m2=mean(v2);const num=v1.reduce((s,x,i)=>s+(x-m1)*(v2[i]-m2),0);const d1=Math.sqrt(v1.reduce((s,x)=>s+(x-m1)**2,0)),d2=Math.sqrt(v2.reduce((s,x)=>s+(x-m2)**2,0));R[`${t1}:${t2}`]=d1&&d2?num/(d1*d2):(t1===t2?1:0)}));
+  const cw=46,ch=30,hl=110;
+  let h=`<div class="hm"><div class="hr"><div class="hl" style="height:88px;min-width:${hl}px"></div>`;
+  ta.forEach(t=>{h+=`<div class="hch" style="width:${cw}px"><span class="hct">${t}</span></div>`});h+='</div>';
+  ta.forEach(t1=>{h+=`<div class="hr"><div class="hl" style="min-width:${hl}px">${t1}</div>`;
+    ta.forEach(t2=>{const r=R[`${t1}:${t2}`];const rv=isFinite(r)?r:0;h+=`<div class="cc-cell" style="width:${cw}px;background:${corrCol(rv)}" title="${t1} × ${t2}: r = ${rv.toFixed(2)}"><span style="color:${corrTxt(rv)}">${rv.toFixed(2)}</span></div>`});h+='</div>'});
+  h+='<div class="hscale" style="margin-left:'+hl+'px"><span style="color:#4A7ED4">−1</span>';
+  h+=Array.from({length:9},(_,i)=>`<span class="hsw" style="background:${corrCol(-1+i/4)}"></span>`).join('');
+  h+='<span style="color:#D84E6A">+1</span></div></div>';
+  document.getElementById('corrWrap').innerHTML=h;
+}
+
+/* ══════════════════════════════════════
+   RENDER ALL
+══════════════════════════════════════ */
+function renderAll(){
+  const d=fData();if(!d.length)return;
+  const metric=document.getElementById('mSel')?.value||'shannon';
+  // Taxonomy
+  buildComp(d);buildTopN(d,+document.getElementById('topNSel').value);buildDonut(d);buildSunburst(d);
+  // Alpha
+  buildAlpha(d,metric);buildBox(d,metric);buildViolin(d,metric);buildRar(d);
+  // Beta
+  buildBeta(d);buildNMDS(d);buildDendro(d);
+  // Comparative
+  rebuildComparative();
+  // Longitudinal
+  buildLong(d,document.getElementById('lSel')?.value||'shannon');
+  // Stats
+  updateStats(d);buildDivStats(d);
+}
+
+function rebuildComparative(){
+  const d=fData(),g1=document.getElementById('cmpA').value,g2=document.getElementById('cmpB').value;
+  if(!g1||!g2||g1===g2)return;
+  buildDiff(d,g1,g2);buildVolc(d,g1,g2);buildHeatmap(d);buildCorr(d);
+}
+
+function onMetricChange(){
+  const d=fData(),m=document.getElementById('mSel').value;
+  buildAlpha(d,m);buildBox(d,m);buildViolin(d,m);
+}
+
+function updateStats(d){
+  d=d||fData();const g=getGroups(d);
+  const sh=d.map(r=>+r.shannon).filter(v=>v>0),si=d.map(r=>+r.simpson).filter(v=>v>0);
+  document.getElementById('stN').textContent=d.length;document.getElementById('stG').textContent=g.length;
+  document.getElementById('stT').textContent=aTaxa().length;
+  document.getElementById('stSh').textContent=sh.length?mean(sh).toFixed(2):'—';
+  document.getElementById('stSi').textContent=si.length?mean(si).toFixed(2):'—';
+  document.getElementById('dpN').textContent=`${data.length} samples`;
+  document.getElementById('dpG').textContent=`${getGroups(data).length} groups`;
+  document.getElementById('dpT').textContent=`${rawTaxa.length} taxa`;
+}
+
+function buildDivStats(d){
+  const groups=getGroups(d);
+  const rows=groups.map(g=>{
+    const gd=d.filter(r=>r.group===g);const sh=gd.map(r=>+r.shannon).filter(v=>v>0);const si=gd.map(r=>+r.simpson).filter(v=>v>0);
+    const f=v=>v?mean(v).toFixed(3):'—';const c=gCol(g,groups);
+    return`<tr><td><span style="color:${c};font-weight:700">${g}</span></td><td>${gd.length}</td><td>${f(sh)} ± ${safeSd(sh)}</td><td>${sh.length?Math.min(...sh).toFixed(3)+' – '+Math.max(...sh).toFixed(3):'—'}</td><td>${f(si)} ± ${safeSd(si)}</td><td>${si.length?Math.min(...si).toFixed(3)+' – '+Math.max(...si).toFixed(3):'—'}</td></tr>`;
+  }).join('');
+  document.getElementById('divStatsTable').innerHTML=`<table class="stat-tbl"><thead><tr><th>Group</th><th>N</th><th>Shannon mean ± SD</th><th>Shannon range</th><th>Simpson mean ± SD</th><th>Simpson range</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ══════════════════════════════════════
+   SIDEBAR BUILDERS
+══════════════════════════════════════ */
+function buildGPills(){
+  const groups=getGroups(data);activeGroups=new Set(groups);
+  document.getElementById('gPills').innerHTML=groups.map(g=>`<div class="g-pill on" data-g="${g}" onclick="toggleG(this)"><span class="g-dot" style="background:${gCol(g,groups)}"></span>${g}<span class="g-ck">✓</span></div>`).join('');
+}
+function buildTList(){
+  activeTaxa=new Set(rawTaxa);
+  document.getElementById('tList').innerHTML=rawTaxa.map((t,i)=>`<label class="t-lbl"><input type="checkbox" checked data-t="${t}" onchange="toggleT(this)"><span class="t-sq" style="background:${TCMAP[t]||TC[i%TC.length]}"></span>${t}</label>`).join('');
+}
+function buildCmpSelectors(){
+  const groups=getGroups(data);
+  ['cmpA','cmpB'].forEach((id,k)=>{const s=document.getElementById(id);s.innerHTML=groups.map((g,i)=>`<option value="${g}"${i===k?' selected':''}>${g}</option>`).join('');s.onchange=rebuildComparative});
+}
+
+/* ══════════════════════════════════════
+   INTERACTIONS
+══════════════════════════════════════ */
+function toggleG(pill){const g=pill.dataset.g;if(activeGroups.has(g)){if(activeGroups.size>1){activeGroups.delete(g);pill.classList.remove('on')}}else{activeGroups.add(g);pill.classList.add('on')}renderAll()}
+function toggleT(cb){const t=cb.dataset.t;if(cb.checked)activeTaxa.add(t);else if(activeTaxa.size>1)activeTaxa.delete(t);else{cb.checked=true;return}const d=fData();buildComp(d);buildTopN(d,+document.getElementById('topNSel').value);buildDonut(d);buildHeatmap(d);buildCorr(d);buildRar(d);buildSunburst(d);updateStats(d)}
+function dlC(key,name){const c=CHS[key];if(!c)return;Object.assign(document.createElement('a'),{href:c.toBase64Image(),download:`microsee_${name}.png`}).click()}
+function dlCanvas(id,name){const cv=document.getElementById(id);Object.assign(document.createElement('a'),{href:cv.toDataURL(),download:`microsee_${name}.png`}).click()}
+function dlSVG(id,name){const s=document.getElementById(id);const blob=new Blob([s.outerHTML],{type:'image/svg+xml'});Object.assign(document.createElement('a'),{href:URL.createObjectURL(blob),download:`microsee_${name}.svg`}).click()}
+const ALL_SECS=['secTaxonomy','secAlpha','secBeta','secCompare','secLong','secStats'];
+function filterSec(id,btn){
+  document.querySelectorAll('.sec-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(id==='all'){
+    ALL_SECS.forEach(s=>{const el=document.getElementById(s);if(el)el.style.display=''});
+  }else{
+    ALL_SECS.forEach(s=>{const el=document.getElementById(s);if(el)el.style.display=s===id?'':'none'});
+    document.getElementById(id)?.scrollIntoView({behavior:'smooth'});
+  }
+}
+function scrollTo(id,btn){document.getElementById(id)?.scrollIntoView({behavior:'smooth'});document.querySelectorAll('.sec-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+function showTip(e,text){const t=document.getElementById('tt');t.textContent=text;t.style.left=(e.clientX+14)+'px';t.style.top=(e.clientY-10)+'px';t.classList.add('show')}
+function hideTip(){document.getElementById('tt').classList.remove('show')}
+function setErr(m){document.getElementById('errNote').textContent=m;document.getElementById('mainErr').textContent=m}
+
+/* ══════════════════════════════════════
+   CSV UPLOAD
+══════════════════════════════════════ */
+document.getElementById('csvIn').addEventListener('change',e=>{
+  const f=e.target.files[0];if(!f)return;
+  Papa.parse(f,{header:true,dynamicTyping:true,skipEmptyLines:true,
+    complete(res){
+      if(res.errors.length){setErr('Parse error: '+res.errors[0].message);return}
+      const rows=res.data.map(r=>({...r,id:r.id||r.sample_id||r.Sample||'S?',group:r.group||r.Group||r.condition||'Group A',shannon:+(r.shannon||r.Shannon||0),simpson:+(r.simpson||r.Simpson||0),pc1:+(r.pc1||r.PC1||0),pc2:+(r.pc2||r.PC2||0),time:r.time!=null?+r.time:null}));
+      if(!rows.length){setErr('No rows found.');return}
+      data=rows;rawTaxa=TAXA.filter(t=>rows[0]&&t in rows[0]);if(!rawTaxa.length)rawTaxa=[...TAXA];
+      setErr('');document.getElementById('srcNote').textContent=f.name;
+      buildGPills();buildTList();buildCmpSelectors();renderAll();
+    },error:err=>setErr('Error: '+err.message)});
+});
+
+document.getElementById('btnTpl').addEventListener('click',()=>{
+  const h=['id','group','time',...TAXA,'shannon','simpson','pc1','pc2'].join(',');
+  const rows=[['CTR_01','Control',0,44,30,10,7,4,2,3,2.08,0.81,-1.4,0.6],['CTR_02','Control',14,38,35,12,6,5,1,3,2.21,0.84,-1.1,1.0],['CTR_03','Control',28,41,28,14,8,3,2,4,2.14,0.82,-1.3,0.3],['TRT_01','Treatment',0,22,18,28,14,9,5,4,2.61,0.89,1.2,0.5],['TRT_02','Treatment',14,18,20,32,12,10,4,4,2.58,0.88,1.5,-0.2],['TRT_03','Treatment',28,25,15,30,13,8,5,4,2.52,0.87,1.0,1.1]].map(r=>r.join(',')).join('\n');
+  Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob([[h,rows].join('\n')],{type:'text/csv'})),download:'microsee_template.csv'}).click();
+});
+
+document.getElementById('cmpA').addEventListener('change',rebuildComparative);
+document.getElementById('cmpB').addEventListener('change',rebuildComparative);
+
+/* ══════════════════════════════════════
+   SPLASH → APP
+══════════════════════════════════════ */
+function goApp(){
+  document.getElementById('splash').classList.add('out');
+  document.getElementById('app').classList.add('in');
+  setTimeout(()=>{
+    document.getElementById('splash').style.display='none';
+    buildGPills();buildTList();buildCmpSelectors();renderAll();
+  },700);
+}
+setTimeout(goApp,6500);
+buildGPills();buildTList();buildCmpSelectors();updateStats(fData());
+</script>
+</body>
+</html>
