@@ -1,5 +1,6 @@
 # Organization of the folders
 
+````
 AGB2026/
 ├── alphaflow/                <-- Group B: The Nextflow Pipeline
 │   ├── main.nf               <-- Entry point
@@ -20,6 +21,7 @@ AGB2026/
 │   └── design_v1.png
 │
 └── README.md                 <-- General instructions for the whole class
+````
 
 ## Considerations for Group A
 
