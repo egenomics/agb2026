@@ -3,6 +3,7 @@
 ````
 alphaflow_backup/            <-- If we need some files or folders to move from here to inside Group_B folder
 Group_B/
+├── biodb/                     <-- This folder won't be found on GitHub due to have huge weight (it will be on our shared drive :)
 ├── modules
 ├── make_samplesheet.sh        <-- The new automation script
 ├── main.nf                    <-- Entry point

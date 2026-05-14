@@ -21,9 +21,12 @@ include { MULTIQC } from '../../modules/nf-core/multiqc/main'
 
 workflow QC_CHECKS {
     take:
-    ch_samplesheet
-    multiqc_config
-    multiqc_logo
+    ch_samplesheet              // channel: [ val(meta), [ reads ] ] 
+    multiqc_config              // path: multiqc_config [cite: 7]
+    multiqc_logo                // path: multiqc_logo [cite: 7]
+    ch_collated_versions        // channel: [ path(versions.yml) ] [cite: 5]
+    ch_methods_description      // channel: [ path(methods_description_mqc.yaml) ] [cite: 6]
+    ch_workflow_summary         // channel: [ path(workflow_summary_mqc.yaml) ] [cite: 5]
 
     main:
     def ch_versions = channel.empty()
