@@ -131,3 +131,31 @@ Rows = samples, columns = family-level taxa. Values are relative abundances (any
 - **Differential abundance**: Welch t-test with Satterthwaite degrees of freedom, exact p-values via regularised incomplete beta, Benjamini-Hochberg FDR, log₂ fold change with pseudo-count
 - **Correlation**: Spearman rank correlation (diversity vs clinical variables)
 - **PERMANOVA**: 99 permutations, Bray-Curtis distances, data-derived seed
+
+## Mermaid Workflow
+
+```mermaid
+graph TD
+    %% Data Ingestion Phase
+    Input[/Input Files/] --> Parsers[Data Parsers Script]
+    Parsers --> Storage[(Global Storage)]
+
+    %% Storage Details
+    subgraph StorageStructure [Storage Contents]
+    ID[Sample ID]
+    Meta[Metadata: Case/Control, Date, Age, Batch]
+    Values[Actual Data Values]
+    end
+    Storage --- StorageStructure
+
+    %% Branching Logic
+    Storage --> S1[Script 1: Global Aggregator]
+    Storage --> S2[Script 2: Filtered Generator]
+
+    %% Output Phase
+    S1 --> HTML1([Interactive .html Global Report])
+    
+    S2 --> S2Input{User Selection}
+    S2Input -->|By ID| HTML2([Filtered .html Report])
+    S2Input -->|By Metadata| HTML2
+    ```
