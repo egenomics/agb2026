@@ -1,0 +1,29 @@
+name: metadata_integration
+description: 'Integrate and validate metadata from multiple sources'
+keywords:
+  - metadata
+  - validation
+  - integration
+input:
+  - metadata_csv:
+      type: file
+      description: 'CSV file containing sample metadata'
+  - sample_ids:
+      type: value
+      description: 'List of sample identifiers'
+output:
+  - metadata:
+      type: file
+      description: 'Integrated metadata in JSON format'
+      pattern: "*.json"
+  - report:
+      type: file
+      description: 'Validation report'
+      pattern: "*.txt"
+  - versions:
+      type: file
+      description: 'Software versions'
+      pattern: "versions.yml"
+authors:
+  - name: "GROUP A"
+    url: "https://github.com"

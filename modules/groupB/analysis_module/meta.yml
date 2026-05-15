@@ -1,0 +1,32 @@
+name: analysis_module
+description: 'Perform data analysis and generate results'
+keywords:
+  - analysis
+  - feature extraction
+  - abundance
+input:
+  - meta:
+      type: value
+      description: 'Sample metadata'
+  - reads:
+      type: file
+      description: 'Input sequencing reads'
+  - metadata:
+      type: file
+      description: 'Sample metadata file'
+output:
+  - results:
+      type: file
+      description: 'Analysis results'
+      pattern: "*.analysis.tsv"
+  - abundance:
+      type: file
+      description: 'Abundance table'
+      pattern: "*.abundance.tsv"
+  - versions:
+      type: file
+      description: 'Software versions'
+      pattern: "versions.yml"
+authors:
+  - name: "GROUP B"
+    url: "https://github.com"

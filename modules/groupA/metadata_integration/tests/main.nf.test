@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test process METADATA_INTEGRATION"
+    script "../main.nf"
+    process "METADATA_INTEGRATION"
+
+    test("METADATA_INTEGRATION - basic") {
+
+        when {
+            params {
+                outdir = "test-output"
+            }
+            process {
+                """
+                input[0] = file('${baseDir}/tests/fixtures/metadata.csv')
+                input[1] = ['sample1', 'sample2', 'sample3']
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.metadata).match() },
+                { assert snapshot(process.out.report).match() }
+            )
+        }
+
+    }
+
+}
