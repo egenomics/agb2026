@@ -1,0 +1,87 @@
+/* ══════════════════════════════════════
+   MICROSEE DESIGN TOKENS
+   Same palette as MicroSee.html — migrated to CSS custom properties
+══════════════════════════════════════ */
+
+:root {
+  /* Backgrounds */
+  --bg:          #FEF3EC;
+  --card:        #ffffff;
+  --surface:     #FFF8F4;
+
+  /* Borders */
+  --border:      #F0D5C8;
+  --border2:     #E8C0AD;
+
+  /* Brand colours */
+  --rose:        #C05070;
+  --rose-dark:   #8B3A52;
+  --rose-light:  #FFE6DF;
+  --peach:       #F5C4AE;
+  --choc:        #3E1A0E;
+  --choc2:       #6B3220;
+
+  /* Text */
+  --text:        #2A1410;
+  --text2:       #8B5860;
+  --text3:       #C4A0A8;
+
+  /* Shadows */
+  --sh0:         0 2px 12px rgba(180, 80, 100, 0.07);
+  --sh1:         0 6px 28px rgba(180, 80, 100, 0.13);
+
+  /* Typography */
+  --font-body:   'Nunito', system-ui, sans-serif;
+  --font-serif:  'Playfair Display', Georgia, serif;
+
+  /* Chart group colours — same order as GPAL in HTML */
+  --g0: #D97A3A;
+  --g1: #C4960A;
+  --g2: #4A7ED4;
+  --g3: #89BAF0;
+  --g4: #2FA896;
+  --g5: #9058C4;
+
+  /* Taxa colours — same order as TC in HTML */
+  --t0: #4A7ED4;
+  --t1: #D84E6A;
+  --t2: #2FA896;
+  --t3: #D97A3A;
+  --t4: #9058C4;
+  --t5: #C4960A;
+  --t6: #8CAD70;
+  --t7: #E87AA0;
+  --t8: #5B8C5A;
+}
+
+/* ── Reset ── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family:            var(--font-body);
+  background:             var(--bg);
+  color:                  var(--text);
+  min-height:             100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x:             hidden;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--peach); border-radius: 3px; }
+
+/* ── Typography helpers ── */
+.serif  { font-family: var(--font-serif); }
+.muted  { color: var(--text3); }
+.choc   { color: var(--choc); }

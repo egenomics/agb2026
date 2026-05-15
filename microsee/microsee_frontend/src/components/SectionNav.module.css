@@ -1,0 +1,37 @@
+.nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 9px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.btn {
+  padding: 5px 11px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  background: transparent;
+  color: var(--text2);
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  background: var(--rose-light);
+  border-color: var(--rose);
+  color: var(--rose-dark);
+}
+
+.active {
+  background: var(--choc) !important;
+  border-color: var(--choc) !important;
+  color: #FFF9F6 !important;
+}

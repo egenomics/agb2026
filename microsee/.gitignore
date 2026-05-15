@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+venv/
+.venv/
+env/
+
+# Node / Frontend
+node_modules/
+microsee_frontend/dist/
+microsee_frontend/.vite/
+*.local
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.swp
+*.swo
+
+# Claude Code
+.claude/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
