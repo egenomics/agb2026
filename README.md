@@ -8,37 +8,9 @@ Repository for the AGB 2026 common class project.
 
 ## What is MicroSee?
 
-**MicroSee** is Group D's visualisation contribution to this project. The original goal was a **web app** — a Flask/React stack that would let users upload QIIME2 data and explore an interactive microbiome dashboard in their browser. The web app architecture, designed by the team, looks like this:
+**MicroSee** is Group D's visualisation contribution to this project. The original goal was a **web app** (Flask backend + React frontend, lives in `microsee/`) that would let users upload QIIME2 data and explore an interactive microbiome dashboard in their browser. `MicroSee.html` is the standalone HTML prototype built to validate that concept.
 
-```mermaid
-graph TD
-    %% Data Ingestion Phase
-    Input[/Input Files/] --> Parsers[Data Parsers Script]
-    Parsers --> Storage[(Global Storage)]
-
-    %% Storage Details
-    subgraph StorageStructure [Storage Contents]
-    ID[Sample ID]
-    Meta[Metadata: Case/Control, Date, Age, Batch]
-    Values[Actual Data Values]
-    end
-    Storage --- StorageStructure
-
-    %% Branching Logic
-    Storage --> S1[Script 1: Global Aggregator]
-    Storage --> S2[Script 2: Filtered Generator]
-
-    %% Output Phase
-    S1 --> HTML1([Interactive .html Global Report])
-
-    S2 --> S2Input{User Selection}
-    S2Input -->|By ID| HTML2([Filtered .html Report])
-    S2Input -->|By Metadata| HTML2
-```
-
-That web app lives in `microsee/` (Flask backend + React frontend). `MicroSee.html` is the original standalone HTML prototype built to validate the concept.
-
-**The final deliverable evolves this idea further:** instead of requiring a running server, the report generator in `modules/groupD/microsee_report/` produces a **single self-contained HTML file** with all 30+ charts embedded — including Plotly.js (4.3 MB) bundled directly inside. You open it in any browser, on any machine, with no server, no internet, and no installs. This makes it fully compatible with HPC environments where persistent servers and outbound internet are not available.
+The final deliverable evolves this idea further: instead of requiring a running server, the report generator in `modules/groupD/microsee_report/` produces a **single self-contained HTML file** with all 30+ charts embedded — including Plotly.js (4.3 MB) bundled directly inside. You open it in any browser, on any machine, with no server, no internet, and no installs. This makes it fully compatible with HPC environments where persistent servers and outbound internet are not available.
 
 ```mermaid
 flowchart TD
