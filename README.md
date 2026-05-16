@@ -111,7 +111,7 @@ biologically meaningful comparisons between samples.
 
 ### Input Data
 
-| Input | Description |
+| Description | Input |
 |---|---|
 | ASV/OTU abundance tables | table_counts.tsv |
 | Taxonomic profiles | rep_seqs.fasta |
