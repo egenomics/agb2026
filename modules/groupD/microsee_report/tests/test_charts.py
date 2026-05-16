@@ -1,5 +1,11 @@
-"""Smoke tests — verify chart builders return non-empty, well-shaped output."""
+"""Smoke tests — verify chart builders return non-empty, well-shaped output.
+
+Runs against both inline strings and realistic fixture TSV files.
+"""
+from pathlib import Path
+
 import pytest
+
 from report_generator.parsers import (
     parse_feature_table, parse_taxonomy, parse_metadata,
     parse_alpha_diversity, integrate,
@@ -21,10 +27,10 @@ ASV3\td__Bacteria;p__Firmicutes;f__Ruminococcaceae\t0.97
 """
 METADATA = """\
 sample-id\tsubject\tgroup\ttimepoint
-S1\tPat1\tEAA_T0\tT0
-S2\tPat1\tEAA_T84\tT84
-S3\tPat2\tEAA_T0\tT0
-S4\tPat2\tEAA_T84\tT84
+S1\tPat1\tEAA\tT0
+S2\tPat1\tEAA\tT84
+S3\tPat2\tEAA\tT0
+S4\tPat2\tEAA\tT84
 """
 ALPHA = """\
 sample-id\tshannon_entropy\tsimpson\tfaith_pd
@@ -82,10 +88,12 @@ def test_lme_trajectory_all_metrics(chart_data):
 
 
 def test_stats_table_all_metrics(chart_data):
+    from report_generator.charts.alpha import METRIC_LABELS
+    expected_cols = 2 + len(METRIC_LABELS)  # Group + N + one column per metric
     st = chart_data["stats_table"]
-    assert len(st["header"]) == 7   # Group + N + 5 metrics
+    assert len(st["header"]) == expected_cols
     assert len(st["rows"]) > 0
-    assert all(len(row) == 7 for row in st["rows"])
+    assert all(len(row) == expected_cols for row in st["rows"])
 
 
 def test_render_html_produces_valid_output(chart_data):
@@ -94,3 +102,63 @@ def test_render_html_produces_valid_output(chart_data):
     assert "Plotly" in html or "<script>" in html
     assert "__DATA_JSON__" not in html   # placeholder was replaced
     assert len(html) > 100_000          # should be a substantial file
+
+
+def test_insights_injected(chart_data):
+    """Dynamic insights must be present and non-empty after rendering."""
+    assert "insights" in chart_data
+    ins = chart_data["insights"]
+    assert isinstance(ins, dict)
+    assert "taxonomy" in ins
+    assert len(ins["taxonomy"]) > 20
+
+
+# ── Fixture-file tests (clinical-complete 4-patient dataset) ─────────────────
+
+_DATA = Path(__file__).parent / "data"
+
+
+@pytest.fixture(scope="module")
+def fixture_chart_data():
+    """Chart data built from the realistic fixture TSV files (includes clinical)."""
+    feat  = parse_feature_table((_DATA / "feature-table.tsv").read_text(encoding="utf-8"))
+    tax   = parse_taxonomy((_DATA / "taxonomy.tsv").read_text(encoding="utf-8"))
+    meta  = parse_metadata((_DATA / "metadata.tsv").read_text(encoding="utf-8"))
+    alpha = parse_alpha_diversity((_DATA / "alpha-diversity.tsv").read_text(encoding="utf-8"))
+    result = integrate(feat, tax, meta, alpha)
+    return compute_chart_data(result)
+
+
+class TestFixtureCharts:
+    """Chart-builder smoke tests on the realistic 8-sample fixture dataset."""
+
+    def test_meta_eight_samples(self, fixture_chart_data):
+        assert fixture_chart_data["meta"]["n_samples"] == 8
+
+    def test_clinical_sections_present(self, fixture_chart_data):
+        assert "clinical_sixmwt" in fixture_chart_data
+        assert "clinical_il18" in fixture_chart_data
+        assert "taxa_clinical_heatmap" in fixture_chart_data
+
+    def test_all_alpha_metrics_populated(self, fixture_chart_data):
+        for metric in ("shannon", "simpson", "pielou", "observed", "faith_pd"):
+            assert metric in fixture_chart_data["alpha_metrics"]
+            strips = fixture_chart_data["alpha_metrics"][metric]["strip"]
+            assert len(strips) > 0
+
+    def test_stability_bar_all_patients(self, fixture_chart_data):
+        stab = fixture_chart_data["stability_bar"]
+        assert len(stab) > 0
+        # 4 patients should each have a stability score
+        assert len(stab[0]["y"]) == 4
+
+    def test_insights_taxonomy_and_permanova(self, fixture_chart_data):
+        ins = fixture_chart_data["insights"]
+        assert "taxonomy" in ins and len(ins["taxonomy"]) > 10
+        assert "permanova" in ins and len(ins["permanova"]) > 10
+
+    def test_render_html_no_placeholders(self, fixture_chart_data):
+        html = render_html(fixture_chart_data)
+        assert "__DATA_JSON__" not in html
+        assert "__INSIGHTS_JSON__" not in html
+        assert len(html) > 100_000

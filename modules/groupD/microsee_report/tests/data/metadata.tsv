@@ -1,0 +1,9 @@
+sample-id	subject	group	timepoint	time	sixmwt	il18
+P1_T0	Pat1	EAA	T0	0	350	45.2
+P1_T84	Pat1	EAA	T84	84	380	40.1
+P2_T0	Pat2	EAA	T0	0	420	52.3
+P2_T84	Pat2	EAA	T84	84	460	44.8
+P3_T0	Pat3	Whey	T0	0	300	61.0
+P3_T84	Pat3	Whey	T84	84	330	55.5
+P4_T0	Pat4	Whey	T0	0	390	48.7
+P4_T84	Pat4	Whey	T84	84	410	42.3

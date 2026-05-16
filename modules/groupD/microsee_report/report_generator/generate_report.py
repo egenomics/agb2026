@@ -50,6 +50,7 @@ from report_generator.parsers import (
     integrate,
 )
 from report_generator.charts import compute_chart_data, render_html
+from report_generator.charts.renderer import render_patient_html
 
 log = logging.getLogger(__name__)
 
@@ -75,6 +76,13 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--output", "-o",  metavar="HTML",
                    default="microsee_report.html",
                    help="Output HTML file (default: microsee_report.html)")
+    p.add_argument("--mode", choices=["cohort", "patient", "all"],
+                   default="cohort",
+                   help=(
+                       "cohort  — one combined report (default); "
+                       "patient — one HTML per patient; "
+                       "all     — cohort report + one per patient"
+                   ))
     return p.parse_args()
 
 
@@ -105,15 +113,29 @@ def main() -> None:
     for w in result.warnings:
         log.warning("%s", w)
 
-    log.info("Computing chart data...")
-    chart_data = compute_chart_data(result)
-
-    log.info("Rendering HTML...")
-    html = render_html(chart_data)
-
     out = Path(args.output)
-    out.write_text(html, encoding="utf-8")
-    log.info("Report written → %s  (%.1f KB)", out.resolve(), out.stat().st_size / 1024)
+
+    if args.mode in ("cohort", "all"):
+        log.info("Computing chart data...")
+        chart_data = compute_chart_data(result)
+
+        log.info("Rendering HTML...")
+        html = render_html(chart_data)
+        out.write_text(html, encoding="utf-8")
+        log.info("Report written → %s  (%.1f KB)", out.resolve(), out.stat().st_size / 1024)
+
+    if args.mode in ("patient", "all"):
+        patients = sorted(set(r.patient for r in result.rows))
+        stem     = out.stem if args.mode == "all" else out.stem
+        suffix   = out.suffix or ".html"
+        parent   = out.parent
+        log.info("Generating per-patient reports for %d patients ...", len(patients))
+        for patient_id in patients:
+            patient_html = render_patient_html(patient_id, result)
+            safe_pid     = patient_id.replace("/", "_").replace(" ", "_")
+            patient_out  = parent / f"{stem}_{safe_pid}{suffix}"
+            patient_out.write_text(patient_html, encoding="utf-8")
+            log.info("  Patient report → %s", patient_out.name)
 
 
 if __name__ == "__main__":

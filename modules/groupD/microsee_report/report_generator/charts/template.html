@@ -60,6 +60,46 @@ section{margin-bottom:40px;scroll-margin-top:16px}
 .ctrl-btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:auto}
 .ctrl-sep{width:1px;height:18px;background:rgba(196,160,140,.3);margin:0 2px;flex-shrink:0}
 
+/* ── Splash screen ──────────────────────────────────────────────────────── */
+@keyframes scoopPop{
+  0%{opacity:0;transform:translateY(14px) scale(0.75)}
+  65%{transform:translateY(-2px) scale(1.05)}
+  100%{opacity:1;transform:translateY(0) scale(1)}
+}
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(8px)}
+  to{opacity:1;transform:translateY(0)}
+}
+@keyframes splashExit{
+  0%{opacity:1;visibility:visible}
+  99%{opacity:0;visibility:visible}
+  100%{opacity:0;visibility:hidden}
+}
+#splash{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:#FEF3EC;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  animation:splashExit 0.65s ease-in 3.5s forwards
+}
+#splash .sc{opacity:0;transform-box:fill-box;transform-origin:center bottom}
+#splash .sc1{animation:scoopPop 0.4s cubic-bezier(.34,1.56,.64,1) 0.35s forwards}
+#splash .sc2{animation:scoopPop 0.4s cubic-bezier(.34,1.56,.64,1) 0.68s forwards}
+#splash .sc3{animation:scoopPop 0.4s cubic-bezier(.34,1.56,.64,1) 1.01s forwards}
+#splash .sc4{animation:scoopPop 0.4s cubic-bezier(.34,1.56,.64,1) 1.34s forwards}
+.splash-brand{
+  opacity:0;font-size:30px;font-weight:800;color:#3E1A0E;letter-spacing:-0.3px;
+  font-family:__FONT__;animation:fadeInUp 0.55s ease-out 1.9s forwards
+}
+.splash-sub{
+  opacity:0;font-size:12px;color:#8B5860;letter-spacing:0.04em;
+  font-family:__FONT__;animation:fadeInUp 0.55s ease-out 2.35s forwards
+}
+/* ── Section insights ───────────────────────────────────────────────────── */
+.sec-insight{
+  font-size:12px;color:#8B5860;line-height:1.55;
+  border-left:3px solid #D97A3A;padding:4px 0 4px 10px;margin-bottom:14px
+}
+.sec-insight:empty{display:none}
 /* Misc */
 .warning{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;
   padding:8px 12px;margin-bottom:8px;font-size:12px}
@@ -72,6 +112,29 @@ tr:last-child td{border-bottom:none}
 </style>
 </head>
 <body>
+
+<!-- ═══ SPLASH SCREEN ════════════════════════════════════════════════════════ -->
+<div id="splash" role="presentation" aria-hidden="true">
+  <svg width="110" height="200" viewBox="0 0 110 200" xmlns="http://www.w3.org/2000/svg">
+    <!-- Cone -->
+    <polygon points="55,200 8,118 102,118" fill="#D97A3A"/>
+    <line x1="55" y1="200" x2="31" y2="135" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>
+    <line x1="55" y1="200" x2="79" y2="135" stroke="rgba(0,0,0,0.13)" stroke-width="1.2"/>
+    <line x1="18"  y1="155" x2="92" y2="155" stroke="rgba(0,0,0,0.10)" stroke-width="1"/>
+    <!-- Cone rim -->
+    <ellipse cx="55" cy="118" rx="47" ry="8" fill="#B85A18"/>
+    <!-- Scoops — each has class "sc" (opacity:0) + sc1…sc4 (animation) -->
+    <circle class="sc sc1" cx="55" cy="103" r="32" fill="#C4960A"/>
+    <circle class="sc sc2" cx="55" cy="73"  r="28" fill="#2FA896"/>
+    <circle class="sc sc3" cx="55" cy="47"  r="24" fill="#D84E6A"/>
+    <circle class="sc sc4" cx="55" cy="25"  r="20" fill="#4A7ED4"/>
+    <!-- Cherry -->
+    <circle class="sc sc4" cx="62" cy="6" r="7" fill="#9058C4"/>
+    <line x1="55" y1="6" x2="55" y2="14" stroke="#5A3010" stroke-width="1.5" stroke-linecap="round"/>
+  </svg>
+  <div class="splash-brand">MicroSee</div>
+  <div class="splash-sub">Microbiome Visualisation Report</div>
+</div>
 
 <nav id="sidebar">
   <div class="logo">MicroSee<span>Microbiome Report</span></div>
@@ -103,6 +166,7 @@ __WARNINGS__
 <!-- ═══ TAXONOMY ══════════════════════════════════════════════════════════ -->
 <section id="sec-taxonomy">
   <div class="sec-header">Taxonomy</div>
+  <div class="sec-insight" id="insight-taxonomy"></div>
   <div class="grid1">
     <div class="chart-card">
       <div class="chart-title">Taxonomic Composition</div>
@@ -155,6 +219,7 @@ __WARNINGS__
 <!-- ═══ ALPHA DIVERSITY ═══════════════════════════════════════════════════ -->
 <section id="sec-alpha">
   <div class="sec-header">Alpha Diversity</div>
+  <div class="sec-insight" id="insight-alpha"></div>
   <div class="control-bar" style="margin-bottom:16px">
     <span class="ctrl-label">Metric</span>
     <button class="ctrl-btn metric-btn active" data-metric="shannon">Shannon H′</button>
@@ -199,6 +264,7 @@ __WARNINGS__
 <!-- ═══ BETA DIVERSITY ════════════════════════════════════════════════════ -->
 <section id="sec-beta">
   <div class="sec-header">Beta Diversity</div>
+  <div class="sec-insight" id="insight-pcoa"></div>
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">PCoA — Bray-Curtis</div>
@@ -237,6 +303,7 @@ __WARNINGS__
 <!-- ═══ INDIVIDUAL ════════════════════════════════════════════════════════ -->
 <section id="sec-individual">
   <div class="sec-header">Individual Analysis</div>
+  <div class="sec-insight" id="insight-stability"></div>
   <div class="grid1">
     <div class="chart-card">
       <div class="chart-title">Paired Slopegraph — Shannon</div>
@@ -320,6 +387,7 @@ __CLINICAL_SECTION__
 <!-- ═══ LONGITUDINAL ══════════════════════════════════════════════════════ -->
 <section id="sec-longitudinal">
   <div class="sec-header">Longitudinal</div>
+  <div class="sec-insight" id="insight-longitudinal"></div>
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">Shannon Diversity Over Time</div>
@@ -337,6 +405,7 @@ __CLINICAL_SECTION__
 <!-- ═══ STATISTICS ════════════════════════════════════════════════════════ -->
 <section id="sec-stats">
   <div class="sec-header">Statistics</div>
+  <div class="sec-insight" id="insight-permanova"></div>
   <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">PERMANOVA</div>
@@ -690,6 +759,15 @@ __CLINICAL_SECTION__
   });
   html+='</tbody></table>';
   document.getElementById('stats-table').innerHTML=html;
+
+  // ── Dynamic insights ──────────────────────────────────────────────────────
+  (function(){
+    var INS = __INSIGHTS_JSON__;
+    Object.keys(INS).forEach(function(k){
+      var el=document.getElementById('insight-'+k);
+      if(el&&INS[k]) el.textContent=INS[k];
+    });
+  })();
 
   // ── Sidebar active link on scroll ─────────────────────────────────────────
   var secs=document.querySelectorAll('section[id]');

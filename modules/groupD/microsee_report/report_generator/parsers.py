@@ -523,11 +523,20 @@ def integrate(
         ab    = rel_ab.get(sample_id, {})
         alph  = alpha_lookup.get(sample_id)
 
-        # Compute Shannon/Simpson if not in alpha file
+        # Compute Shannon/Simpson if not in alpha file.
+        # WARNING: fallback computes from family-level relative abundances, which
+        # collapses ASV-level variation and systematically underestimates diversity.
+        # Pass --alpha with the QIIME2 alpha-diversity export to get accurate values.
         if alph and alph.shannon > 0:
             shannon = alph.shannon
             simpson = alph.simpson
         else:
+            if not alpha:
+                logger.warning(
+                    "No alpha diversity file supplied — Shannon/Simpson estimated from "
+                    "family-level abundances for %s. Values will be lower than ASV-level "
+                    "estimates. Pass --alpha for accurate diversity metrics.", sample_id
+                )
             props   = np.array([ab.get(fam, 0.0) for fam in families], dtype=float)
             tot     = props.sum() or 1.0
             p       = props / tot

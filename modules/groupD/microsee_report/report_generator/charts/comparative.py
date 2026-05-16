@@ -174,10 +174,7 @@ def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
             p_vals_raw.append(p_raw)
 
         q_vals = _bh_fdr(p_vals_raw)
-        results = sorted(
-            [(t, diff, p, q) for (t, diff, p), q in zip(taxon_stats, q_vals)],
-            key=lambda x: x[1],
-        )
+        results = [(t, diff, p, q) for (t, diff, p), q in zip(taxon_stats, q_vals)]
 
         def _color(diff: float, q: float) -> str:
             if q < 0.1 and diff > 0:  return "#D84E6A"

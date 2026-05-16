@@ -1,0 +1,7 @@
+Feature ID	Taxon	Confidence
+ASV1	d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Lachnospiraceae	0.99
+ASV2	d__Bacteria;p__Bacteroidota;c__Bacteroidia;o__Bacteroidales;f__Bacteroidaceae	0.98
+ASV3	d__Bacteria;p__Firmicutes;c__Clostridia;o__Clostridiales;f__Ruminococcaceae	0.97
+ASV4	d__Bacteria;p__Proteobacteria;c__Gammaproteobacteria;o__Enterobacterales;f__Enterobacteriaceae	0.96
+ASV5	d__Bacteria;p__Firmicutes;c__Bacilli;o__Lactobacillales;f__Streptococcaceae	0.95
+ASV6	d__Bacteria;p__Actinobacteriota;c__Actinobacteria;o__Bifidobacteriales;f__Bifidobacteriaceae	0.94

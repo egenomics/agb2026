@@ -1,0 +1,12 @@
+name: microsee
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python>=3.10,<3.13
+  - pandas>=2.2,<3
+  - numpy>=1.26,<3
+  - pydantic>=2.7,<3
+  - pip
+  - pip:
+      - microsee-report

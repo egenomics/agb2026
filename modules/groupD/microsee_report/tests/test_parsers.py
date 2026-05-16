@@ -1,5 +1,8 @@
-"""Unit tests for report_generator parsers."""
+"""Unit tests for report_generator parsers — inline strings + fixture files."""
+from pathlib import Path
+
 import pytest
+
 from report_generator.parsers import (
     parse_feature_table,
     parse_taxonomy,
@@ -108,3 +111,96 @@ def test_empty_feature_table_raises():
 def test_missing_taxonomy_column_raises():
     with pytest.raises(ValueError):
         parse_taxonomy("col1\tcol2\nA\tB\n")
+
+
+# ── Fixture-file tests (realistic 4-patient × 2-timepoint dataset) ────────────
+
+_DATA = Path(__file__).parent / "data"
+
+
+@pytest.fixture(scope="module")
+def file_feat() -> str:
+    """Read feature table from fixture file."""
+    return (_DATA / "feature-table.tsv").read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def file_tax() -> str:
+    """Read taxonomy from fixture file."""
+    return (_DATA / "taxonomy.tsv").read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def file_meta() -> str:
+    """Read metadata (with clinical columns) from fixture file."""
+    return (_DATA / "metadata.tsv").read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def file_alpha() -> str:
+    """Read alpha diversity (all 5 metrics) from fixture file."""
+    return (_DATA / "alpha-diversity.tsv").read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def file_result(file_feat, file_tax, file_meta, file_alpha):
+    """Fully integrated result built from fixture files."""
+    return integrate(
+        parse_feature_table(file_feat),
+        parse_taxonomy(file_tax),
+        parse_metadata(file_meta),
+        parse_alpha_diversity(file_alpha),
+    )
+
+
+class TestFixtureFiles:
+    """Replicate core parser assertions using realistic fixture TSV files."""
+
+    def test_feature_table_dimensions(self, file_feat):
+        result = parse_feature_table(file_feat)
+        assert result.n_samples == 8
+        assert result.n_features == 6
+
+    def test_feature_table_sample_ids(self, file_feat):
+        result = parse_feature_table(file_feat)
+        assert "P1_T0" in result.samples
+        assert "P4_T84" in result.samples
+
+    def test_taxonomy_six_families(self, file_tax):
+        result = parse_taxonomy(file_tax)
+        assert len(result.assignments) == 6
+        assert "Lachnospiraceae" in result.assignments.values()
+        assert "Bifidobacteriaceae" in result.assignments.values()
+        assert result.unclassified_pct == 0.0
+
+    def test_metadata_clinical_detected(self, file_meta):
+        result = parse_metadata(file_meta)
+        assert result.n_samples == 8
+        assert result.has_clinical is True  # sixmwt + il18 columns present
+
+    def test_metadata_groups_present(self, file_meta):
+        result = parse_metadata(file_meta)
+        names = " ".join(result.groups)
+        assert "EAA" in names
+        assert "Whey" in names
+
+    def test_alpha_all_five_metrics(self, file_alpha):
+        result = parse_alpha_diversity(file_alpha)
+        assert len(result.samples) == 8
+        s = next(e for e in result.samples if e.sample_id == "P1_T0")
+        assert s.shannon == pytest.approx(1.52)
+        assert s.simpson == pytest.approx(0.75)
+        assert s.faith_pd == pytest.approx(8.2)
+
+    def test_integrate_clinical_flag(self, file_result):
+        assert file_result.has_clinical is True
+
+    def test_integrate_eight_rows(self, file_result):
+        assert file_result.n_samples == 8
+        assert len(file_result.rows) == 8
+
+    def test_integrate_abundances_sum_to_100(self, file_result):
+        for row in file_result.rows:
+            total = sum(float(row.model_dump().get(t, 0)) for t in file_result.taxa)
+            assert total == pytest.approx(100.0, abs=0.5), \
+                f"{row.sample_id} abundances sum to {total:.2f}"
