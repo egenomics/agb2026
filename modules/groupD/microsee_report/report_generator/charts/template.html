@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MicroSee Report</title>
+__PLOTLY_SCRIPT__
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:__FONT__;background:__BG__;color:__TEXT__;display:flex;min-height:100vh}
+
+/* Sidebar */
+#sidebar{width:200px;min-height:100vh;background:__PAPER__;border-right:1px solid rgba(196,160,140,.2);
+  padding:24px 0;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
+#sidebar .logo{padding:0 20px 20px;font-size:18px;font-weight:700;color:__TEXT__;
+  border-bottom:1px solid rgba(196,160,140,.15);margin-bottom:12px}
+#sidebar .logo span{font-size:11px;font-weight:400;color:__TEXT2__;display:block;margin-top:2px}
+#sidebar a{display:block;padding:8px 20px;font-size:13px;color:__TEXT2__;text-decoration:none;
+  border-left:3px solid transparent;transition:all .15s}
+#sidebar a:hover,#sidebar a.active{color:__TEXT__;border-left-color:#D97A3A;background:rgba(217,122,58,.06)}
+
+/* Stats bar */
+#statsbar{background:__PAPER__;border-bottom:1px solid rgba(196,160,140,.2);
+  padding:12px 24px;display:flex;gap:32px;align-items:center}
+.stat{display:flex;flex-direction:column}
+.stat-val{font-size:20px;font-weight:700;color:__TEXT__}
+.stat-lbl{font-size:10px;color:__TEXT2__;text-transform:uppercase;letter-spacing:.05em}
+
+/* Main */
+#main{flex:1;padding:24px;overflow-x:hidden}
+section{margin-bottom:40px;scroll-margin-top:16px}
+.sec-header{font-size:16px;font-weight:700;color:__TEXT__;margin-bottom:16px;
+  padding-bottom:8px;border-bottom:2px solid rgba(196,160,140,.2)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.grid1{display:grid;grid-template-columns:1fr;gap:16px;margin-bottom:16px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+
+/* Chart cards */
+.chart-card{background:__PAPER__;border-radius:10px;padding:16px;
+  box-shadow:0 1px 4px rgba(107,58,42,.08)}
+.chart-title{font-size:13px;font-weight:700;color:__TEXT__;margin-bottom:2px}
+.chart-sub{font-size:11px;color:__TEXT2__;margin-bottom:10px}
+.plot-div{width:100%;height:360px}
+.plot-div-lg{width:100%;height:440px}
+.plot-div-xl{width:100%;height:520px}
+
+/* Control bars */
+.control-bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;
+  margin-bottom:10px;padding:7px 10px;background:rgba(107,58,42,.04);
+  border-radius:8px;border:1px solid rgba(196,160,140,.15)}
+.ctrl-group{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.ctrl-label{font-size:10px;color:__TEXT2__;text-transform:uppercase;
+  letter-spacing:.05em;font-weight:600;white-space:nowrap;margin-right:2px}
+.ctrl-btn{font-size:11px;padding:3px 10px;border:1px solid rgba(196,160,140,.4);
+  border-radius:12px;background:transparent;color:__TEXT2__;cursor:pointer;
+  transition:all .12s;font-family:__FONT__;line-height:1.5}
+.ctrl-btn:hover{background:rgba(217,122,58,.08);border-color:#D97A3A;color:__TEXT__}
+.ctrl-btn.active{background:#D97A3A;border-color:#D97A3A;color:#fff;font-weight:600}
+.ctrl-btn:disabled{opacity:.35;cursor:not-allowed;pointer-events:auto}
+.ctrl-sep{width:1px;height:18px;background:rgba(196,160,140,.3);margin:0 2px;flex-shrink:0}
+
+/* Misc */
+.warning{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;
+  padding:8px 12px;margin-bottom:8px;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;background:__BG__;color:__TEXT2__;
+  font-size:11px;text-transform:uppercase;letter-spacing:.05em;
+  border-bottom:2px solid rgba(196,160,140,.2)}
+td{padding:8px 12px;border-bottom:1px solid rgba(196,160,140,.1)}
+tr:last-child td{border-bottom:none}
+</style>
+</head>
+<body>
+
+<nav id="sidebar">
+  <div class="logo">MicroSee<span>Microbiome Report</span></div>
+  <a href="#sec-taxonomy">Taxonomy</a>
+  <a href="#sec-alpha">Alpha Diversity</a>
+  <a href="#sec-beta">Beta Diversity</a>
+  <a href="#sec-individual">Individual</a>
+  <a href="#sec-comparative">Comparative</a>
+  __CLINICAL_NAV__
+  <a href="#sec-longitudinal">Longitudinal</a>
+  <a href="#sec-stats">Statistics</a>
+</nav>
+
+<div style="flex:1;display:flex;flex-direction:column">
+
+<div id="statsbar">
+  <div class="stat"><span class="stat-val">__N_SAMPLES__</span><span class="stat-lbl">Samples</span></div>
+  <div class="stat"><span class="stat-val">__N_TAXA__</span><span class="stat-lbl">Taxa (family)</span></div>
+  <div class="stat"><span class="stat-val">__N_GROUPS__</span><span class="stat-lbl">Groups</span></div>
+  <div class="stat" style="flex:1">
+    <span class="stat-val" style="font-size:13px;font-weight:400">__GROUPS_STR__</span>
+    <span class="stat-lbl">Group labels</span>
+  </div>
+</div>
+
+<main id="main">
+__WARNINGS__
+
+<!-- ═══ TAXONOMY ══════════════════════════════════════════════════════════ -->
+<section id="sec-taxonomy">
+  <div class="sec-header">Taxonomy</div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Taxonomic Composition</div>
+      <div class="chart-sub">Relative abundance (%) per sample · stacked by family</div>
+      <div class="control-bar">
+        <div class="ctrl-group">
+          <span class="ctrl-label">Timepoint</span>
+          <button class="ctrl-btn tp-btn active" data-tp="both">Both</button>
+          <button class="ctrl-btn tp-btn" data-tp="T0">T0</button>
+          <button class="ctrl-btn tp-btn" data-tp="T84">T84</button>
+        </div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group">
+          <span class="ctrl-label">Group</span>
+          <button class="ctrl-btn grp-btn active" data-grp="all">All</button>
+          __GROUP_FILTER_BUTTONS__
+        </div>
+        <div class="ctrl-sep"></div>
+        <div class="ctrl-group">
+          <span class="ctrl-label">Top taxa</span>
+          <button class="ctrl-btn topn-btn" data-topn="5">5</button>
+          <button class="ctrl-btn topn-btn" data-topn="10">10</button>
+          <button class="ctrl-btn topn-btn active" data-topn="all">All</button>
+        </div>
+      </div>
+      <div id="chart-comp" class="plot-div-lg"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Top Taxa Ranking</div>
+      <div class="chart-sub">Mean relative abundance across all samples</div>
+      <div id="chart-topn" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Composition per Group</div>
+      <div class="chart-sub">Average relative abundance per group (donut)</div>
+      <div id="chart-donut" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Sunburst — Group → Taxa</div>
+      <div class="chart-sub">Inner ring: group · outer ring: family · arc width = abundance</div>
+      <div id="chart-sunburst" class="plot-div-lg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ ALPHA DIVERSITY ═══════════════════════════════════════════════════ -->
+<section id="sec-alpha">
+  <div class="sec-header">Alpha Diversity</div>
+  <div class="control-bar" style="margin-bottom:16px">
+    <span class="ctrl-label">Metric</span>
+    <button class="ctrl-btn metric-btn active" data-metric="shannon">Shannon H′</button>
+    <button class="ctrl-btn metric-btn" data-metric="simpson">Simpson</button>
+    <button class="ctrl-btn metric-btn" data-metric="pielou">Pielou J′</button>
+    <button class="ctrl-btn metric-btn" data-metric="observed">Observed</button>
+    <button class="ctrl-btn metric-btn" data-metric="faith_pd">Faith PD</button>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title" id="title-strip">Strip Chart — Shannon H′</div>
+      <div class="chart-sub">Each dot = one sample · bar = group mean</div>
+      <div id="chart-strip" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title" id="title-box">Box Plot — Shannon H′</div>
+      <div class="chart-sub">IQR box · 1.5× whiskers · all points shown</div>
+      <div id="chart-box" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title" id="title-violin">Violin Plot — Shannon H′</div>
+      <div class="chart-sub">Kernel density · median box · mean line</div>
+      <div id="chart-violin" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Rarefaction Curves</div>
+      <div class="chart-sub">Expected taxa vs sequencing depth · mean ± 1 SD shaded band</div>
+      <div id="chart-rarefaction" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Multi-Metric Alpha</div>
+      <div class="chart-sub">Observed taxa (bars) · Pielou J′ evenness (diamonds, right axis)</div>
+      <div id="chart-multimet" class="plot-div"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ BETA DIVERSITY ════════════════════════════════════════════════════ -->
+<section id="sec-beta">
+  <div class="sec-header">Beta Diversity</div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">PCoA — Bray-Curtis</div>
+      <div class="chart-sub">Compositional dissimilarity · each dot = one sample</div>
+      <div id="chart-pcoa-bray" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">PCoA — Jaccard</div>
+      <div class="chart-sub">Presence/absence similarity · 5% threshold</div>
+      <div id="chart-pcoa-jacc" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">NMDS — Bray-Curtis</div>
+      <div class="chart-sub">Rank-order distances · diamonds = samples · closer = more similar</div>
+      <div id="chart-nmds" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Hierarchical Clustering Dendrogram</div>
+      <div class="chart-sub">Average-linkage on Bray-Curtis · leaves on right · root on left</div>
+      <div id="chart-dendro" class="plot-div-lg"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Δ Abundance Heatmap — T0 → T84</div>
+      <div class="chart-sub">Red = increased · Blue = decreased · White = stable · sorted by max change</div>
+      <div id="chart-delta" class="plot-div-lg"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ INDIVIDUAL ════════════════════════════════════════════════════════ -->
+<section id="sec-individual">
+  <div class="sec-header">Individual Analysis</div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Paired Slopegraph — Shannon</div>
+      <div class="chart-sub">Each line = one patient · dashed = group mean · T0 → T84</div>
+      <div id="chart-paired-slope" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Microbiome Stability Score</div>
+      <div class="chart-sub">Bray-Curtis dissimilarity T0 vs T84 per patient · 0 = identical · 1 = completely different</div>
+      <div id="chart-stability" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Diversity Rank Plot — Shannon</div>
+      <div class="chart-sub">Samples ranked low→high · circles = T0 · diamonds = T84</div>
+      <div id="chart-diversity-rank" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Patient Radar Profile</div>
+      <div class="chart-sub">Group mean T0 (filled) vs T84 (dashed) · family-level composition</div>
+      <div id="chart-radar" class="plot-div-lg"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">NMDS — Individual Trajectories</div>
+      <div class="chart-sub">○ = T0 start · ● = T84 end · short line = stable microbiome</div>
+      <div id="chart-nmds-traj" class="plot-div-lg"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Individual Composition — Small Multiples</div>
+      <div class="chart-sub">T0 vs T84 per patient · each colour = one family · interactive: zoom, hover, legend toggle</div>
+      <div id="chart-faceted" class="plot-div-xl"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ COMPARATIVE ═══════════════════════════════════════════════════════ -->
+<section id="sec-comparative">
+  <div class="sec-header">Comparative</div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Differential Abundance — LFC</div>
+      <div class="chart-sub">Log2 fold change per taxon (T84 vs T0) · red = increased</div>
+      <div id="chart-diff" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Volcano Plot</div>
+      <div class="chart-sub">Log2FC vs −log10(p) · red = FDR q &lt; 0.1 and |Log2FC| &gt; 0.5</div>
+      <div id="chart-volcano" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Differential Abundance — CLR / ANCOM-style</div>
+      <div class="chart-sub">CLR-transformed paired Wilcoxon (T0→T84) · compositionally-unbiased · red/blue = FDR q &lt; 0.1</div>
+      <div id="chart-ancom" class="plot-div"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Abundance Heatmap</div>
+      <div class="chart-sub">Sample × taxon relative abundance (%)</div>
+      <div id="chart-heatmap" class="plot-div-xl"></div>
+    </div>
+  </div>
+  <div class="grid1">
+    <div class="chart-card">
+      <div class="chart-title">Taxon Correlation Matrix</div>
+      <div class="chart-sub">Pairwise Pearson correlation between taxon abundances</div>
+      <div id="chart-corr" class="plot-div-lg"></div>
+    </div>
+  </div>
+</section>
+
+__CLINICAL_SECTION__
+
+<!-- ═══ LONGITUDINAL ══════════════════════════════════════════════════════ -->
+<section id="sec-longitudinal">
+  <div class="sec-header">Longitudinal</div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">Shannon Diversity Over Time</div>
+      <div class="chart-sub">Group mean per timepoint</div>
+      <div id="chart-long" class="plot-div"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title" id="title-lme">LME-Style Trajectory — Shannon H′</div>
+      <div class="chart-sub">Mean ± 95% CI per group · thin lines = individual patients · Wilcoxon p annotated</div>
+      <div id="chart-lme" class="plot-div"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ STATISTICS ════════════════════════════════════════════════════════ -->
+<section id="sec-stats">
+  <div class="sec-header">Statistics</div>
+  <div class="grid2">
+    <div class="chart-card">
+      <div class="chart-title">PERMANOVA</div>
+      <div class="chart-sub">Bray-Curtis · 99 permutations · tests group / timepoint / individual</div>
+      <div id="permanova-table"></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Diversity Summary</div>
+      <div class="chart-sub">Mean ± SD Shannon and Simpson per group</div>
+      <div id="stats-table"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+(function(){
+  var D = __DATA_JSON__;
+  var L = __LAYOUT_JSON__;
+  var C = __CONFIG_JSON__;
+
+  function merge(base, extra){
+    return Object.assign(JSON.parse(JSON.stringify(base)), extra);
+  }
+  function render(id, traces, layout){
+    var el=document.getElementById(id);
+    if(!el||!traces||!traces.length) return;
+    Plotly.newPlot(el, traces, layout, C);
+  }
+
+  // ── Taxonomy filter ───────────────────────────────────────────────────────
+  var taxState = {tp:'both', grp:'all', topn:'all'};
+  var compLayout = merge(L,{
+    barmode:'stack', height:440,
+    xaxis:{tickangle:-45, tickfont:{size:9}},
+    yaxis:{title:{text:'Relative Abundance (%)'}, range:[0,100]},
+  });
+
+  function updateTaxChart(){
+    var key = taxState.tp+':'+taxState.grp+':'+taxState.topn;
+    var traces = D.taxonomy_views[key];
+    if(!traces||!traces.length){ traces = D.taxonomy_views['both:all:all']; }
+    if(traces&&traces.length) Plotly.react('chart-comp', traces, compLayout, C);
+  }
+  updateTaxChart();
+
+  document.querySelectorAll('.tp-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      taxState.tp = this.dataset.tp;
+      document.querySelectorAll('.tp-btn').forEach(function(x){x.classList.remove('active');});
+      this.classList.add('active'); updateTaxChart();
+    });
+  });
+  document.querySelectorAll('.grp-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      taxState.grp = this.dataset.grp;
+      document.querySelectorAll('.grp-btn').forEach(function(x){x.classList.remove('active');});
+      this.classList.add('active'); updateTaxChart();
+    });
+  });
+  document.querySelectorAll('.topn-btn').forEach(function(b){
+    b.addEventListener('click', function(){
+      taxState.topn = this.dataset.topn;
+      document.querySelectorAll('.topn-btn').forEach(function(x){x.classList.remove('active');});
+      this.classList.add('active'); updateTaxChart();
+    });
+  });
+
+  render('chart-topn', D.top_taxa, merge(L,{
+    height:360, margin:{l:140,r:16,t:32,b:40},
+    xaxis:{title:{text:'Mean Relative Abundance (%)'}},
+    yaxis:{automargin:true},
+  }));
+  render('chart-donut', D.donut, merge(L,{
+    height:360, showlegend:false, margin:{l:10,r:10,t:32,b:10},
+  }));
+  render('chart-sunburst', D.sunburst, merge(L,{
+    height:440, margin:{l:0,r:0,t:32,b:0},
+  }));
+
+  // ── Alpha metric toggle ───────────────────────────────────────────────────
+  var metricLabels = {
+    'shannon':"Shannon H′",'simpson':"Simpson 1−D",
+    'pielou':"Pielou J′",'observed':"Observed Taxa",'faith_pd':"Faith PD"
+  };
+  var grps = D.meta.groups;
+  var stripL = merge(L,{
+    height:360,
+    xaxis:{tickmode:'array', tickvals:grps.map(function(_,i){return i;}),
+           ticktext:grps, gridcolor:'transparent', zeroline:false},
+    yaxis:{title:{text:"Shannon H′"}},
+  });
+  var boxL   = merge(L,{height:360, yaxis:{title:{text:"Shannon H′"}}});
+  var violinL= merge(L,{height:360, yaxis:{title:{text:"Shannon H′"}}});
+
+  // Disable Faith PD button if no data
+  var hasFaith = D.alpha_metrics && D.alpha_metrics.faith_pd &&
+    D.alpha_metrics.faith_pd.strip.some(function(t){return t.y&&t.y.some(function(v){return v>0;});});
+  if(!hasFaith){
+    document.querySelectorAll('[data-metric="faith_pd"]').forEach(function(b){
+      b.disabled=true;
+      b.title='Faith PD requires a phylogenetic tree — run qiime diversity alpha-phylogenetic and include the exported TSV';
+    });
+  }
+
+  function updateLME(metric){
+    var lbl = metricLabels[metric]||metric;
+    var tl = document.getElementById('title-lme');
+    if(tl) tl.textContent='LME-Style Trajectory — '+lbl;
+    if(!D.lme_trajectory||!D.lme_trajectory[metric]) return;
+    var lmeTraces = D.lme_trajectory[metric];
+    if(!lmeTraces||!lmeTraces.length) return;
+    Plotly.react('chart-lme', lmeTraces, merge(L,{
+      height:360, showlegend:true,
+      yaxis:{title:{text:lbl}},
+    }), C);
+  }
+
+  function updateAlpha(metric){
+    if(!D.alpha_metrics||!D.alpha_metrics[metric]) return;
+    var md  = D.alpha_metrics[metric];
+    var lbl = metricLabels[metric]||metric;
+    var sl  = merge(stripL,  {yaxis:{title:{text:lbl}}});
+    var bl  = merge(boxL,    {yaxis:{title:{text:lbl}}});
+    var vl  = merge(violinL, {yaxis:{title:{text:lbl}}});
+    if(md.brackets){
+      var bk = md.brackets;
+      if(bk.shapes&&bk.shapes.length) bl.shapes = bk.shapes;
+      if(bk.annots&&bk.annots.length) bl.annotations = bk.annots;
+      if(bk.y_max) bl.yaxis = Object.assign({}, bl.yaxis||{}, {range:[null, bk.y_max]});
+    }
+    if(md.strip&&md.strip.length)  Plotly.react('chart-strip',  md.strip,  sl, C);
+    if(md.box&&md.box.length)      Plotly.react('chart-box',    md.box,    bl, C);
+    if(md.violin&&md.violin.length)Plotly.react('chart-violin', md.violin, vl, C);
+    var suffix=' — '+lbl;
+    var ts=document.getElementById('title-strip');
+    var tb=document.getElementById('title-box');
+    var tv=document.getElementById('title-violin');
+    if(ts) ts.textContent='Strip Chart'+suffix;
+    if(tb) tb.textContent='Box Plot'+suffix;
+    if(tv) tv.textContent='Violin Plot'+suffix;
+    updateLME(metric);
+    document.querySelectorAll('.metric-btn').forEach(function(b){
+      b.classList.toggle('active', b.dataset.metric===metric);
+    });
+  }
+  updateAlpha('shannon');
+  document.querySelectorAll('.metric-btn').forEach(function(b){
+    b.addEventListener('click', function(){ if(!this.disabled) updateAlpha(this.dataset.metric); });
+  });
+
+  render('chart-rarefaction', D.rarefaction, merge(L,{
+    height:360,
+    xaxis:{title:{text:'Sequencing depth (reads)'},type:'log'},
+    yaxis:{title:{text:'Expected taxa observed'}},
+  }));
+  render('chart-multimet', D.multimet_alpha, merge(L,{
+    height:360,
+    xaxis:{tickangle:-45,tickfont:{size:9}},
+    yaxis:{title:{text:'Observed taxa'}},
+    yaxis2:{title:{text:"Pielou J′"},overlaying:'y',side:'right',range:[0,1]},
+    barmode:'group',
+  }));
+
+  // ── Individual ────────────────────────────────────────────────────────────
+  render('chart-paired-slope', D.paired_slope, merge(L,{
+    height:360, yaxis:{title:{text:"Shannon H′"}},
+  }));
+  render('chart-stability', D.stability_bar, merge(L,{
+    height:360, margin:{l:90,r:60,t:32,b:40},
+    xaxis:{title:{text:'Bray-Curtis dissimilarity'},range:[0,1]},
+    yaxis:{automargin:true, gridcolor:'transparent'},
+    showlegend:false,
+  }));
+  render('chart-diversity-rank', D.diversity_rank, merge(L,{
+    height:360,
+    xaxis:{title:{text:'Rank'},showticklabels:false,gridcolor:'transparent'},
+    yaxis:{title:{text:"Shannon H′"}},
+  }));
+  render('chart-radar', D.patient_radar, merge(L,{
+    height:440, margin:{l:60,r:60,t:32,b:60},
+    polar:{radialaxis:{visible:true,ticksuffix:'%',tickfont:{size:9}},
+           gridshape:'circular'},
+    showlegend:true,
+  }));
+  (function(){
+    var fc=D.faceted_composition;
+    var el=document.getElementById('chart-faceted');
+    if(!el||!fc||!fc.data||!fc.data.length) return;
+    el.style.height=(fc.layout.height||520)+'px';
+    Plotly.newPlot(el, fc.data, merge(L, fc.layout), C);
+  })();
+  var nmds=D.nmds_trajectories;
+  render('chart-nmds-traj', nmds.traces, merge(L,{
+    height:440, showlegend:true,
+    xaxis:{title:{text:'PC1 ('+nmds.pct1+'%)'}},
+    yaxis:{title:{text:'PC2 ('+nmds.pct2+'%)'}},
+  }));
+
+  // ── Beta ──────────────────────────────────────────────────────────────────
+  var bray=D.pcoa_bray;
+  render('chart-pcoa-bray', bray.traces, merge(L,{
+    height:360, showlegend:true,
+    xaxis:{title:{text:'PC1 ('+bray.pct1+'%)'}},
+    yaxis:{title:{text:'PC2 ('+bray.pct2+'%)'}},
+  }));
+  var jacc=D.pcoa_jaccard;
+  render('chart-pcoa-jacc', jacc.traces, merge(L,{
+    height:360, showlegend:true,
+    xaxis:{title:{text:'PC1 ('+jacc.pct1+'%)'}},
+    yaxis:{title:{text:'PC2 ('+jacc.pct2+'%)'}},
+  }));
+  var nmds2=D.nmds;
+  render('chart-nmds', nmds2.traces, merge(L,{
+    height:360, showlegend:true,
+    xaxis:{title:{text:'NMDS1'}},
+    yaxis:{title:{text:'NMDS2'}},
+  }));
+  render('chart-dendro', D.dendrogram, merge(L,{
+    height:440, showlegend:true,
+    xaxis:{title:{text:'Distance'}, autorange:'reversed', zeroline:false},
+    yaxis:{side:'right', showgrid:false, zeroline:false, tickfont:{size:9}},
+    legend:{orientation:'h', y:-0.08, x:0},
+  }));
+  render('chart-delta', D.delta_heatmap, merge(L,{
+    height:440, margin:{l:140,r:80,t:32,b:80},
+    xaxis:{tickangle:-35,tickfont:{size:9}},
+    yaxis:{tickfont:{size:9}},
+  }));
+
+  // ── Comparative ───────────────────────────────────────────────────────────
+  render('chart-diff', D.diff_abundance, merge(L,{
+    height:360, barmode:'group',
+    xaxis:{title:{text:'Log2 Fold Change (T84 vs T0)'},zeroline:true,zerolinecolor:'#999',zerolinewidth:1},
+    yaxis:{automargin:true},
+    margin:{l:160,r:16,t:32,b:40},
+  }));
+  render('chart-ancom', D.ancom_style, merge(L,{
+    height:360, barmode:'group',
+    xaxis:{title:{text:'CLR mean difference (T84 − T0)'},zeroline:true,zerolinecolor:'#999',zerolinewidth:1},
+    yaxis:{automargin:true},
+    margin:{l:160,r:16,t:32,b:40},
+    annotations:[{x:0.98,y:0.98,xref:'paper',yref:'paper',showarrow:false,
+      text:'Red/Blue: FDR q<0.1',align:'right',font:{size:9,color:'#999'}}],
+  }));
+  render('chart-volcano', D.volcano, merge(L,{
+    height:360,
+    xaxis:{title:{text:'Log2 Fold Change'},zeroline:true,zerolinecolor:'#999',zerolinewidth:1},
+    yaxis:{title:{text:'−log10(p)'}},
+    shapes:[{type:'line',x0:-0.5,x1:-0.5,y0:0,y1:1,yref:'paper',line:{color:'#ccc',dash:'dot'}},
+            {type:'line',x0:0.5,x1:0.5,y0:0,y1:1,yref:'paper',line:{color:'#ccc',dash:'dot'}},
+            {type:'line',x0:0,x1:1,xref:'paper',y0:1.3,y1:1.3,line:{color:'#ccc',dash:'dot'}}],
+    annotations:[{x:0.98,y:0.98,xref:'paper',yref:'paper',showarrow:false,
+      text:'Red: FDR q<0.1 &amp; |LFC|>0.5',align:'right',
+      font:{size:9,color:'#999'}}],
+  }));
+  render('chart-heatmap', D.heatmap, merge(L,{
+    height:520, margin:{l:120,r:16,t:32,b:100},
+    xaxis:{tickangle:-45},
+  }));
+  render('chart-corr', D.corr_matrix, merge(L,{
+    height:440, margin:{l:140,r:16,t:32,b:100},
+    xaxis:{tickangle:-45},
+  }));
+
+  // ── Clinical ──────────────────────────────────────────────────────────────
+  if(D.clinical_sixmwt){
+    render('chart-mwt', D.clinical_sixmwt, merge(L,{
+      height:360, showlegend:true, yaxis:{title:{text:'6MWT (m)'}},
+    }));
+  }
+  if(D.clinical_il18){
+    render('chart-il18', D.clinical_il18, merge(L,{
+      height:360, showlegend:true, yaxis:{title:{text:'IL-18 (pg/mL)'}},
+    }));
+  }
+  if(D.corr_mwt&&D.corr_mwt.traces.length){
+    var cm=D.corr_mwt;
+    document.getElementById('sub-corr-mwt').textContent='r = '+cm.r+', p = '+cm.p+(cm.p<0.05?' · ✱ significant':' · not significant');
+    render('chart-corr-mwt', cm.traces, merge(L,{
+      height:360, showlegend:true,
+      xaxis:{title:{text:"Shannon H′"}},
+      yaxis:{title:{text:'6MWT (m)'}},
+      annotations:[{x:0.97,y:0.03,xref:'paper',yref:'paper',
+        text:'r = '+cm.r+'<br>p = '+cm.p,showarrow:false,align:'right',
+        bgcolor:'rgba(255,248,244,0.85)',bordercolor:'#C4A0A8',font:{size:10}}],
+    }));
+  }
+  if(D.corr_il18&&D.corr_il18.traces.length){
+    var ci2=D.corr_il18;
+    document.getElementById('sub-corr-il18').textContent='r = '+ci2.r+', p = '+ci2.p+(ci2.p<0.05?' · ✱ significant':' · not significant');
+    render('chart-corr-il18', ci2.traces, merge(L,{
+      height:360, showlegend:true,
+      xaxis:{title:{text:"Shannon H′"}},
+      yaxis:{title:{text:'IL-18 (pg/mL)'}},
+      annotations:[{x:0.97,y:0.03,xref:'paper',yref:'paper',
+        text:'r = '+ci2.r+'<br>p = '+ci2.p,showarrow:false,align:'right',
+        bgcolor:'rgba(255,248,244,0.85)',bordercolor:'#C4A0A8',font:{size:10}}],
+    }));
+  }
+
+  if(D.taxa_clinical_heatmap&&D.taxa_clinical_heatmap.z&&D.taxa_clinical_heatmap.z.length){
+    var tch=D.taxa_clinical_heatmap;
+    render('chart-taxa-clinical',[{
+      type:'heatmap', x:tch.x, y:tch.y, z:tch.z,
+      text:tch.text, texttemplate:'%{text}',
+      colorscale:'RdBu', zmid:0, zmin:-1, zmax:1,
+      hovertemplate:'<b>%{y}</b> × <b>%{x}</b><br>%{text}<extra></extra>',
+    }], merge(L,{
+      height:440, margin:{l:160,r:40,t:32,b:80},
+      xaxis:{tickangle:-35},
+      yaxis:{tickfont:{size:9}, automargin:true},
+    }));
+  }
+
+  // ── Longitudinal ──────────────────────────────────────────────────────────
+  render('chart-long', D.longitudinal, merge(L,{
+    height:360, yaxis:{title:{text:"Shannon H′"}},
+  }));
+
+  // ── PERMANOVA table ───────────────────────────────────────────────────────
+  var pm=D.permanova;
+  if(pm&&pm.header.length){
+    var pmh='<table><thead><tr>'+pm.header.map(function(h){return'<th>'+h+'</th>';}).join('')+'</tr></thead><tbody>';
+    pm.rows.forEach(function(row){
+      var sig=row[3]<0.05;
+      pmh+='<tr>'+row.map(function(v,i){
+        var s=i===3&&sig?'style="color:#2FA896;font-weight:700"':'';
+        return'<td '+s+'>'+v+'</td>';
+      }).join('')+'</tr>';
+    });
+    pmh+='</tbody></table>';
+    if(pm.top_name){
+      pmh+='<div style="margin-top:10px;padding:8px 12px;background:#FFE6DF;border-left:3px solid #C05070;border-radius:0 8px 8px 0;font-size:11px;color:#8B3A52;line-height:1.5">'+
+        '&#128161; <strong>'+pm.top_name+'</strong> explains the most variance (R&#178; = '+pm.top_R2+').'+
+        (pm.top_is_individual?' This confirms each person has a unique stable microbiome.':'')+
+        '</div>';
+    }
+    document.getElementById('permanova-table').innerHTML=pmh;
+  }
+
+  // ── Stats table ───────────────────────────────────────────────────────────
+  var st=D.stats_table;
+  var html='<table><thead><tr>'+
+    st.header.map(function(h){return'<th>'+h+'</th>';}).join('')+
+    '</tr></thead><tbody>';
+  st.rows.forEach(function(row){
+    html+='<tr>'+row.map(function(v){return'<td>'+v+'</td>';}).join('')+'</tr>';
+  });
+  html+='</tbody></table>';
+  document.getElementById('stats-table').innerHTML=html;
+
+  // ── Sidebar active link on scroll ─────────────────────────────────────────
+  var secs=document.querySelectorAll('section[id]');
+  var links=document.querySelectorAll('#sidebar a');
+  window.addEventListener('scroll',function(){
+    var y=window.scrollY+80, active=null;
+    secs.forEach(function(s){if(s.offsetTop<=y) active=s.id;});
+    links.forEach(function(a){
+      a.classList.toggle('active',a.getAttribute('href')==='#'+active);
+    });
+  },{passive:true});
+
+})();
+</script>
+</body>
+</html>
