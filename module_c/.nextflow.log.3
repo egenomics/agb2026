@@ -1,0 +1,331 @@
+may-17 22:08:44.552 [main] DEBUG nextflow.cli.Launcher - Setting HTTP proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 22:08:44.634 [main] DEBUG nextflow.cli.Launcher - Setting HTTPS proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 22:08:44.635 [main] DEBUG nextflow.cli.Launcher - Setting FTP proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 22:08:44.636 [main] DEBUG nextflow.cli.Launcher - Setting http proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 22:08:44.638 [main] DEBUG nextflow.cli.Launcher - Setting https proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 22:08:44.639 [main] DEBUG nextflow.cli.Launcher - Setting ftp proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 22:08:44.640 [main] DEBUG nextflow.cli.Launcher - $> nextflow run diversity_analysis.nf --data_dir ./data --outdir results --sampling_depth 1103
+may-17 22:08:44.696 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.2
+may-17 22:08:44.733 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/data/upfagb/u269208/.nextflow/plugins; core-plugins: nf-amazon@3.4.2,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.3,nf-wave@1.16.1
+may-17 22:08:44.765 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+may-17 22:08:44.767 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+may-17 22:08:44.771 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+may-17 22:08:44.784 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+may-17 22:08:44.909 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+may-17 22:08:44.933 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 22:08:44.936 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 22:08:44.956 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+may-17 22:08:45.329 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+may-17 22:08:45.330 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+may-17 22:08:45.343 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /data/upfagb/u269208/.nextflow/secrets/store.json
+may-17 22:08:45.347 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@6d2a2560] - activable => nextflow.secret.LocalSecretsProvider@6d2a2560
+may-17 22:08:45.353 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
+may-17 22:08:45.365 [main] DEBUG nextflow.cli.CmdRun - Launching `diversity_analysis.nf` [hopeful_lamarck] DSL2 - revision: 6cd568e504
+may-17 22:08:45.404 [main] DEBUG nextflow.Session - Session UUID: d73c265a-9d37-4edb-bdb8-a2096f30540a
+may-17 22:08:45.407 [main] DEBUG nextflow.Session - Run name: hopeful_lamarck
+may-17 22:08:45.408 [main] DEBUG nextflow.Session - Executor pool size: 4
+may-17 22:08:45.416 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+may-17 22:08:45.421 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=12; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+may-17 22:08:45.444 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.2 build 10555
+  Created: 28-11-2025 19:24 UTC (20:24 CEST)
+  System: Linux 4.18.0-513.11.1.el8_9.x86_64
+  Runtime: Groovy 4.0.28 on Java HotSpot(TM) 64-Bit Server VM 23.0.1+11-39
+  Encoding: UTF-8 (UTF-8)
+  Process: 952191@amd11 [192.168.131.39]
+  CPUs: 4 - Mem: 8 GB (7.8 GB) - Swap: 0 (0)
+may-17 22:08:45.471 [main] DEBUG nextflow.Session - Work-dir: /data/upfagb/u269208/agb2026/module_c/work [nfs]
+may-17 22:08:45.474 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /data/upfagb/u269208/agb2026/module_c/bin
+may-17 22:08:45.483 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+may-17 22:08:45.490 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+may-17 22:08:45.494 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+may-17 22:08:45.536 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+may-17 22:08:45.544 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 5; maxThreads: 1000
+may-17 22:08:45.656 [main] DEBUG nextflow.Session - Session start
+may-17 22:08:45.844 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+may-17 22:08:45.915 [main] DEBUG n.script.dsl.ProcessConfigBuilder - Config settings `withName:diversity_analysis` matches process diversity_analysis
+may-17 22:08:45.933 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+may-17 22:08:45.935 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+may-17 22:08:45.944 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+may-17 22:08:45.952 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=4; memory=8 GB; capacity=4; pollInterval=100ms; dumpInterval=5m
+may-17 22:08:45.955 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+may-17 22:08:45.984 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'diversity_analysis': maxForks=0; fair=false; array=0
+may-17 22:08:46.027 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: diversity_analysis
+may-17 22:08:46.030 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+may-17 22:08:46.031 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > diversity_analysis
+may-17 22:08:46.033 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_80614ec9062dcd72: /data/upfagb/u269208/agb2026/module_c/diversity_analysis.nf
+may-17 22:08:46.035 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+may-17 22:08:46.036 [main] DEBUG nextflow.Session - Session await
+may-17 22:08:46.139 [Actor Thread 5] INFO  nextflow.conda.CondaCache - Creating env using conda: qiime2-amplicon-2026.1 [cache /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f]
+may-17 22:08:51.289 [Actor Thread 3] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=diversity_analysis; work-dir=null
+  error [java.lang.IllegalStateException]: java.lang.IllegalStateException: Failed to create Conda environment
+  command: conda create --yes --quiet --prefix /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f qiime2-amplicon-2026.1
+  status : 1
+  message:
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    
+    PackagesNotFoundInChannelsError: The following packages are not available from current channels:
+    
+      - qiime2-amplicon-2026.1
+    
+    Current channels:
+    
+      - defaults
+      - https://conda.anaconda.org/bioconda
+      - https://conda.anaconda.org/conda-forge
+    
+    To search for alternate channels that may provide the conda package you're
+    looking for, navigate to
+    
+        https://anaconda.org
+    
+    and use the search bar at the top of the page.
+
+may-17 22:08:51.300 [Actor Thread 3] ERROR nextflow.processor.TaskProcessor - Error executing process > 'diversity_analysis'
+
+Caused by:
+  Failed to create Conda environment
+    command: conda create --yes --quiet --prefix /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f qiime2-amplicon-2026.1
+    status : 1
+    message:
+      Channels:
+       - defaults
+       - bioconda
+       - conda-forge
+      Platform: linux-64
+      Collecting package metadata (repodata.json): ...working... done
+      Solving environment: ...working... failed
+      Channels:
+       - defaults
+       - bioconda
+       - conda-forge
+      Platform: linux-64
+      Collecting package metadata (repodata.json): ...working... done
+      Solving environment: ...working... failed
+      
+      PackagesNotFoundInChannelsError: The following packages are not available from current channels:
+      
+        - qiime2-amplicon-2026.1
+      
+      Current channels:
+      
+        - defaults
+        - https://conda.anaconda.org/bioconda
+        - https://conda.anaconda.org/conda-forge
+      
+      To search for alternate channels that may provide the conda package you're
+      looking for, navigate to
+      
+          https://anaconda.org
+      
+      and use the search bar at the top of the page.
+
+
+java.lang.IllegalStateException: java.lang.IllegalStateException: Failed to create Conda environment
+  command: conda create --yes --quiet --prefix /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f qiime2-amplicon-2026.1
+  status : 1
+  message:
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    
+    PackagesNotFoundInChannelsError: The following packages are not available from current channels:
+    
+      - qiime2-amplicon-2026.1
+    
+    Current channels:
+    
+      - defaults
+      - https://conda.anaconda.org/bioconda
+      - https://conda.anaconda.org/conda-forge
+    
+    To search for alternate channels that may provide the conda package you're
+    looking for, navigate to
+    
+        https://anaconda.org
+    
+    and use the search bar at the top of the page.
+
+	at nextflow.conda.CondaCache.getCachePathFor(CondaCache.groovy:383)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.getCondaEnv0(TaskRun.groovy:672)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at org.codehaus.groovy.runtime.ScriptBytecodeAdapter.invokeMethodOnCurrentN(ScriptBytecodeAdapter.java:97)
+	at nextflow.processor.TaskRun.this$dist$invoke$1(TaskRun.groovy)
+	at nextflow.processor.TaskRun$1.methodMissing(TaskRun.groovy)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaClassImpl.invokeMissingMethod(MetaClassImpl.java:924)
+	at groovy.lang.MetaClassImpl.invokePropertyOrMissing(MetaClassImpl.java:1419)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1341)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun$1.apply(TaskRun.groovy:663)
+	at nextflow.processor.TaskRun$1.apply(TaskRun.groovy)
+	at java.base/java.util.concurrent.ConcurrentHashMap.computeIfAbsent(ConcurrentHashMap.java:1713)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.getCondaEnv(TaskRun.groovy:660)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskProcessor.createTaskHashKey(TaskProcessor.groovy:2065)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskProcessor.invokeTask(TaskProcessor.groovy:687)
+	at nextflow.processor.InvokeTaskAdapter.call(InvokeTaskAdapter.groovy:52)
+	at groovyx.gpars.dataflow.operator.DataflowOperatorActor.startTask(DataflowOperatorActor.java:120)
+	at groovyx.gpars.dataflow.operator.ForkingDataflowOperatorActor.access$001(ForkingDataflowOperatorActor.java:35)
+	at groovyx.gpars.dataflow.operator.ForkingDataflowOperatorActor$1.run(ForkingDataflowOperatorActor.java:58)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+Caused by: java.lang.IllegalStateException: Failed to create Conda environment
+  command: conda create --yes --quiet --prefix /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f qiime2-amplicon-2026.1
+  status : 1
+  message:
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    
+    PackagesNotFoundInChannelsError: The following packages are not available from current channels:
+    
+      - qiime2-amplicon-2026.1
+    
+    Current channels:
+    
+      - defaults
+      - https://conda.anaconda.org/bioconda
+      - https://conda.anaconda.org/conda-forge
+    
+    To search for alternate channels that may provide the conda package you're
+    looking for, navigate to
+    
+        https://anaconda.org
+    
+    and use the search bar at the top of the page.
+
+	at nextflow.conda.CondaCache.runCommand(CondaCache.groovy:331)
+	at nextflow.conda.CondaCache.createLocalCondaEnv0(CondaCache.groovy:302)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
+	at nextflow.conda.CondaCache$_createLocalCondaEnv_closure1.doCall(CondaCache.groovy:252)
+	at nextflow.conda.CondaCache$_createLocalCondaEnv_closure1.call(CondaCache.groovy)
+	at nextflow.file.FileMutex.lock(FileMutex.groovy:106)
+	at nextflow.conda.CondaCache.createLocalCondaEnv(CondaCache.groovy:252)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
+	at nextflow.conda.CondaCache$_getLazyImagePath_closure3.doCall(CondaCache.groovy:360)
+	at nextflow.conda.CondaCache$_getLazyImagePath_closure3.call(CondaCache.groovy)
+	at groovyx.gpars.dataflow.LazyDataflowVariable$1.run(LazyDataflowVariable.java:70)
+	... 3 common frames omitted
+may-17 22:08:51.306 [Actor Thread 3] DEBUG nextflow.Session - Session aborted -- Cause: java.lang.IllegalStateException: Failed to create Conda environment
+  command: conda create --yes --quiet --prefix /data/upfagb/u269208/agb2026/module_c/work/conda/env-91a0f74114f73fa9a05650e7211e7c8f qiime2-amplicon-2026.1
+  status : 1
+  message:
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    Channels:
+     - defaults
+     - bioconda
+     - conda-forge
+    Platform: linux-64
+    Collecting package metadata (repodata.json): ...working... done
+    Solving environment: ...working... failed
+    
+    PackagesNotFoundInChannelsError: The following packages are not available from current channels:
+    
+      - qiime2-amplicon-2026.1
+    
+    Current channels:
+    
+      - defaults
+      - https://conda.anaconda.org/bioconda
+      - https://conda.anaconda.org/conda-forge
+    
+    To search for alternate channels that may provide the conda package you're
+    looking for, navigate to
+    
+        https://anaconda.org
+    
+    and use the search bar at the top of the page.
+
+may-17 22:08:51.321 [Actor Thread 3] DEBUG nextflow.Session - The following nodes are still active:
+[process] diversity_analysis
+  status=ACTIVE
+  port 0: (value) bound ; channel: phylogeny
+  port 1: (value) bound ; channel: table
+  port 2: (value) bound ; channel: metadata
+  port 3: (cntrl) -     ; channel: $
+
+may-17 22:08:51.329 [Actor Thread 3] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+may-17 22:08:51.373 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+may-17 22:08:51.620 [main] DEBUG nextflow.Session - Session await > all processes finished
+may-17 22:08:51.632 [main] DEBUG nextflow.Session - Session await > all barriers passed
+may-17 22:08:51.632 [Actor Thread 1] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=diversity_analysis; work-dir=null
+  error [java.lang.InterruptedException]: java.lang.InterruptedException
+may-17 22:08:51.633 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+may-17 22:08:51.644 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+may-17 22:08:51.669 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

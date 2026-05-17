@@ -1,0 +1,21 @@
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `diversity_analysis.nf` [stoic_bernard] DSL2 - revision: 011c1a6715
+
+[-        ] diversity_analysis | 0 of 1
+
+executor >  local (1)
+[39/1d23cb] div…sis (alpha_beta_diversity) | 0 of 1
+
+executor >  local (1)
+[39/1d23cb] div…sis (alpha_beta_diversity) | 1 of 1 ✔
+
+executor >  local (1)
+[39/1d23cb] div…sis (alpha_beta_diversity) | 1 of 1 ✔
+Completed at: 17-May-2026 22:31:01
+Duration    : 5m 4s
+CPU hours   : 0.3
+Succeeded   : 1
+
+

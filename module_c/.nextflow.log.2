@@ -1,0 +1,220 @@
+may-17 22:10:46.141 [main] DEBUG nextflow.cli.Launcher - Setting HTTP proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 22:10:46.226 [main] DEBUG nextflow.cli.Launcher - Setting HTTPS proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 22:10:46.227 [main] DEBUG nextflow.cli.Launcher - Setting FTP proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 22:10:46.229 [main] DEBUG nextflow.cli.Launcher - Setting http proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 22:10:46.230 [main] DEBUG nextflow.cli.Launcher - Setting https proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 22:10:46.232 [main] DEBUG nextflow.cli.Launcher - Setting ftp proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 22:10:46.233 [main] DEBUG nextflow.cli.Launcher - $> nextflow run diversity_analysis.nf --data_dir ./data --outdir results --sampling_depth 1103
+may-17 22:10:46.285 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.2
+may-17 22:10:46.316 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/data/upfagb/u269208/.nextflow/plugins; core-plugins: nf-amazon@3.4.2,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.3,nf-wave@1.16.1
+may-17 22:10:46.356 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+may-17 22:10:46.359 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+may-17 22:10:46.362 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+may-17 22:10:46.375 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+may-17 22:10:46.464 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+may-17 22:10:46.485 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 22:10:46.490 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 22:10:46.507 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+may-17 22:10:46.851 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+may-17 22:10:46.852 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+may-17 22:10:46.864 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /data/upfagb/u269208/.nextflow/secrets/store.json
+may-17 22:10:46.867 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@31b7d869] - activable => nextflow.secret.LocalSecretsProvider@31b7d869
+may-17 22:10:46.871 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
+may-17 22:10:46.883 [main] DEBUG nextflow.cli.CmdRun - Launching `diversity_analysis.nf` [reverent_hamilton] DSL2 - revision: 6cd568e504
+may-17 22:10:46.918 [main] DEBUG nextflow.Session - Session UUID: 980e1d61-5c26-4eb4-9bac-098f089b32b9
+may-17 22:10:46.920 [main] DEBUG nextflow.Session - Run name: reverent_hamilton
+may-17 22:10:46.921 [main] DEBUG nextflow.Session - Executor pool size: 4
+may-17 22:10:46.928 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+may-17 22:10:46.932 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=12; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+may-17 22:10:46.952 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.2 build 10555
+  Created: 28-11-2025 19:24 UTC (20:24 CEST)
+  System: Linux 4.18.0-513.11.1.el8_9.x86_64
+  Runtime: Groovy 4.0.28 on Java HotSpot(TM) 64-Bit Server VM 23.0.1+11-39
+  Encoding: UTF-8 (UTF-8)
+  Process: 954030@amd11 [192.168.131.39]
+  CPUs: 4 - Mem: 8 GB (7.8 GB) - Swap: 0 (0)
+may-17 22:10:46.980 [main] DEBUG nextflow.Session - Work-dir: /data/upfagb/u269208/agb2026/module_c/work [nfs]
+may-17 22:10:46.983 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /data/upfagb/u269208/agb2026/module_c/bin
+may-17 22:10:46.991 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+may-17 22:10:46.998 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+may-17 22:10:47.001 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+may-17 22:10:47.038 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+may-17 22:10:47.046 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 5; maxThreads: 1000
+may-17 22:10:47.170 [main] DEBUG nextflow.Session - Session start
+may-17 22:10:47.353 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+may-17 22:10:47.418 [main] DEBUG n.script.dsl.ProcessConfigBuilder - Config settings `withName:diversity_analysis` matches process diversity_analysis
+may-17 22:10:47.434 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+may-17 22:10:47.435 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+may-17 22:10:47.443 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+may-17 22:10:47.450 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=4; memory=8 GB; capacity=4; pollInterval=100ms; dumpInterval=5m
+may-17 22:10:47.453 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+may-17 22:10:47.471 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'diversity_analysis': maxForks=0; fair=false; array=0
+may-17 22:10:47.508 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: diversity_analysis
+may-17 22:10:47.511 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+may-17 22:10:47.512 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > diversity_analysis
+may-17 22:10:47.514 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_80614ec9062dcd72: /data/upfagb/u269208/agb2026/module_c/diversity_analysis.nf
+may-17 22:10:47.515 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+may-17 22:10:47.517 [main] DEBUG nextflow.Session - Session await
+may-17 22:10:47.596 [Actor Thread 5] DEBUG nextflow.conda.CondaCache - conda found local env for environment=/data/upfagb/.conda/envs/qiime2-amplicon-2026.1; path=/data/upfagb/.conda/envs/qiime2-amplicon-2026.1
+may-17 22:10:47.684 [Task submitter] DEBUG n.executor.local.LocalTaskHandler - Launch cmd line: /bin/bash -ue .command.run
+may-17 22:10:47.690 [Task submitter] INFO  nextflow.Session - [89/ddd74d] Submitted process > diversity_analysis (alpha_beta_diversity)
+may-17 22:13:36.815 [Task monitor] DEBUG n.processor.TaskPollingMonitor - Task completed > TaskHandler[id: 1; name: diversity_analysis (alpha_beta_diversity); status: COMPLETED; exit: 1; error: -; workDir: /data/upfagb/u269208/agb2026/module_c/work/89/ddd74dd25e44352a7a50fb634be5dd]
+may-17 22:13:36.818 [Task monitor] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'TaskFinalizer' minSize=10; maxSize=12; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+may-17 22:13:36.826 [TaskFinalizer-1] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=diversity_analysis (alpha_beta_diversity); work-dir=/data/upfagb/u269208/agb2026/module_c/work/89/ddd74dd25e44352a7a50fb634be5dd
+  error [nextflow.exception.ProcessFailedException]: Process `diversity_analysis (alpha_beta_diversity)` terminated with an error exit status (1)
+may-17 22:13:36.840 [TaskFinalizer-1] ERROR nextflow.processor.TaskProcessor - Error executing process > 'diversity_analysis (alpha_beta_diversity)'
+
+Caused by:
+  Process `diversity_analysis (alpha_beta_diversity)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  mkdir -p core_metrics_output \
+           diversity_table/shannon \
+           diversity_table/observed \
+           diversity_table/faith \
+           diversity_table/simpson \
+           diversity_table/weighted_unifrac \
+           diversity_table/bray_curtis
+  
+  qiime diversity core-metrics-phylogenetic \
+      --i-phylogeny rooted-tree.qza \
+      --i-table table.qza \
+      --p-sampling-depth 1103 \
+      --m-metadata-file sample-metadata.tsv \
+      --output-dir core_metrics_output
+  
+  qiime diversity alpha \
+      --i-table table.qza \
+      --p-metric simpson \
+      --o-alpha-diversity core_metrics_output/simpson_vector.qza
+  
+  qiime tools export \
+      --input-path core_metrics_output/shannon_vector.qza \
+      --output-path diversity_table/shannon
+  
+  qiime tools export \
+      --input-path core_metrics_output/observed_features_vector.qza \
+      --output-path diversity_table/observed
+  
+  qiime tools export \
+      --input-path core_metrics_output/faith_pd_vector.qza \
+      --output-path diversity_table/faith
+  
+  qiime tools export \
+      --input-path core_metrics_output/simpson_vector.qza \
+      --output-path diversity_table/simpson
+  
+  qiime tools export \
+      --input-path core_metrics_output/weighted_unifrac_distance_matrix.qza \
+      --output-path diversity_table/weighted_unifrac
+  
+  qiime tools export \
+      --input-path core_metrics_output/bray_curtis_distance_matrix.qza \
+      --output-path diversity_table/bray_curtis
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+    --parallel              Execute your action in parallel. This flag will use
+                            your default parallel config.
+    --parallel-config FILE  Execute your action in parallel using a config at
+                            the indicated path.
+    --example-data PATH     Write example data and exit.
+    --citations             Show citations and exit.
+    --use-cache DIRECTORY   Specify the cache to be used for the intermediate
+                            work of this action. If not provided, the default
+                            cache under $TMP/qiime2/<uname> will be used.
+                            IMPORTANT FOR HPC USERS: If you are on an HPC system
+                            and are using parallel execution it is important to
+                            set this to a location that is globally accessible
+                            to all nodes in the cluster.
+    --help                  Show this message and exit.
+  
+                    There were some problems with the command:                  
+   (1/18) Invalid value for '--output-dir': 'core_metrics_output' already
+    exists, will not overwrite.
+   (2/18) Missing option '--o-rarefied-table'. ("--output-dir" may also be used)
+   (3/18) Missing option '--o-faith-pd-vector'. ("--output-dir" may also be
+    used)
+   (4/18) Missing option '--o-observed-features-vector'. ("--output-dir" may
+    also be used)
+   (5/18) Missing option '--o-shannon-vector'. ("--output-dir" may also be used)
+   (6/18) Missing option '--o-evenness-vector'. ("--output-dir" may also be
+    used)
+   (7/18) Missing option '--o-unweighted-unifrac-distance-matrix'. ("--output-
+    dir" may also be used)
+   (8/18) Missing option '--o-weighted-unifrac-distance-matrix'. ("--output-dir"
+    may also be used)
+   (9/18) Missing option '--o-jaccard-distance-matrix'. ("--output-dir" may also
+    be used)
+   (10/18) Missing option '--o-bray-curtis-distance-matrix'. ("--output-dir" may
+    also be used)
+   (11/18) Missing option '--o-unweighted-unifrac-pcoa-results'. ("--output-dir"
+    may also be used)
+   (12/18) Missing option '--o-weighted-unifrac-pcoa-results'. ("--output-dir"
+    may also be used)
+   (13/18) Missing option '--o-jaccard-pcoa-results'. ("--output-dir" may also
+    be used)
+   (14/18) Missing option '--o-bray-curtis-pcoa-results'. ("--output-dir" may
+    also be used)
+   (15/18) Missing option '--o-unweighted-unifrac-emperor'. ("--output-dir" may
+    also be used)
+   (16/18) Missing option '--o-weighted-unifrac-emperor'. ("--output-dir" may
+    also be used)
+   (17/18) Missing option '--o-jaccard-emperor'. ("--output-dir" may also be
+    used)
+   (18/18) Missing option '--o-bray-curtis-emperor'. ("--output-dir" may also be
+    used)
+
+Work dir:
+  /data/upfagb/u269208/agb2026/module_c/work/89/ddd74dd25e44352a7a50fb634be5dd
+
+Tip: you can try to figure out what's wrong by changing to the process work dir and showing the script file named `.command.sh`
+may-17 22:13:36.856 [main] DEBUG nextflow.Session - Session await > all processes finished
+may-17 22:13:36.859 [TaskFinalizer-1] DEBUG nextflow.Session - Session aborted -- Cause: Process `diversity_analysis (alpha_beta_diversity)` terminated with an error exit status (1)
+may-17 22:13:36.895 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+may-17 22:13:36.896 [main] DEBUG nextflow.Session - Session await > all barriers passed
+may-17 22:13:36.900 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=1; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=11m 16s; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=4; peakMemory=8 GB; ]
+may-17 22:13:36.902 [TaskFinalizer-1] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=1; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=11m 16s; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=1; peakCpus=4; peakMemory=8 GB; ]
+may-17 22:13:36.915 [TaskFinalizer-1] DEBUG nextflow.Session - null
+java.lang.InterruptedException: null
+	at java.base/java.lang.Object.wait0(Native Method)
+	at java.base/java.lang.Object.wait(Object.java:378)
+	at java.base/java.lang.Thread.join(Thread.java:2017)
+	at java.base/java.lang.Thread.join(Thread.java:2093)
+	at nextflow.trace.AnsiLogObserver.onFlowComplete(AnsiLogObserver.groovy:520)
+	at nextflow.Session$_notifyFlowComplete_lambda39.doCall(Session.groovy:1121)
+	at nextflow.Session.notifyEvent(Session.groovy:1151)
+	at nextflow.Session.notifyFlowComplete(Session.groovy:1121)
+	at nextflow.Session.shutdown0(Session.groovy:779)
+	at nextflow.Session.abort(Session.groovy:834)
+	at nextflow.Session.fault(Session.groovy:796)
+	at nextflow.processor.TaskPollingMonitor.finalizeTask(TaskPollingMonitor.groovy:753)
+	at nextflow.processor.TaskPollingMonitor.safeFinalizeTask(TaskPollingMonitor.groovy:736)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
+	at nextflow.processor.TaskPollingMonitor$_checkTaskStatus_lambda8.doCall(TaskPollingMonitor.groovy:726)
+	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:572)
+	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:317)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+may-17 22:13:37.384 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+may-17 22:13:37.414 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye

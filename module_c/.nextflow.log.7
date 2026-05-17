@@ -1,0 +1,194 @@
+may-17 20:43:18.126 [main] DEBUG nextflow.cli.Launcher - Setting HTTP proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 20:43:18.175 [main] DEBUG nextflow.cli.Launcher - Setting HTTPS proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 20:43:18.178 [main] DEBUG nextflow.cli.Launcher - Setting FTP proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 20:43:18.179 [main] DEBUG nextflow.cli.Launcher - Setting http proxy: ProxyConfig[protocol=http; host=192.168.255.254; port=8080]
+may-17 20:43:18.180 [main] DEBUG nextflow.cli.Launcher - Setting https proxy: ProxyConfig[protocol=https; host=192.168.255.254; port=8080]
+may-17 20:43:18.182 [main] DEBUG nextflow.cli.Launcher - Setting ftp proxy: ProxyConfig[protocol=ftp; host=192.168.255.254; port=8080]
+may-17 20:43:18.186 [main] DEBUG nextflow.cli.Launcher - $> nextflow run diversity_analysis.nf --data_dir ./data --outdir results --sampling_depth 1103
+may-17 20:43:18.253 [main] DEBUG nextflow.cli.CmdRun - N E X T F L O W  ~  version 25.10.2
+may-17 20:43:18.292 [main] DEBUG nextflow.plugin.PluginsFacade - Setting up plugin manager > mode=prod; embedded=false; plugins-dir=/data/upfagb/u269208/.nextflow/plugins; core-plugins: nf-amazon@3.4.2,nf-azure@1.20.2,nf-cloudcache@0.5.0,nf-codecommit@0.5.0,nf-console@1.3.0,nf-google@1.23.3,nf-k8s@1.2.2,nf-tower@1.17.3,nf-wave@1.16.1
+may-17 20:43:18.327 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Enabled plugins: []
+may-17 20:43:18.330 [main] INFO  o.pf4j.DefaultPluginStatusProvider - Disabled plugins: []
+may-17 20:43:18.346 [main] INFO  org.pf4j.DefaultPluginManager - PF4J version 3.12.0 in 'deployment' mode
+may-17 20:43:18.359 [main] DEBUG nextflow.util.RetryConfig - Missing nextflow session - using default retry config
+may-17 20:43:18.448 [main] INFO  org.pf4j.AbstractPluginManager - No plugins
+may-17 20:43:18.475 [main] DEBUG nextflow.config.ConfigBuilder - Found config local: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 20:43:18.480 [main] DEBUG nextflow.config.ConfigBuilder - Parsing config file: /data/upfagb/u269208/agb2026/module_c/nextflow.config
+may-17 20:43:18.506 [main] DEBUG nextflow.config.ConfigBuilder - Applying config profile: `standard`
+may-17 20:43:18.873 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins default=[]
+may-17 20:43:18.875 [main] DEBUG nextflow.plugin.PluginsFacade - Plugins resolved requirement=[]
+may-17 20:43:18.888 [main] DEBUG n.secret.LocalSecretsProvider - Secrets store: /data/upfagb/u269208/.nextflow/secrets/store.json
+may-17 20:43:18.892 [main] DEBUG nextflow.secret.SecretsLoader - Discovered secrets providers: [nextflow.secret.LocalSecretsProvider@2a097d77] - activable => nextflow.secret.LocalSecretsProvider@2a097d77
+may-17 20:43:18.911 [main] DEBUG nextflow.cli.CmdRun - Applied DSL=2 by global default
+may-17 20:43:18.923 [main] DEBUG nextflow.cli.CmdRun - Launching `diversity_analysis.nf` [special_goldwasser] DSL2 - revision: 548f5e1280
+may-17 20:43:18.963 [main] DEBUG nextflow.Session - Session UUID: fed059af-4d41-4fc3-ad7d-156dfea118c4
+may-17 20:43:18.965 [main] DEBUG nextflow.Session - Run name: special_goldwasser
+may-17 20:43:18.967 [main] DEBUG nextflow.Session - Executor pool size: 4
+may-17 20:43:18.981 [main] DEBUG nextflow.file.FilePorter - File porter settings maxRetries=3; maxTransfers=50; pollTimeout=null
+may-17 20:43:18.986 [main] DEBUG nextflow.util.ThreadPoolBuilder - Creating thread pool 'FileTransfer' minSize=10; maxSize=12; workQueue=LinkedBlockingQueue[-1]; allowCoreThreadTimeout=false
+may-17 20:43:19.014 [main] DEBUG nextflow.cli.CmdRun - 
+  Version: 25.10.2 build 10555
+  Created: 28-11-2025 19:24 UTC (20:24 CEST)
+  System: Linux 4.18.0-513.11.1.el8_9.x86_64
+  Runtime: Groovy 4.0.28 on Java HotSpot(TM) 64-Bit Server VM 23.0.1+11-39
+  Encoding: UTF-8 (UTF-8)
+  Process: 896303@amd11 [192.168.131.39]
+  CPUs: 4 - Mem: 8 GB (7.8 GB) - Swap: 0 (0)
+may-17 20:43:19.047 [main] DEBUG nextflow.Session - Work-dir: /data/upfagb/u269208/agb2026/module_c/work [nfs]
+may-17 20:43:19.052 [main] DEBUG nextflow.Session - Script base path does not exist or is not a directory: /data/upfagb/u269208/agb2026/module_c/bin
+may-17 20:43:19.060 [main] DEBUG nextflow.executor.ExecutorFactory - Extension executors providers=[]
+may-17 20:43:19.068 [main] DEBUG nextflow.Session - Observer factory (v2): LinObserverFactory
+may-17 20:43:19.071 [main] DEBUG nextflow.Session - Observer factory (v2): DefaultObserverFactory
+may-17 20:43:19.120 [main] DEBUG nextflow.cache.CacheFactory - Using Nextflow cache factory: nextflow.cache.DefaultCacheFactory
+may-17 20:43:19.128 [main] DEBUG nextflow.util.CustomThreadPool - Creating default thread pool > poolSize: 5; maxThreads: 1000
+may-17 20:43:19.249 [main] DEBUG nextflow.Session - Session start
+may-17 20:43:19.461 [main] DEBUG nextflow.script.ScriptRunner - > Launching execution
+may-17 20:43:19.538 [main] DEBUG n.script.dsl.ProcessConfigBuilder - Config settings `withName:diversity_analysis` matches process diversity_analysis
+may-17 20:43:19.560 [main] DEBUG nextflow.executor.ExecutorFactory - << taskConfig executor: null
+may-17 20:43:19.561 [main] DEBUG nextflow.executor.ExecutorFactory - >> processorType: 'local'
+may-17 20:43:19.573 [main] DEBUG nextflow.executor.Executor - [warm up] executor > local
+may-17 20:43:19.587 [main] DEBUG n.processor.LocalPollingMonitor - Creating local task monitor for executor 'local' > cpus=4; memory=8 GB; capacity=4; pollInterval=100ms; dumpInterval=5m
+may-17 20:43:19.593 [main] DEBUG n.processor.TaskPollingMonitor - >>> barrier register (monitor: local)
+may-17 20:43:19.614 [main] DEBUG nextflow.processor.TaskProcessor - Creating process 'diversity_analysis': maxForks=0; fair=false; array=0
+may-17 20:43:19.653 [main] DEBUG nextflow.Session - Workflow process names [dsl2]: diversity_analysis
+may-17 20:43:19.656 [main] DEBUG nextflow.Session - Igniting dataflow network (1)
+may-17 20:43:19.658 [main] DEBUG nextflow.processor.TaskProcessor - Starting process > diversity_analysis
+may-17 20:43:19.660 [main] DEBUG nextflow.script.ScriptRunner - Parsed script files:
+  Script_74f2a5ed8d795821: /data/upfagb/u269208/agb2026/module_c/diversity_analysis.nf
+may-17 20:43:19.662 [main] DEBUG nextflow.script.ScriptRunner - > Awaiting termination 
+may-17 20:43:19.663 [main] DEBUG nextflow.Session - Session await
+may-17 20:43:19.762 [Actor Thread 5] INFO  nextflow.container.SingularityCache - Pulling Singularity image docker://quay.io/qiime2/amplicon:2024.10 [cache /home/u269208/.singularity/cache/quay.io-qiime2-amplicon-2024.10.img]
+may-17 20:43:19.773 [Actor Thread 3] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=diversity_analysis; work-dir=null
+  error [java.lang.IllegalStateException]: java.lang.IllegalStateException: Failed to pull singularity image
+  command: singularity pull  --name quay.io-qiime2-amplicon-2024.10.img.pulling.1779043399765 docker://quay.io/qiime2/amplicon:2024.10 > /dev/null
+  status : 127
+  hint   : Try and increase singularity.pullTimeout in the config (current is "20m")
+  message:
+    bash: singularity: no se encontró la orden
+
+may-17 20:43:19.781 [Actor Thread 3] ERROR nextflow.processor.TaskProcessor - Error executing process > 'diversity_analysis'
+
+Caused by:
+  Failed to pull singularity image
+    command: singularity pull  --name quay.io-qiime2-amplicon-2024.10.img.pulling.1779043399765 docker://quay.io/qiime2/amplicon:2024.10 > /dev/null
+    status : 127
+    hint   : Try and increase singularity.pullTimeout in the config (current is "20m")
+    message:
+      bash: singularity: no se encontró la orden
+
+
+java.lang.IllegalStateException: java.lang.IllegalStateException: Failed to pull singularity image
+  command: singularity pull  --name quay.io-qiime2-amplicon-2024.10.img.pulling.1779043399765 docker://quay.io/qiime2/amplicon:2024.10 > /dev/null
+  status : 127
+  hint   : Try and increase singularity.pullTimeout in the config (current is "20m")
+  message:
+    bash: singularity: no se encontró la orden
+
+	at nextflow.container.SingularityCache.getCachePathFor(SingularityCache.groovy:354)
+	at nextflow.container.ContainerHandler.createSingularityCache(ContainerHandler.groovy:105)
+	at nextflow.container.ContainerHandler.normalizeImageName(ContainerHandler.groovy:72)
+	at nextflow.container.resolver.DefaultContainerResolver.resolveImage0(DefaultContainerResolver.groovy:68)
+	at nextflow.container.resolver.DefaultContainerResolver.resolveImage(DefaultContainerResolver.groovy:61)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.containerInfo0(TaskRun.groovy:722)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at org.codehaus.groovy.runtime.ScriptBytecodeAdapter.invokeMethodOnCurrentN(ScriptBytecodeAdapter.java:97)
+	at nextflow.processor.TaskRun.this$dist$invoke$1(TaskRun.groovy)
+	at nextflow.processor.TaskRun$3.methodMissing(TaskRun.groovy)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaClassImpl.invokeMissingMethod(MetaClassImpl.java:924)
+	at groovy.lang.MetaClassImpl.invokePropertyOrMissing(MetaClassImpl.java:1419)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1341)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun$3.apply(TaskRun.groovy:703)
+	at nextflow.processor.TaskRun$3.apply(TaskRun.groovy)
+	at java.base/java.util.concurrent.ConcurrentHashMap.computeIfAbsent(ConcurrentHashMap.java:1713)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.containerInfo(TaskRun.groovy:700)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.getContainer(TaskRun.groovy:734)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskRun.isContainerEnabled(TaskRun.groovy:800)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskProcessor.createTaskHashKey(TaskProcessor.groovy:2031)
+	at org.codehaus.groovy.vmplugin.v8.IndyInterface.fromCache(IndyInterface.java:321)
+	at nextflow.processor.TaskProcessor.invokeTask(TaskProcessor.groovy:687)
+	at nextflow.processor.InvokeTaskAdapter.call(InvokeTaskAdapter.groovy:52)
+	at groovyx.gpars.dataflow.operator.DataflowOperatorActor.startTask(DataflowOperatorActor.java:120)
+	at groovyx.gpars.dataflow.operator.ForkingDataflowOperatorActor.access$001(ForkingDataflowOperatorActor.java:35)
+	at groovyx.gpars.dataflow.operator.ForkingDataflowOperatorActor$1.run(ForkingDataflowOperatorActor.java:58)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1575)
+Caused by: java.lang.IllegalStateException: Failed to pull singularity image
+  command: singularity pull  --name quay.io-qiime2-amplicon-2024.10.img.pulling.1779043399765 docker://quay.io/qiime2/amplicon:2024.10 > /dev/null
+  status : 127
+  hint   : Try and increase singularity.pullTimeout in the config (current is "20m")
+  message:
+    bash: singularity: no se encontró la orden
+
+	at nextflow.container.SingularityCache.runCommand(SingularityCache.groovy:306)
+	at nextflow.container.SingularityCache.downloadContainerImage0(SingularityCache.groovy:273)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
+	at nextflow.container.SingularityCache$_downloadContainerImage_closure1.doCall(SingularityCache.groovy:241)
+	at nextflow.container.SingularityCache$_downloadContainerImage_closure1.call(SingularityCache.groovy)
+	at nextflow.file.FileMutex.lock(FileMutex.groovy:106)
+	at nextflow.container.SingularityCache.downloadContainerImage(SingularityCache.groovy:241)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.codehaus.groovy.reflection.CachedMethod.invoke(CachedMethod.java:343)
+	at groovy.lang.MetaMethod.doMethodInvoke(MetaMethod.java:328)
+	at groovy.lang.MetaClassImpl.doInvokeMethod(MetaClassImpl.java:1339)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1094)
+	at groovy.lang.MetaClassImpl.invokeMethod(MetaClassImpl.java:1007)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokePogoMethod(InvokerHelper.java:645)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethod(InvokerHelper.java:628)
+	at org.codehaus.groovy.runtime.InvokerHelper.invokeMethodSafe(InvokerHelper.java:82)
+	at nextflow.container.SingularityCache$_getLazyImagePath_closure2.doCall(SingularityCache.groovy:331)
+	at nextflow.container.SingularityCache$_getLazyImagePath_closure2.call(SingularityCache.groovy)
+	at groovyx.gpars.dataflow.LazyDataflowVariable$1.run(LazyDataflowVariable.java:70)
+	... 3 common frames omitted
+may-17 20:43:19.786 [Actor Thread 3] DEBUG nextflow.Session - Session aborted -- Cause: java.lang.IllegalStateException: Failed to pull singularity image
+  command: singularity pull  --name quay.io-qiime2-amplicon-2024.10.img.pulling.1779043399765 docker://quay.io/qiime2/amplicon:2024.10 > /dev/null
+  status : 127
+  hint   : Try and increase singularity.pullTimeout in the config (current is "20m")
+  message:
+    bash: singularity: no se encontró la orden
+
+may-17 20:43:19.798 [Actor Thread 3] DEBUG nextflow.Session - The following nodes are still active:
+[process] diversity_analysis
+  status=ACTIVE
+  port 0: (value) bound ; channel: phylogeny
+  port 1: (value) bound ; channel: table
+  port 2: (value) bound ; channel: metadata
+  port 3: (cntrl) -     ; channel: $
+
+may-17 20:43:19.799 [Task monitor] DEBUG n.processor.TaskPollingMonitor - <<< barrier arrives (monitor: local) - terminating tasks monitor poll loop
+may-17 20:43:19.805 [Actor Thread 3] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+may-17 20:43:20.046 [main] DEBUG nextflow.Session - Session await > all processes finished
+may-17 20:43:20.047 [main] DEBUG nextflow.Session - Session await > all barriers passed
+may-17 20:43:20.048 [main] DEBUG n.trace.WorkflowStatsObserver - Workflow completed > WorkflowStats[succeededCount=0; failedCount=0; ignoredCount=0; cachedCount=0; pendingCount=0; submittedCount=0; runningCount=0; retriesCount=0; abortedCount=0; succeedDuration=0ms; failedDuration=0ms; cachedDuration=0ms;loadCpus=0; loadMemory=0; peakRunning=0; peakCpus=0; peakMemory=0; ]
+may-17 20:43:20.046 [Actor Thread 1] DEBUG nextflow.processor.TaskProcessor - Handling unexpected condition for
+  task: name=diversity_analysis; work-dir=null
+  error [java.lang.InterruptedException]: java.lang.InterruptedException
+may-17 20:43:20.056 [main] DEBUG nextflow.cache.CacheDB - Closing CacheDB done
+may-17 20:43:20.088 [main] DEBUG nextflow.script.ScriptRunner - > Execution complete -- Goodbye
