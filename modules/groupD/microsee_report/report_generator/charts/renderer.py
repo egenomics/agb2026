@@ -57,6 +57,119 @@ def _patient_bc(rows: list[dict[str, Any]], taxa: list[str], patient: str) -> fl
     return round(float(np.sum(np.abs(ab0 - ab84))) / denom, 3) if denom > 0 else 0.0
 
 
+# ── Per-patient personalised insight block ────────────────────────────────────
+
+def _build_patient_insights_html(
+    patient_id: str,
+    p_rows: list[dict[str, Any]],
+    rows: list[dict[str, Any]],
+    taxa: list[str],
+    bc: float,
+    pat_profile: dict[str, Any],
+    has_clinical: bool,
+) -> str:
+    group   = str(p_rows[0].get("base_group") or p_rows[0].get("group") or "")
+    t0_row  = next((r for r in p_rows if (r.get("time") or 0) == 0), None)
+    t84_row = next((r for r in p_rows if (r.get("time") or 0) > 0), None)
+    items: list[str] = []
+
+    # 1 — Shannon diversity change
+    if t0_row and t84_row:
+        sh0  = float(t0_row.get("shannon") or 0)
+        sh84 = float(t84_row.get("shannon") or 0)
+        if sh0 > 0:
+            delta_sh = sh84 - sh0
+            pct_sh   = abs(delta_sh / sh0) * 100
+            arrow    = "↑" if delta_sh > 0 else "↓"
+            color    = "#D97A3A" if delta_sh > 0 else "#4A7ED4"
+            verb     = "increased" if delta_sh > 0 else "decreased"
+            items.append(
+                f"<li><strong>Shannon diversity</strong> {verb} from "
+                f"<strong>{sh0:.2f}</strong> → "
+                f'<strong style="color:{color}">{sh84:.2f}</strong> '
+                f'<span style="color:{color}">({arrow}{pct_sh:.0f}%)</span>.</li>'
+            )
+
+    # 2 — Largest taxon shifts (top 2)
+    table = pat_profile.get("table", [])
+    ranked = sorted(
+        [r for r in table if r.get("delta") is not None],
+        key=lambda r: abs(float(r["delta"])),
+        reverse=True,
+    )
+    for entry in ranked[:2]:
+        d   = float(entry["delta"])
+        if abs(d) < 0.5:
+            break
+        fam   = entry["family"]
+        dstr  = f"+{d:.1f}%" if d > 0 else f"{d:.1f}%"
+        color = "#D97A3A" if d > 0 else "#4A7ED4"
+        verb  = "increased" if d > 0 else "decreased"
+        items.append(
+            f"<li><strong>{fam}</strong> "
+            f'<span style="color:{color}">{verb} by {dstr}</span> between visits.</li>'
+        )
+
+    # 3 — Stability rank within the same group
+    group_patients = sorted(set(
+        r["patient"] for r in rows
+        if str(r.get("base_group") or r.get("group") or "") == group
+    ))
+    if len(group_patients) > 1:
+        bc_scores = sorted(_patient_bc(rows, taxa, p) for p in group_patients)
+        n_more_stable = sum(1 for v in bc_scores if v < bc)
+        n_total       = len(bc_scores)
+        group_mean    = round(float(np.mean(bc_scores)), 3)
+        comparison    = (
+            "more stable than" if bc < group_mean else
+            "less stable than" if bc > group_mean else
+            "as stable as"
+        )
+        items.append(
+            f"<li>Microbiome stability score <strong>{bc:.3f}</strong> — "
+            f"{comparison} the group average ({group_mean:.3f}). "
+            f"More stable than {n_more_stable} of {n_total} patients in the {group} group.</li>"
+        )
+
+    # 4 — Clinical outcomes
+    if has_clinical and t0_row and t84_row:
+        mwt0  = float(t0_row.get("sixmwt") or 0)
+        mwt84 = float(t84_row.get("sixmwt") or 0)
+        if mwt0 > 0 and mwt84 > 0:
+            dmwt  = mwt84 - mwt0
+            color = "#D97A3A" if dmwt > 0 else "#4A7ED4"
+            arrow = "↑" if dmwt > 0 else "↓"
+            note  = " — physical function improved." if dmwt > 0 else " — physical function declined."
+            items.append(
+                f"<li><strong>6-Minute Walk Test</strong>: {mwt0:.0f} m → "
+                f'<strong style="color:{color}">{mwt84:.0f} m</strong> '
+                f'<span style="color:{color}">({arrow}{abs(dmwt):.0f} m)</span>{note}</li>'
+            )
+        il0  = float(t0_row.get("il18") or 0)
+        il84 = float(t84_row.get("il18") or 0)
+        if il0 > 0 and il84 > 0:
+            dil   = il84 - il0
+            color = "#4A7ED4" if dil < 0 else "#D97A3A"
+            arrow = "↓" if dil < 0 else "↑"
+            note  = " — inflammation marker reduced." if dil < 0 else " — inflammation marker increased."
+            items.append(
+                f"<li><strong>IL-18</strong>: {il0:.1f} → "
+                f'<strong style="color:{color}">{il84:.1f} pg/mL</strong> '
+                f'<span style="color:{color}">({arrow}{abs(dil):.1f})</span>{note}</li>'
+            )
+
+    if not items:
+        return ""
+
+    return (
+        '<div class="insight">'
+        f"<strong>Personalised findings — {patient_id} ({group}):</strong>"
+        '<ul style="margin-top:10px;padding-left:18px;line-height:2.0">'
+        + "".join(items)
+        + "</ul></div>"
+    )
+
+
 # ── Per-patient report ────────────────────────────────────────────────────────
 
 def render_patient_html(patient_id: str, result: Any) -> str:
@@ -123,12 +236,8 @@ def render_patient_html(patient_id: str, result: Any) -> str:
     if(D.il18&&D.il18.length)
       Plotly.newPlot('pt-il18', D.il18, merge(L,{height:320,yaxis:{title:{text:'IL-18 (pg/mL)'}}}), C);"""
 
-    insight_text = (
-        f"Patient {patient_id} ({group}) had a microbiome stability score of {bc:.3f}. "
-        + ("Changes were minimal and within normal day-to-day variation." if bc < 0.2
-           else "The largest compositional shift was detected, warranting closer monitoring.")
-        + (" Clinical markers were available for this patient and are shown above."
-           if result.has_clinical else "")
+    insights_html = _build_patient_insights_html(
+        patient_id, p_rows, rows, taxa, bc, pat_profile, result.has_clinical,
     )
 
     html = _PATIENT_TEMPLATE
@@ -140,7 +249,7 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         ("__BC_STABILITY_TEXT__", bc_stability_text),
         ("__CLINICAL_BLOCK__",    clinical_block),
         ("__CLINICAL_JS__",       clinical_js),
-        ("__INSIGHT_TEXT__",      insight_text),
+        ("__INSIGHTS_HTML__",     insights_html),
         ("__DATA_JSON__",         json.dumps(patient_chart_data, allow_nan=False)),
         ("__LAYOUT_JSON__",       json.dumps(BASE_LAYOUT, allow_nan=False)),
         ("__CONFIG_JSON__",       json.dumps(BASE_CONFIG,  allow_nan=False)),
