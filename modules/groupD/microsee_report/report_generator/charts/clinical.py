@@ -1,12 +1,13 @@
 """charts/clinical.py — clinical outcome chart builders (slopegraph, Shannon correlation)."""
 from __future__ import annotations
+from typing import Any
 import numpy as np
 from .utils import hex_rgba, base_group_color
 from .preprocessing import get_patient_timepoints, get_unique_patients, get_base_groups, sorted_timepoints
 from .stats_helpers import pearson_p, spearman_r
 
 
-def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
+def build_taxa_clinical_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> dict[str, Any]:
     """Spearman rho heatmap: all taxa × all clinical variables.
 
     Uses the change (Δ = T84 − T0) for both taxon abundances and clinical values,
@@ -47,7 +48,9 @@ def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
             row_p.append(round(p, 3))
             stars = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else ""
             row_t.append(f"ρ={rho:+.2f}{stars}")
-        z.append(row_z); text_mat.append(row_t); p_mat.append(row_p)
+        z.append(row_z)
+        text_mat.append(row_t)
+        p_mat.append(row_p)
 
     return {
         "z": z, "x": x_labels, "y": list(taxa),
@@ -55,11 +58,11 @@ def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
     }
 
 
-def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
+def build_clinical_slope(rows: list[dict[str, Any]], field: str) -> list[dict[str, Any]]:
     patients    = get_unique_patients(rows)
     timepoints  = sorted_timepoints(rows)
     base_groups = get_base_groups(rows)
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
 
     for p in patients:
         p_rows = sorted([r for r in rows if r["patient"] == p],
@@ -99,7 +102,7 @@ def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
     return traces
 
 
-def build_clinical_correlation(rows: list[dict], field: str) -> tuple[list[dict], float, float]:
+def build_clinical_correlation(rows: list[dict[str, Any]], field: str) -> tuple[list[dict[str, Any]], float, float]:
     """Shannon vs clinical field scatter + regression line. Returns (traces, r, p)."""
     base_groups = get_base_groups(rows)
     valid = [r for r in rows if float(r.get(field) or 0) > 0 and float(r.get("shannon") or 0) > 0]
@@ -119,7 +122,7 @@ def build_clinical_correlation(rows: list[dict], field: str) -> tuple[list[dict]
     intercept = my - slope * mx
     x_range   = [float(np.min(xs)), float(np.max(xs))]
 
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
     for bg in base_groups:
         c   = base_group_color(bg, base_groups)
         pts = [r for r in valid if r.get("base_group", r.get("group")) == bg]

@@ -10,7 +10,7 @@ Repository for the AGB 2026 common class project.
 
 **MicroSee** is Group D's visualisation contribution to this project. The original goal was a **web app** (Flask backend + React frontend, lives in `microsee/`) that would let users upload QIIME2 data and explore an interactive microbiome dashboard in their browser. `MicroSee.html` is the standalone HTML prototype built to validate that concept.
 
-The final deliverable evolves this idea further: instead of requiring a running server, the report generator in `modules/groupD/microsee_report/` produces a **single self-contained HTML file** with all 30+ charts embedded — including Plotly.js (4.3 MB) bundled directly inside. You open it in any browser, on any machine, with no server, no internet, and no installs. This makes it fully compatible with HPC environments where persistent servers and outbound internet are not available.
+The final deliverable evolves this idea further: instead of requiring a running server, the report generator in `modules/groupD/microsee_report/` produces a **single self-contained HTML file** with 34+ interactive charts embedded — including Plotly.js (4.3 MB) bundled directly inside. Every chart panel has an ℹ button that reveals a plain-language explanation of what the chart shows and what the data actually found. You open it in any browser, on any machine, with no server, no internet, and no installs. This makes it fully compatible with HPC environments where persistent servers and outbound internet are not available.
 
 ```mermaid
 flowchart TD
@@ -50,7 +50,7 @@ agb2026/
 │               ├── generate_report.py
 │               ├── parsers.py
 │               ├── models.py
-│               └── charts/         ← Chart builders + HTML template + bundled Plotly.js
+│               └── charts/         ← Chart builders, insights, HTML templates + bundled Plotly.js
 │
 ├── workflows/
 │   └── groupD.nf                   ← Nextflow workflow entry point for Group D

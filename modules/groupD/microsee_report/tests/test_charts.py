@@ -131,10 +131,10 @@ def fixture_chart_data():
 
 
 class TestFixtureCharts:
-    """Chart-builder smoke tests on the realistic 8-sample fixture dataset."""
+    """Chart-builder smoke tests on the realistic 24-sample fixture dataset."""
 
-    def test_meta_eight_samples(self, fixture_chart_data):
-        assert fixture_chart_data["meta"]["n_samples"] == 8
+    def test_meta_twenty_four_samples(self, fixture_chart_data):
+        assert fixture_chart_data["meta"]["n_samples"] == 24
 
     def test_clinical_sections_present(self, fixture_chart_data):
         assert "clinical_sixmwt" in fixture_chart_data
@@ -150,8 +150,8 @@ class TestFixtureCharts:
     def test_stability_bar_all_patients(self, fixture_chart_data):
         stab = fixture_chart_data["stability_bar"]
         assert len(stab) > 0
-        # 4 patients should each have a stability score
-        assert len(stab[0]["y"]) == 4
+        # 12 patients should each have a stability score
+        assert len(stab[0]["y"]) == 12
 
     def test_insights_taxonomy_and_permanova(self, fixture_chart_data):
         ins = fixture_chart_data["insights"]

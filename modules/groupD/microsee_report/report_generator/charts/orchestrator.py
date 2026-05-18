@@ -21,7 +21,7 @@ from .alpha      import (build_all_alpha_metrics, build_rarefaction,
 from .beta       import (build_pcoa_chart, build_nmds_plot,
                           build_dendrogram, build_delta_heatmap)
 from .individual import (build_paired_slope, build_stability_bar,
-                          build_diversity_rank, build_patient_radar,
+                          build_diversity_rank, build_patient_radar_profiles,
                           build_faceted_composition, build_nmds_trajectories)
 from .comparative import (build_diff_abundance, build_volcano, build_heatmap,
                            build_corr_matrix, build_ancom_style)
@@ -29,7 +29,7 @@ from .clinical   import (build_clinical_slope, build_clinical_correlation,
                           build_taxa_clinical_heatmap)
 from .stats      import (build_longitudinal, build_stats_table,
                           build_permanova_table, build_lme_trajectory)
-from .insights   import generate_dynamic_insights
+from .insights   import generate_dynamic_insights, generate_chart_explanations
 
 
 # ── Configuration dataclass ───────────────────────────────────────────────────
@@ -130,11 +130,11 @@ def compute_chart_data(
 
     # ── Individual / per-patient ──────────────────────────────────────────────
     if cfg.includes("individual"):
-        data["paired_slope"]        = build_paired_slope(rows, groups)
-        data["stability_bar"]       = build_stability_bar(rows, taxa)
-        data["diversity_rank"]      = build_diversity_rank(rows)
-        data["patient_radar"]       = build_patient_radar(rows, taxa)
-        data["faceted_composition"] = build_faceted_composition(rows, taxa)
+        data["paired_slope"]           = build_paired_slope(rows, groups)
+        data["stability_bar"]          = build_stability_bar(rows, taxa)
+        data["diversity_rank"]         = build_diversity_rank(rows)
+        data["patient_radar_profiles"] = build_patient_radar_profiles(rows, taxa)
+        data["faceted_composition"]    = build_faceted_composition(rows, taxa)
         if cfg.includes("beta"):
             data["nmds_trajectories"] = {"traces": nmds_traces, "pct1": nmds_pct1, "pct2": nmds_pct2}
         else:
@@ -166,7 +166,8 @@ def compute_chart_data(
         data["corr_il18"]             = {"traces": corr_il18_traces, "r": r_il18, "p": p_il18}
         data["taxa_clinical_heatmap"] = build_taxa_clinical_heatmap(rows, taxa)
 
-    # ── Dynamic insights (reads all payloads, must run last) ──────────────────
-    data["insights"] = generate_dynamic_insights(result, data, rows)
+    # ── Dynamic insights + per-chart explanations (must run last) ────────────
+    data["insights"]      = generate_dynamic_insights(result, data, rows)
+    data["explanations"]  = generate_chart_explanations(result, data, rows)
 
     return data

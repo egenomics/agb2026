@@ -1,16 +1,17 @@
 """charts/preprocessing.py — shared data-preparation helpers for chart builders.
 
-All functions operate on the canonical list[dict] row representation produced by
+All functions operate on the canonical list[dict[str, Any]] row representation produced by
 parsers.integrate().  Centralising these avoids duplicating the same filtering
 and pairing logic across beta, individual, comparative, clinical, stats, and
 renderer — where the T0/T84 patient-pair pattern previously appeared eight times.
 """
 from __future__ import annotations
+from typing import Any
 
 
 # ── Timepoint utilities ───────────────────────────────────────────────────────
 
-def sorted_timepoints(rows: list[dict]) -> list[str]:
+def sorted_timepoints(rows: list[dict[str, Any]]) -> list[str]:
     """Return unique timepoints sorted by their numeric `time` field."""
     tp_time: dict[str, int] = {}
     for r in rows:
@@ -22,12 +23,12 @@ def sorted_timepoints(rows: list[dict]) -> list[str]:
 
 # ── Group utilities ───────────────────────────────────────────────────────────
 
-def get_base_groups(rows: list[dict]) -> list[str]:
+def get_base_groups(rows: list[dict[str, Any]]) -> list[str]:
     """Return sorted unique base_group values from a row list."""
     return sorted(set(r.get("base_group", r.get("group", "")) for r in rows))
 
 
-def get_unique_patients(rows: list[dict]) -> list[str]:
+def get_unique_patients(rows: list[dict[str, Any]]) -> list[str]:
     """Return sorted unique patient IDs."""
     return sorted(set(r["patient"] for r in rows))
 
@@ -35,8 +36,8 @@ def get_unique_patients(rows: list[dict]) -> list[str]:
 # ── Patient-level time pairing ────────────────────────────────────────────────
 
 def get_patient_timepoints(
-    rows: list[dict], patient: str
-) -> tuple[dict | None, dict | None]:
+    rows: list[dict[str, Any]], patient: str
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
     """Return (T0 row, latest post-T0 row) for a patient.
 
     Returns None for a position when no matching row exists.  Callers should
@@ -58,11 +59,11 @@ def get_patient_timepoints(
 # ── Row filtering ─────────────────────────────────────────────────────────────
 
 def filter_rows(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     *,
     timepoint: str | None = None,
     base_group: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Filter a row list by timepoint and/or base_group.
 
     Both filters are ANDed when both are provided.  Returns the original list

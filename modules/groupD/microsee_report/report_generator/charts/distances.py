@@ -1,11 +1,12 @@
 """charts/distances.py — distance matrices, PCoA ordination, and hierarchical clustering."""
 
 from __future__ import annotations
+from typing import Any
 import math  # used by pcoa (math.sqrt) and average_linkage_dendrogram
 import numpy as np
 
 
-def rows_to_ab(rows: list[dict], taxa: list[str]) -> np.ndarray:
+def rows_to_ab(rows: list[dict[str, Any]], taxa: list[str]) -> np.ndarray:
     return np.array([[float(r.get(t) or 0) for t in taxa] for r in rows], dtype=float)
 
 
@@ -69,7 +70,8 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list:
 
     for _ in range(n - 1):
         arr = sorted(active)
-        min_d = float("inf"); ci = cj = -1
+        min_d = float("inf")
+        ci = cj = -1
         for a in range(len(arr)):
             for b in range(a + 1, len(arr)):
                 d = D.get(arr[a], {}).get(arr[b], float("inf"))
@@ -96,7 +98,9 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list:
         pos[next_id]    = (pi * ni + pj * nj) / (ni + nj)
         height[next_id] = min_d
         size[next_id]   = ni + nj
-        active.discard(ci); active.discard(cj); active.add(next_id)
+        active.discard(ci)
+        active.discard(cj)
+        active.add(next_id)
         next_id += 1
 
     return segments

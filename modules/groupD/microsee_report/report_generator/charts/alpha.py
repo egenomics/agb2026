@@ -1,13 +1,14 @@
 """charts/alpha.py — alpha-diversity chart builders (strip, box, violin, rarefaction, multi-metric)."""
 from __future__ import annotations
+from typing import Any
 import numpy as np
 from .utils import group_color, hex_rgba
 from .metrics import METRIC_LABELS, metric_value, pielou_evenness  # noqa: F401 – re-export METRIC_LABELS
 from .stats_helpers import wilcoxon_p, mannwhitney_p, sig_label
 
 
-def build_alpha_strip(rows: list[dict], groups: list[str],
-                      metric: str = "shannon", taxa: list[str] | None = None) -> list[dict]:
+def build_alpha_strip(rows: list[dict[str, Any]], groups: list[str],
+                      metric: str = "shannon", taxa: list[str] | None = None) -> list[dict[str, Any]]:
     traces = []
     for gi, g in enumerate(groups):
         g_rows = [r for r in rows if r["group"] == g]
@@ -34,8 +35,8 @@ def build_alpha_strip(rows: list[dict], groups: list[str],
     return traces
 
 
-def build_alpha_box(rows: list[dict], groups: list[str],
-                    metric: str = "shannon", taxa: list[str] | None = None) -> list[dict]:
+def build_alpha_box(rows: list[dict[str, Any]], groups: list[str],
+                    metric: str = "shannon", taxa: list[str] | None = None) -> list[dict[str, Any]]:
     lbl = METRIC_LABELS.get(metric, metric)
     return [{
         "type": "box", "name": g,
@@ -47,8 +48,8 @@ def build_alpha_box(rows: list[dict], groups: list[str],
     } for g in groups]
 
 
-def build_alpha_violin(rows: list[dict], groups: list[str],
-                       metric: str = "shannon", taxa: list[str] | None = None) -> list[dict]:
+def build_alpha_violin(rows: list[dict[str, Any]], groups: list[str],
+                       metric: str = "shannon", taxa: list[str] | None = None) -> list[dict[str, Any]]:
     lbl = METRIC_LABELS.get(metric, metric)
     return [{
         "type": "violin", "name": g,
@@ -60,8 +61,8 @@ def build_alpha_violin(rows: list[dict], groups: list[str],
     } for g in groups]
 
 
-def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
-                  metric: str, taxa: list[str]) -> dict:
+def _bracket_data(rows: list[dict[str, Any]], groups: list[str], base_groups: list[str],
+                  metric: str, taxa: list[str]) -> dict[str, Any]:
     """Wilcoxon bracket shapes + annotations for one alpha metric box chart."""
     all_vals = [metric_value(r, metric, taxa) for r in rows]
     if not all_vals:
@@ -69,8 +70,8 @@ def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
     y_max  = max(all_vals)
     y_span = max(y_max - min(0.0, min(all_vals)), 1e-6)
     gpos   = {g: i for i, g in enumerate(groups)}
-    shapes: list[dict] = []
-    annots: list[dict] = []
+    shapes: list[dict[str, Any]] = []
+    annots: list[dict[str, Any]] = []
     highest = y_max
 
     def _bracket(x0: int, x1: int, y_b: float, label: str, dashed: bool = False) -> None:
@@ -99,7 +100,8 @@ def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
             t0v  = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
             t84v = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) > 0]
             if t0v and t84v:
-                a.append(t0v[0]); b.append(t84v[0])
+                a.append(t0v[0])
+                b.append(t84v[0])
         p = wilcoxon_p(a, b)
         highest += y_span * 0.14
         _bracket(gpos[t0_g], gpos[t84_g], highest, sig_label(p))
@@ -120,8 +122,8 @@ def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
     return {"shapes": shapes, "annots": annots, "y_max": round(highest + y_span * 0.10, 4)}
 
 
-def build_all_alpha_metrics(rows: list[dict], groups: list[str], taxa: list[str],
-                             base_groups: list[str] | None = None) -> dict:
+def build_all_alpha_metrics(rows: list[dict[str, Any]], groups: list[str], taxa: list[str],
+                             base_groups: list[str] | None = None) -> dict[str, Any]:
     """Pre-compute strip/box/violin + significance brackets for every metric."""
     bgs = base_groups or sorted(set(r.get("base_group", r["group"]) for r in rows))
     return {
@@ -135,10 +137,10 @@ def build_all_alpha_metrics(rows: list[dict], groups: list[str], taxa: list[str]
     }
 
 
-def build_rarefaction(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
+def build_rarefaction(rows: list[dict[str, Any]], taxa: list[str], groups: list[str]) -> list[dict[str, Any]]:
     """Expected species accumulation ± 1 SD shaded band per group."""
     depths = [10, 25, 50, 100, 200, 500, 1_000, 2_000, 5_000, 10_000]
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
     for g in groups:
         g_rows = [r for r in rows if r["group"] == g]
         c = group_color(g, groups)
@@ -174,8 +176,8 @@ def build_rarefaction(rows: list[dict], taxa: list[str], groups: list[str]) -> l
     return traces
 
 
-def build_multimet_alpha(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
-    traces: list[dict] = []
+def build_multimet_alpha(rows: list[dict[str, Any]], taxa: list[str], groups: list[str]) -> list[dict[str, Any]]:
+    traces: list[dict[str, Any]] = []
     for g in groups:
         g_rows = [r for r in rows if r["group"] == g]
         c = group_color(g, groups)

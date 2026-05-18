@@ -1,5 +1,6 @@
-"""charts/individual.py — per-patient chart builders (slopegraph, stability, rank, radar, faceted, NMDS trajectories)."""
+"""charts/individual.py — per-patient chart builders."""
 from __future__ import annotations
+from typing import Any
 import math
 import numpy as np
 from .utils import hex_rgba, taxon_color, base_group_color
@@ -9,13 +10,18 @@ from .preprocessing import (
 from .distances import rows_to_ab, bray_curtis_matrix, pcoa
 
 
-def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
-    """Per-patient Shannon T0→T84 slopegraph."""
+# ── Paired Slopegraph ─────────────────────────────────────────────────────────
+
+def build_paired_slope(rows: list[dict[str, Any]], groups: list[str]) -> dict[str, list[dict[str, Any]]]:
+    """Per-patient slopegraph for Shannon and Simpson — returns dict keyed by metric."""
+    return {m: _slope_traces(rows, m) for m in ("shannon", "simpson")}
+
+
+def _slope_traces(rows: list[dict[str, Any]], metric: str) -> list[dict[str, Any]]:
     timepoints  = sorted_timepoints(rows)
     base_groups = get_base_groups(rows)
-    traces: list[dict] = []
-    patients = get_unique_patients(rows)
-    for p in patients:
+    traces: list[dict[str, Any]] = []
+    for p in get_unique_patients(rows):
         p_rows = sorted([r for r in rows if r["patient"] == p],
                         key=lambda r: r.get("time") or 0)
         if len(p_rows) < 2:
@@ -25,17 +31,17 @@ def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
         traces.append({
             "type": "scatter", "mode": "lines+markers", "name": p,
             "x": [r["timepoint"] for r in p_rows],
-            "y": [float(r["shannon"]) for r in p_rows],
+            "y": [float(r.get(metric) or 0) for r in p_rows],
             "line": {"color": hex_rgba(c, 0.55), "width": 1.5},
             "marker": {"size": 7, "color": c},
             "showlegend": False,
-            "hovertemplate": f"<b>{p}</b><br>%{{x}}<br>Shannon: %{{y:.3f}}<extra></extra>",
+            "hovertemplate": f"<b>{p}</b><br>%{{x}}<br>{metric}: %{{y:.3f}}<extra></extra>",
         })
     for bg in base_groups:
         c = base_group_color(bg, base_groups)
         means, xs_used = [], []
         for tp in timepoints:
-            vals = [float(r["shannon"]) for r in rows
+            vals = [float(r.get(metric) or 0) for r in rows
                     if r.get("base_group", r["group"]) == bg and r["timepoint"] == tp]
             if vals:
                 means.append(round(float(np.mean(vals)), 4))
@@ -46,12 +52,14 @@ def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
                 "name": f"{bg} mean", "x": xs_used, "y": means,
                 "line": {"color": c, "width": 3, "dash": "dash"},
                 "marker": {"size": 10, "color": c, "symbol": "diamond"},
-                "hovertemplate": f"<b>{bg} mean</b><br>%{{x}}<br>Shannon: %{{y:.3f}}<extra></extra>",
+                "hovertemplate": f"<b>{bg} mean</b><br>%{{x}}<br>{metric}: %{{y:.3f}}<extra></extra>",
             })
     return traces
 
 
-def build_stability_bar(rows: list[dict], taxa: list[str]) -> list[dict]:
+# ── Stability Bar ─────────────────────────────────────────────────────────────
+
+def build_stability_bar(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Per-patient Bray-Curtis dissimilarity T0 vs T84, sorted horizontal bar."""
     base_groups = get_base_groups(rows)
     scores = []
@@ -78,22 +86,28 @@ def build_stability_bar(rows: list[dict], taxa: list[str]) -> list[dict]:
     }]
 
 
-def build_diversity_rank(rows: list[dict]) -> list[dict]:
-    """Samples ranked low→high by Shannon; circle = T0, diamond = T84."""
+# ── Diversity Rank ────────────────────────────────────────────────────────────
+
+def build_diversity_rank(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]:
+    """Samples ranked low→high for Shannon and Simpson — returns dict keyed by metric."""
+    return {m: _rank_traces(rows, m) for m in ("shannon", "simpson")}
+
+
+def _rank_traces(rows: list[dict[str, Any]], metric: str) -> list[dict[str, Any]]:
     base_groups = get_base_groups(rows)
-    sorted_rows = sorted(rows, key=lambda r: float(r.get("shannon") or 0))
+    sorted_rows = sorted(rows, key=lambda r: float(r.get(metric) or 0))
     traces = []
     for bg in base_groups:
-        c    = base_group_color(bg, base_groups)
-        pts  = [(i, r) for i, r in enumerate(sorted_rows)
-                if r.get("base_group", r.get("group")) == bg]
-        t0   = [(i, r) for i, r in pts if (r.get("time") or 0) == 0]
-        t84  = [(i, r) for i, r in pts if (r.get("time") or 0) > 0]
+        c   = base_group_color(bg, base_groups)
+        pts = [(i, r) for i, r in enumerate(sorted_rows)
+               if r.get("base_group", r.get("group")) == bg]
+        t0  = [(i, r) for i, r in pts if (r.get("time") or 0) == 0]
+        t84 = [(i, r) for i, r in pts if (r.get("time") or 0) > 0]
         if t0:
             traces.append({
                 "type": "scatter", "mode": "markers", "name": f"{bg} T0",
                 "x": [i for i, _ in t0],
-                "y": [float(r.get("shannon") or 0) for _, r in t0],
+                "y": [float(r.get(metric) or 0) for _, r in t0],
                 "text": [r["sample_id"] for _, r in t0],
                 "marker": {"color": hex_rgba(c, 0.6), "size": 8, "symbol": "circle",
                            "line": {"width": 1, "color": "white"}},
@@ -103,7 +117,7 @@ def build_diversity_rank(rows: list[dict]) -> list[dict]:
             traces.append({
                 "type": "scatter", "mode": "markers", "name": f"{bg} T84",
                 "x": [i for i, _ in t84],
-                "y": [float(r.get("shannon") or 0) for _, r in t84],
+                "y": [float(r.get(metric) or 0) for _, r in t84],
                 "text": [r["sample_id"] for _, r in t84],
                 "marker": {"color": c, "size": 9, "symbol": "diamond",
                            "line": {"width": 1, "color": "white"}},
@@ -112,35 +126,101 @@ def build_diversity_rank(rows: list[dict]) -> list[dict]:
     return traces
 
 
-def build_patient_radar(rows: list[dict], taxa: list[str]) -> list[dict]:
-    """Radar: group mean T0 (filled) vs group mean T84 (dashed) per base_group."""
+# ── Patient Radar Profiles ────────────────────────────────────────────────────
+
+def build_patient_radar_profiles(rows: list[dict[str, Any]], taxa: list[str]) -> dict[str, Any]:
+    """Pre-compute per-patient radar traces + composition table for all patients.
+
+    Returns::
+        {
+          "patients": [str, ...],           # ordered patient list
+          "profiles": {
+            "<patient_id>": {
+              "traces": [Plotly trace, ...], # T0 filled, T84 dashed, group mean dotted
+              "table":  [{"family", "v0", "v84", "delta"}, ...],
+              "group":  str,
+            }
+          }
+        }
+    """
     base_groups = get_base_groups(rows)
-    short_taxa  = [t.replace("aceae", "")[:10] for t in taxa]
-    traces = []
+    short_taxa  = [t.replace("aceae", "")[:12] for t in taxa]
+
+    # Pre-compute group mean T0 as the dotted reference line
+    gmeans: dict[str, list[float]] = {}
     for bg in base_groups:
-        c        = base_group_color(bg, base_groups)
-        t0_rows  = [r for r in rows if r.get("base_group", r.get("group")) == bg and (r.get("time") or 0) == 0]
-        t84_rows = [r for r in rows if r.get("base_group", r.get("group")) == bg and (r.get("time") or 0) > 0]
-        for label, g_rows, filled in [("T0", t0_rows, True), ("T84", t84_rows, False)]:
-            if not g_rows:
-                continue
-            vals = [round(float(np.mean([float(r.get(t) or 0) for r in g_rows])), 1) for t in taxa]
+        t0s = [r for r in rows
+               if r.get("base_group", r.get("group")) == bg and (r.get("time") or 0) == 0]
+        if t0s:
+            gmeans[bg] = [
+                round(float(np.mean(
+                    [float(r.get(t) or 0) / (sum(float(r.get(tt) or 0) for tt in taxa) or 1) * 100
+                     for r in t0s]
+                )), 1)
+                for t in taxa
+            ]
+
+    patients = get_unique_patients(rows)
+    profiles: dict[str, dict[str, Any]] = {}
+
+    for p in patients:
+        r0, r84 = get_patient_timepoints(rows, p)
+        if r0 is None:
+            continue
+        bg = r0.get("base_group", r0.get("group", ""))
+        c  = base_group_color(bg, base_groups)
+
+        tot0 = sum(float(r0.get(t) or 0) for t in taxa) or 1.0
+        v0   = [round(float(r0.get(t) or 0) / tot0 * 100, 1) for t in taxa]
+
+        v84: list[float] | None = None
+        if r84 is not None:
+            tot84 = sum(float(r84.get(t) or 0) for t in taxa) or 1.0
+            v84   = [round(float(r84.get(t) or 0) / tot84 * 100, 1) for t in taxa]
+
+        traces: list[dict[str, Any]] = [{
+            "type": "scatterpolar", "fill": "toself",
+            "r": v0 + [v0[0]], "theta": short_taxa + [short_taxa[0]],
+            "fillcolor": hex_rgba(c, 0.2),
+            "line": {"color": hex_rgba(c, 0.8), "width": 2},
+            "name": f"{p} T0",
+            "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",
+        }]
+        if v84 is not None:
             traces.append({
-                "type": "scatterpolar",
-                "fill": "toself" if filled else "none",
-                "r": vals + [vals[0]],
-                "theta": short_taxa + [short_taxa[0]],
-                "fillcolor": hex_rgba(c, 0.2) if filled else "rgba(0,0,0,0)",
-                "line": {"color": hex_rgba(c, 0.8) if filled else c,
-                         "width": 2 if filled else 2.5,
-                         "dash": "solid" if filled else "dash"},
-                "name": f"{bg} {label}",
+                "type": "scatterpolar", "fill": "none",
+                "r": v84 + [v84[0]], "theta": short_taxa + [short_taxa[0]],
+                "line": {"color": c, "width": 2.5, "dash": "dash"},
+                "name": f"{p} T84",
                 "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",
             })
-    return traces
+        if bg in gmeans:
+            gm = gmeans[bg]
+            traces.append({
+                "type": "scatterpolar", "fill": "none",
+                "r": gm + [gm[0]], "theta": short_taxa + [short_taxa[0]],
+                "line": {"color": "#C4A0A8", "width": 1.5, "dash": "dot"},
+                "name": f"{bg} mean T0",
+                "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",
+            })
+
+        table = [
+            {
+                "family": t.replace("aceae", ""),
+                "v0":    v0[i],
+                "v84":   v84[i] if v84 is not None else None,
+                "delta": round(v84[i] - v0[i], 1) if v84 is not None else None,
+            }
+            for i, t in enumerate(taxa)
+        ]
+        profiles[p] = {"traces": traces, "table": table, "group": bg}
+
+    return {"patients": patients, "profiles": profiles}
 
 
-def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
+# ── Faceted small multiples ───────────────────────────────────────────────────
+
+def build_faceted_composition(rows: list[dict[str, Any]], taxa: list[str]) -> dict[str, Any]:
     """True small-multiples: one subplot per patient, T0 vs T84 stacked bars."""
     patients = get_unique_patients(rows)
     n        = len(patients)
@@ -150,8 +230,8 @@ def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
     col_w = (1.0 - col_gap * (n_cols - 1)) / n_cols
     row_h = (1.0 - row_gap * (n_rows - 1)) / n_rows
 
-    data: list[dict] = []
-    annotations: list[dict] = []
+    data: list[dict[str, Any]] = []
+    annotations: list[dict[str, Any]] = []
     layout: dict = {"barmode": "stack", "showlegend": True,
                     "height": max(360, n_rows * 240),
                     "margin": {"l": 40, "r": 10, "t": 20, "b": 40}}
@@ -205,17 +285,19 @@ def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
     return {"data": data, "layout": layout}
 
 
+# ── NMDS Trajectories ─────────────────────────────────────────────────────────
+
 def build_nmds_trajectories(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     taxa: list[str],
     bc_matrix: "np.ndarray | None" = None,
-) -> tuple[list[dict], float, float]:
+) -> tuple[list[dict[str, Any]], float, float]:
     """PCoA (Bray-Curtis) with T0→T84 arrows per patient."""
     base_groups = get_base_groups(rows)
     mat = bc_matrix if bc_matrix is not None else bray_curtis_matrix(rows_to_ab(rows, taxa))
     xs, ys, pct1, pct2 = pcoa(mat)
     coord_map = {r["sample_id"]: (xs[i], ys[i]) for i, r in enumerate(rows)}
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
     for p in get_unique_patients(rows):
         r0, r84 = get_patient_timepoints(rows, p)
         if r0 is None or r84 is None:

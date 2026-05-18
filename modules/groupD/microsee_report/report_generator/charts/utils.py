@@ -1,5 +1,6 @@
 """charts/utils.py — shared colour helpers and styling utilities."""
 from __future__ import annotations
+from typing import Any
 from .config import GROUP_COLORS, FALLBACK_COLOR, TAXA_COLORS, _EXTRA_TAXA_PALETTE
 
 
@@ -41,7 +42,7 @@ def hex_rgba(hex_color: str, alpha: float) -> str:
     return f"rgba({r},{g},{b},{alpha})"
 
 
-def _sorted_timepoints(rows: list[dict]) -> list[str]:
+def _sorted_timepoints(rows: list[dict[str, Any]]) -> list[str]:
     """Thin wrapper — delegates to preprocessing.sorted_timepoints.
 
     Kept so callers that haven't updated their imports still work.

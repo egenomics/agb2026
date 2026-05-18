@@ -1,17 +1,18 @@
 """charts/stats.py — statistical summary builders (longitudinal, diversity table, PERMANOVA,
                        Wilcoxon / Mann-Whitney tests, LME-style trajectory)."""
 from __future__ import annotations
+from typing import Any
 import hashlib
 import math
 import numpy as np
-from .utils import base_group_color, group_color, hex_rgba
+from .utils import base_group_color, hex_rgba
 from .preprocessing import sorted_timepoints, get_base_groups
 from .metrics import METRIC_LABELS, metric_value
 from .stats_helpers import wilcoxon_p, sig_label
 from .distances import rows_to_ab, bray_curtis_matrix
 
 
-def build_longitudinal(rows: list[dict]) -> list[dict]:
+def build_longitudinal(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Group mean Shannon per timepoint, connected across time."""
     timepoints  = sorted_timepoints(rows)
     base_groups = get_base_groups(rows)
@@ -37,7 +38,7 @@ def build_longitudinal(rows: list[dict]) -> list[dict]:
     return traces
 
 
-def build_stats_table(rows: list[dict], groups: list[str], taxa: list[str] | None = None) -> dict:
+def build_stats_table(rows: list[dict[str, Any]], groups: list[str], taxa: list[str] | None = None) -> dict[str, Any]:
     metrics = list(METRIC_LABELS.keys())
     header = ["Group", "N"] + [f"{METRIC_LABELS[m]} mean ± SD" for m in metrics]
     table_rows = []
@@ -56,10 +57,10 @@ def build_stats_table(rows: list[dict], groups: list[str], taxa: list[str] | Non
 
 
 def build_permanova_table(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     taxa: list[str],
     bc_matrix: "np.ndarray | None" = None,
-) -> dict:
+) -> dict[str, Any]:
     """PERMANOVA: pseudo-F, R², p-value (99 permutations, Bray-Curtis)."""
     n = len(rows)
     if n < 4 or not taxa:
@@ -136,7 +137,7 @@ def build_permanova_table(
     }
 
 
-def build_lme_trajectory(rows: list[dict], base_groups: list[str], taxa: list[str]) -> dict:
+def build_lme_trajectory(rows: list[dict[str, Any]], base_groups: list[str], taxa: list[str]) -> dict[str, Any]:
     """Mean ± 95% CI trajectory per base group × timepoint, per alpha metric.
 
     Individual patient lines drawn underneath for context.
@@ -146,10 +147,10 @@ def build_lme_trajectory(rows: list[dict], base_groups: list[str], taxa: list[st
     if len(timepoints) < 2:
         return {}
 
-    result: dict[str, list[dict]] = {}
+    result: dict[str, list[dict[str, Any]]] = {}
 
     for metric, metric_lbl in METRIC_LABELS.items():
-        traces: list[dict] = []
+        traces: list[dict[str, Any]] = []
 
         # Individual patient lines (background context)
         patients = sorted(set(r["patient"] for r in rows))
@@ -209,7 +210,7 @@ def build_lme_trajectory(rows: list[dict], base_groups: list[str], taxa: list[st
                 "error_y": {
                     "type": "data", "symmetric": False,
                     "array":       [u - m for u, m in zip(uppers, means)],
-                    "arrayminus":  [m - l for m, l in zip(means, lowers)],
+                    "arrayminus":  [m - lo for m, lo in zip(means, lowers)],
                     "color": hex_rgba(c, 0.5), "thickness": 1.5, "width": 6,
                 },
                 "hovertemplate": (f"<b>{bg}</b><br>%{{x}}<br>"
@@ -227,7 +228,8 @@ def build_lme_trajectory(rows: list[dict], base_groups: list[str], taxa: list[st
                     t84v = [metric_value(r, metric, taxa) for r in rows
                             if r["patient"] == p and (r.get("time") or 0) > 0]
                     if t0v and t84v:
-                        a_vals.append(t0v[0]); b_vals.append(t84v[0])
+                        a_vals.append(t0v[0])
+                        b_vals.append(t84v[0])
                 p_val = wilcoxon_p(a_vals, b_vals)
                 lbl   = sig_label(p_val)
                 traces.append({

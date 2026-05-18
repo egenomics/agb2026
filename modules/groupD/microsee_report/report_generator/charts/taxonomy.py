@@ -1,11 +1,12 @@
 """charts/taxonomy.py — stacked bar, top-N, donut, and sunburst chart builders."""
 
 from __future__ import annotations
+from typing import Any
 import numpy as np
 from .utils import taxon_color, hex_rgba, group_color
 
 
-def build_taxonomy_stacked(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_taxonomy_stacked(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     sample_ids = [r["sample_id"] for r in rows]
     return [{
         "type": "bar", "name": taxon,
@@ -16,7 +17,7 @@ def build_taxonomy_stacked(rows: list[dict], taxa: list[str]) -> list[dict]:
     } for taxon in taxa]
 
 
-def build_top_taxa(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_top_taxa(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     means = {t: float(np.mean([float(r.get(t) or 0) for r in rows])) for t in taxa}
     ordered = sorted(means, key=lambda t: means[t], reverse=True)
     return [{
@@ -28,7 +29,7 @@ def build_top_taxa(rows: list[dict], taxa: list[str]) -> list[dict]:
     }]
 
 
-def build_donut(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
+def build_donut(rows: list[dict[str, Any]], taxa: list[str], groups: list[str]) -> list[dict[str, Any]]:
     col_w = 1.0 / len(groups)
     return [{
         "type": "pie", "hole": 0.45, "name": g,
@@ -41,7 +42,7 @@ def build_donut(rows: list[dict], taxa: list[str], groups: list[str]) -> list[di
     } for gi, g in enumerate(groups) if (g_rows := [r for r in rows if r["group"] == g])]
 
 
-def build_taxonomy_views(rows: list[dict], taxa: list[str], base_groups: list[str]) -> dict:
+def build_taxonomy_views(rows: list[dict[str, Any]], taxa: list[str], base_groups: list[str]) -> dict[str, Any]:
     """Pre-compute stacked-bar traces for every tp × group × topn combination."""
     views: dict[str, list] = {}
     tp_map  = {"both": None, "T0": "T0", "T84": "T84"}
@@ -65,18 +66,22 @@ def build_taxonomy_views(rows: list[dict], taxa: list[str], base_groups: list[st
     return views
 
 
-def build_sunburst(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
+def build_sunburst(rows: list[dict[str, Any]], taxa: list[str], groups: list[str]) -> list[dict[str, Any]]:
     labels, parents, values, colors = [], [], [], []
     for g in groups:
         g_rows = [r for r in rows if r["group"] == g]
         child_vals = [round(float(np.mean([float(r.get(t) or 0) for r in g_rows])), 1) for t in taxa]
         g_total = round(sum(child_vals), 1)
-        labels.append(g); parents.append(""); values.append(g_total)
+        labels.append(g)
+        parents.append("")
+        values.append(g_total)
         colors.append(group_color(g, groups))
         for t, v in zip(taxa, child_vals):
             if v > 0:
-                labels.append(f"{g}:{t}"); parents.append(g)
-                values.append(v); colors.append(taxon_color(t))
+                labels.append(f"{g}:{t}")
+                parents.append(g)
+                values.append(v)
+                colors.append(taxon_color(t))
     return [{
         "type": "sunburst",
         "labels": labels, "parents": parents, "values": values,

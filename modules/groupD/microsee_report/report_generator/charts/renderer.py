@@ -10,6 +10,10 @@ import numpy as np
 from pathlib import Path
 from typing import Any
 
+from .config import BASE_LAYOUT, BASE_CONFIG, THEME
+from .individual import build_patient_radar_profiles, build_faceted_composition
+from .clinical   import build_clinical_slope
+
 # Load Plotly.js from the bundled file so the report works offline on HPC nodes.
 _PLOTLY_JS_PATH = Path(__file__).parent / "plotly.min.js"
 if _PLOTLY_JS_PATH.exists():
@@ -38,15 +42,10 @@ else:
 _TEMPLATE         = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
 _PATIENT_TEMPLATE = (Path(__file__).parent / "patient_template.html").read_text(encoding="utf-8")
 
-from .config import BASE_LAYOUT, BASE_CONFIG, THEME
-from .individual import build_patient_radar, build_faceted_composition
-from .clinical   import build_clinical_slope
-from .distances  import bray_curtis_matrix
-
 
 # ── Per-patient stability helper ──────────────────────────────────────────────
 
-def _patient_bc(rows: list[dict], taxa: list[str], patient: str) -> float:
+def _patient_bc(rows: list[dict[str, Any]], taxa: list[str], patient: str) -> float:
     """Bray-Curtis dissimilarity between T0 and T84 for one patient."""
     from .preprocessing import get_patient_timepoints
     r0, r84 = get_patient_timepoints(rows, patient)
@@ -86,10 +85,13 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         "This degree of change is common in dietary intervention studies."
     )
 
+    all_profiles = build_patient_radar_profiles(rows, taxa)
+    pat_profile  = all_profiles["profiles"].get(patient_id, {})
     patient_chart_data: dict[str, Any] = {
-        "radar": build_patient_radar(rows, taxa),
-        "comp":  build_faceted_composition(p_rows, taxa),
-        "bc":    bc,
+        "radar":       pat_profile.get("traces", []),
+        "radar_table": pat_profile.get("table", []),
+        "comp":        build_faceted_composition(p_rows, taxa),
+        "bc":          bc,
     }
     if result.has_clinical:
         patient_chart_data["sixmwt"] = build_clinical_slope(

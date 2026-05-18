@@ -113,7 +113,7 @@ def test_missing_taxonomy_column_raises():
         parse_taxonomy("col1\tcol2\nA\tB\n")
 
 
-# ── Fixture-file tests (realistic 4-patient × 2-timepoint dataset) ────────────
+# ── Fixture-file tests (realistic 12-patient × 2-timepoint dataset) ───────────
 
 _DATA = Path(__file__).parent / "data"
 
@@ -158,24 +158,25 @@ class TestFixtureFiles:
 
     def test_feature_table_dimensions(self, file_feat):
         result = parse_feature_table(file_feat)
-        assert result.n_samples == 8
-        assert result.n_features == 6
+        assert result.n_samples == 24
+        assert result.n_features == 9
 
     def test_feature_table_sample_ids(self, file_feat):
         result = parse_feature_table(file_feat)
-        assert "P1_T0" in result.samples
-        assert "P4_T84" in result.samples
+        assert "EAA01_T0" in result.samples
+        assert "WHY06_T84" in result.samples
 
-    def test_taxonomy_six_families(self, file_tax):
+    def test_taxonomy_nine_families(self, file_tax):
         result = parse_taxonomy(file_tax)
-        assert len(result.assignments) == 6
+        assert len(result.assignments) == 9
         assert "Lachnospiraceae" in result.assignments.values()
-        assert "Bifidobacteriaceae" in result.assignments.values()
+        assert "Akkermansiaceae" in result.assignments.values()
+        assert "Oscillospiraceae" in result.assignments.values()
         assert result.unclassified_pct == 0.0
 
     def test_metadata_clinical_detected(self, file_meta):
         result = parse_metadata(file_meta)
-        assert result.n_samples == 8
+        assert result.n_samples == 24
         assert result.has_clinical is True  # sixmwt + il18 columns present
 
     def test_metadata_groups_present(self, file_meta):
@@ -186,18 +187,18 @@ class TestFixtureFiles:
 
     def test_alpha_all_five_metrics(self, file_alpha):
         result = parse_alpha_diversity(file_alpha)
-        assert len(result.samples) == 8
-        s = next(e for e in result.samples if e.sample_id == "P1_T0")
-        assert s.shannon == pytest.approx(1.52)
-        assert s.simpson == pytest.approx(0.75)
-        assert s.faith_pd == pytest.approx(8.2)
+        assert len(result.samples) == 24
+        s = next(e for e in result.samples if e.sample_id == "EAA01_T0")
+        assert s.shannon == pytest.approx(1.791)
+        assert s.simpson == pytest.approx(0.786)
+        assert s.faith_pd == pytest.approx(9.2)
 
     def test_integrate_clinical_flag(self, file_result):
         assert file_result.has_clinical is True
 
-    def test_integrate_eight_rows(self, file_result):
-        assert file_result.n_samples == 8
-        assert len(file_result.rows) == 8
+    def test_integrate_twenty_four_rows(self, file_result):
+        assert file_result.n_samples == 24
+        assert len(file_result.rows) == 24
 
     def test_integrate_abundances_sum_to_100(self, file_result):
         for row in file_result.rows:

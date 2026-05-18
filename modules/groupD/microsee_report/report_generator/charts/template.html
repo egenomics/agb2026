@@ -100,6 +100,34 @@ section{margin-bottom:40px;scroll-margin-top:16px}
   border-left:3px solid #D97A3A;padding:4px 0 4px 10px;margin-bottom:14px
 }
 .sec-insight:empty{display:none}
+/* ── Chart info panels ──────────────────────────────────────────────────── */
+.chart-title{display:flex;align-items:center;gap:0}
+.info-btn{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:17px;height:17px;border-radius:50%;
+  border:1px solid rgba(196,160,140,.5);background:transparent;
+  cursor:pointer;font-size:10px;color:#8B5860;margin-left:7px;
+  padding:0;font-family:__FONT__;transition:all .12s;flex-shrink:0;
+  line-height:1
+}
+.info-btn:hover,.info-btn.open{background:#D97A3A;border-color:#D97A3A;color:#fff}
+.chart-info{
+  background:#FFF8F3;border:1px solid rgba(217,122,58,.22);
+  border-radius:8px;padding:12px 14px;margin-bottom:10px;
+  font-size:12px;line-height:1.6;display:none
+}
+.chart-info.open{display:block}
+.ci-what{color:#6B3A2A;margin-bottom:6px}
+.ci-finding{
+  color:#3E1A0E;font-weight:600;margin-bottom:8px;
+  border-left:3px solid #D97A3A;padding-left:8px
+}
+.ci-pills{display:flex;flex-wrap:wrap;gap:4px}
+.ci-pill{
+  font-size:10px;padding:2px 9px;border-radius:10px;
+  background:rgba(217,122,58,.1);color:#B85A18;
+  border:1px solid rgba(217,122,58,.25)
+}
 /* Misc */
 .warning{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;
   padding:8px 12px;margin-bottom:8px;font-size:12px}
@@ -306,8 +334,13 @@ __WARNINGS__
   <div class="sec-insight" id="insight-stability"></div>
   <div class="grid1">
     <div class="chart-card">
-      <div class="chart-title">Paired Slopegraph — Shannon</div>
+      <div class="chart-title" id="title-paired-slope">Paired Slopegraph — Shannon H′</div>
       <div class="chart-sub">Each line = one patient · dashed = group mean · T0 → T84</div>
+      <div class="control-bar">
+        <span class="ctrl-label">Metric</span>
+        <button class="ctrl-btn slope-btn active" data-m="shannon">Shannon H′</button>
+        <button class="ctrl-btn slope-btn" data-m="simpson">Simpson</button>
+      </div>
       <div id="chart-paired-slope" class="plot-div"></div>
     </div>
   </div>
@@ -318,27 +351,39 @@ __WARNINGS__
       <div id="chart-stability" class="plot-div"></div>
     </div>
     <div class="chart-card">
-      <div class="chart-title">Diversity Rank Plot — Shannon</div>
+      <div class="chart-title" id="title-rank">Diversity Rank — Shannon H′</div>
       <div class="chart-sub">Samples ranked low→high · circles = T0 · diamonds = T84</div>
+      <div class="control-bar">
+        <span class="ctrl-label">Metric</span>
+        <button class="ctrl-btn rank-btn active" data-m="shannon">Shannon H′</button>
+        <button class="ctrl-btn rank-btn" data-m="simpson">Simpson</button>
+      </div>
       <div id="chart-diversity-rank" class="plot-div"></div>
     </div>
   </div>
-  <div class="grid2">
+  <div class="grid1">
     <div class="chart-card">
       <div class="chart-title">Patient Radar Profile</div>
-      <div class="chart-sub">Group mean T0 (filled) vs T84 (dashed) · family-level composition</div>
-      <div id="chart-radar" class="plot-div-lg"></div>
+      <div class="chart-sub">T0 filled · T84 dashed · group mean dotted · select a patient to inspect their individual data</div>
+      <div class="control-bar">
+        <span class="ctrl-label">Patient</span>
+        <select id="radar-pat-sel" style="font-size:11px;padding:3px 8px;border-radius:8px;border:1px solid rgba(196,160,140,.4);background:#FFF8F4;font-family:__FONT__;color:__TEXT__"></select>
+      </div>
+      <div style="display:flex;gap:24px;align-items:flex-start;flex-wrap:wrap">
+        <div id="chart-radar" style="flex:0 0 400px;min-width:260px;height:420px"></div>
+        <div id="radar-tbl" style="flex:1;min-width:200px;font-size:12px;padding-top:8px"></div>
+      </div>
     </div>
+  </div>
+  <div class="grid2">
     <div class="chart-card">
       <div class="chart-title">NMDS — Individual Trajectories</div>
       <div class="chart-sub">○ = T0 start · ● = T84 end · short line = stable microbiome</div>
       <div id="chart-nmds-traj" class="plot-div-lg"></div>
     </div>
-  </div>
-  <div class="grid1">
     <div class="chart-card">
       <div class="chart-title">Individual Composition — Small Multiples</div>
-      <div class="chart-sub">T0 vs T84 per patient · each colour = one family · interactive: zoom, hover, legend toggle</div>
+      <div class="chart-sub">T0 vs T84 per patient · each colour = one family</div>
       <div id="chart-faceted" class="plot-div-xl"></div>
     </div>
   </div>
@@ -573,26 +618,117 @@ __CLINICAL_SECTION__
   }));
 
   // ── Individual ────────────────────────────────────────────────────────────
-  render('chart-paired-slope', D.paired_slope, merge(L,{
-    height:360, yaxis:{title:{text:"Shannon H′"}},
-  }));
+  var indLabels={'shannon':"Shannon H′",'simpson':"Simpson"};
+
+  // Slopegraph with metric toggle
+  function updateSlope(m){
+    var lbl=indLabels[m]||m;
+    var tl=document.getElementById('title-paired-slope');
+    if(tl) tl.textContent='Paired Slopegraph — '+lbl;
+    var tr=D.paired_slope&&D.paired_slope[m];
+    if(tr&&tr.length) Plotly.react('chart-paired-slope',tr,merge(L,{
+      height:360, yaxis:{title:{text:lbl}},
+    }),C);
+    document.querySelectorAll('.slope-btn').forEach(function(b){
+      b.classList.toggle('active',b.dataset.m===m);
+    });
+  }
+  updateSlope('shannon');
+  document.querySelectorAll('.slope-btn').forEach(function(b){
+    b.addEventListener('click',function(){updateSlope(this.dataset.m);});
+  });
+
+  // Stability bar (no toggle needed)
   render('chart-stability', D.stability_bar, merge(L,{
     height:360, margin:{l:90,r:60,t:32,b:40},
     xaxis:{title:{text:'Bray-Curtis dissimilarity'},range:[0,1]},
     yaxis:{automargin:true, gridcolor:'transparent'},
     showlegend:false,
   }));
-  render('chart-diversity-rank', D.diversity_rank, merge(L,{
-    height:360,
-    xaxis:{title:{text:'Rank'},showticklabels:false,gridcolor:'transparent'},
-    yaxis:{title:{text:"Shannon H′"}},
+
+  // Diversity rank with metric toggle
+  function updateRank(m){
+    var lbl=indLabels[m]||m;
+    var tl=document.getElementById('title-rank');
+    if(tl) tl.textContent='Diversity Rank — '+lbl;
+    var tr=D.diversity_rank&&D.diversity_rank[m];
+    if(tr&&tr.length) Plotly.react('chart-diversity-rank',tr,merge(L,{
+      height:360,
+      xaxis:{title:{text:'Rank'},showticklabels:false,gridcolor:'transparent'},
+      yaxis:{title:{text:lbl}},
+    }),C);
+    document.querySelectorAll('.rank-btn').forEach(function(b){
+      b.classList.toggle('active',b.dataset.m===m);
+    });
+  }
+  updateRank('shannon');
+  document.querySelectorAll('.rank-btn').forEach(function(b){
+    b.addEventListener('click',function(){updateRank(this.dataset.m);});
+  });
+
+  // Patient Radar with selector and composition table
+  (function(){
+    var rp=D.patient_radar_profiles;
+    if(!rp||!rp.patients||!rp.patients.length) return;
+    var sel=document.getElementById('radar-pat-sel');
+    rp.patients.forEach(function(p){
+      var o=document.createElement('option'); o.value=p; o.textContent=p;
+      sel.appendChild(o);
+    });
+    function buildTable(tbl,patName){
+      var out='<div style="font-weight:700;color:#6B3A2A;margin-bottom:6px;padding-bottom:4px;'+
+        'border-bottom:1px solid rgba(196,160,140,.2)">'+patName+'</div>';
+      out+='<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr>'+
+        '<th style="text-align:left;padding:4px 6px;font-size:10px;color:#8B5860;'+
+        'text-transform:uppercase;border-bottom:2px solid rgba(196,160,140,.2)">Family</th>'+
+        '<th style="text-align:right;padding:4px 6px;font-size:10px;color:#8B5860;'+
+        'text-transform:uppercase;border-bottom:2px solid rgba(196,160,140,.2)">T0 %</th>'+
+        '<th style="text-align:right;padding:4px 6px;font-size:10px;color:#8B5860;'+
+        'text-transform:uppercase;border-bottom:2px solid rgba(196,160,140,.2)">T84 %</th>'+
+        '<th style="text-align:right;padding:4px 6px;font-size:10px;color:#8B5860;'+
+        'text-transform:uppercase;border-bottom:2px solid rgba(196,160,140,.2)">Δ</th>'+
+        '</tr></thead><tbody>';
+      tbl.forEach(function(r){
+        var d=r.delta, dS=d!==null?(d>0?'+':'')+d.toFixed(1):'—';
+        var dC=d>2?'#D97A3A':d<-2?'#4A7ED4':'#8B5860';
+        var bg2=Math.abs(d)>2?(d>0?'rgba(217,122,58,0.06)':'rgba(74,126,212,0.06)'):'transparent';
+        out+='<tr style="background:'+bg2+';border-bottom:1px solid rgba(196,160,140,.08)">'+
+          '<td style="padding:3px 6px;font-weight:600;color:#6B3A2A">'+r.family+'</td>'+
+          '<td style="padding:3px 6px;text-align:right;color:#8B5860">'+r.v0.toFixed(1)+'</td>'+
+          '<td style="padding:3px 6px;text-align:right;color:#8B5860">'+
+            (r.v84!==null?r.v84.toFixed(1):'—')+'</td>'+
+          '<td style="padding:3px 6px;text-align:right;font-weight:700;color:'+dC+'">'+dS+'</td>'+
+          '</tr>';
+      });
+      out+='</tbody></table>';
+      out+='<div style="font-size:9px;color:#8B5860;margin-top:6px">'+
+        'Δ&gt;+2% orange · Δ&lt;−2% blue</div>';
+      return out;
+    }
+    function updateRadar(p){
+      var prof=rp.profiles[p]; if(!prof) return;
+      Plotly.react('chart-radar',prof.traces,merge(L,{
+        height:420, margin:{l:60,r:60,t:32,b:60},
+        polar:{radialaxis:{visible:true,ticksuffix:'%',tickfont:{size:9}},
+               gridshape:'circular'},
+        showlegend:true,
+        legend:{orientation:'h',y:-0.15,x:0,font:{size:10}},
+      }),C);
+      document.getElementById('radar-tbl').innerHTML=buildTable(prof.table,p);
+    }
+    updateRadar(rp.patients[0]);
+    sel.addEventListener('change',function(){updateRadar(this.value);});
+  })();
+
+  // NMDS trajectories
+  var nmds=D.nmds_trajectories;
+  render('chart-nmds-traj', nmds.traces, merge(L,{
+    height:440, showlegend:true,
+    xaxis:{title:{text:'PC1 ('+nmds.pct1+'%)'}},
+    yaxis:{title:{text:'PC2 ('+nmds.pct2+'%)'}},
   }));
-  render('chart-radar', D.patient_radar, merge(L,{
-    height:440, margin:{l:60,r:60,t:32,b:60},
-    polar:{radialaxis:{visible:true,ticksuffix:'%',tickfont:{size:9}},
-           gridshape:'circular'},
-    showlegend:true,
-  }));
+
+  // Small multiples
   (function(){
     var fc=D.faceted_composition;
     var el=document.getElementById('chart-faceted');
@@ -600,12 +736,6 @@ __CLINICAL_SECTION__
     el.style.height=(fc.layout.height||520)+'px';
     Plotly.newPlot(el, fc.data, merge(L, fc.layout), C);
   })();
-  var nmds=D.nmds_trajectories;
-  render('chart-nmds-traj', nmds.traces, merge(L,{
-    height:440, showlegend:true,
-    xaxis:{title:{text:'PC1 ('+nmds.pct1+'%)'}},
-    yaxis:{title:{text:'PC2 ('+nmds.pct2+'%)'}},
-  }));
 
   // ── Beta ──────────────────────────────────────────────────────────────────
   var bray=D.pcoa_bray;
@@ -766,6 +896,81 @@ __CLINICAL_SECTION__
     Object.keys(INS).forEach(function(k){
       var el=document.getElementById('insight-'+k);
       if(el&&INS[k]) el.textContent=INS[k];
+    });
+  })();
+
+  // ── Chart explanations — ℹ buttons + collapsible panels ─────────────────
+  (function(){
+    var EXP = D.explanations || {};
+    var MAP = {
+      'chart-comp':          'composition',
+      'chart-topn':          'top_taxa',
+      'chart-donut':         'donut',
+      'chart-sunburst':      'sunburst',
+      'chart-strip':         'alpha_strip',
+      'chart-box':           'alpha_box',
+      'chart-violin':        'alpha_violin',
+      'chart-rarefaction':   'rarefaction',
+      'chart-multimet':      'multimet',
+      'chart-pcoa-bray':     'pcoa_bray',
+      'chart-pcoa-jacc':     'pcoa_jaccard',
+      'chart-nmds':          'nmds',
+      'chart-dendro':        'dendrogram',
+      'chart-delta':         'delta_heatmap',
+      'chart-paired-slope':  'paired_slope',
+      'chart-stability':     'stability',
+      'chart-diversity-rank':'diversity_rank',
+      'chart-radar':         'radar',
+      'chart-nmds-traj':     'nmds_traj',
+      'chart-faceted':       'faceted',
+      'chart-diff':          'diff_abundance',
+      'chart-volcano':       'volcano',
+      'chart-ancom':         'ancom',
+      'chart-heatmap':       'heatmap',
+      'chart-corr':          'corr_matrix',
+      'chart-mwt':           'clinical_mwt',
+      'chart-il18':          'clinical_il18',
+      'chart-corr-mwt':      'corr_mwt',
+      'chart-corr-il18':     'corr_il18',
+      'chart-taxa-clinical': 'taxa_clinical',
+      'chart-long':          'longitudinal',
+      'chart-lme':           'lme',
+      'permanova-table':     'permanova',
+      'stats-table':         'stats_summary',
+    };
+    Object.keys(MAP).forEach(function(divId){
+      var key=MAP[divId], exp=EXP[key];
+      if(!exp) return;
+      var chartDiv=document.getElementById(divId);
+      if(!chartDiv) return;
+      var card=chartDiv.parentElement;
+      while(card&&!card.classList.contains('chart-card')) card=card.parentElement;
+      if(!card) return;
+      var titleEl=card.querySelector('.chart-title');
+      if(!titleEl) return;
+
+      var btn=document.createElement('button');
+      btn.className='info-btn'; btn.textContent='ℹ';
+      btn.title='What does this chart show?';
+      btn.setAttribute('aria-label','Chart explanation');
+
+      var panel=document.createElement('div');
+      panel.className='chart-info';
+      var pillsHtml=(exp.pills||[]).map(function(p){
+        return '<span class="ci-pill">'+p+'</span>';
+      }).join('');
+      panel.innerHTML=
+        '<div class="ci-what">'+exp.what+'</div>'+
+        '<div class="ci-finding">'+exp.finding+'</div>'+
+        (pillsHtml?'<div class="ci-pills">'+pillsHtml+'</div>':'');
+
+      btn.addEventListener('click',function(){
+        var open=panel.classList.toggle('open');
+        btn.classList.toggle('open',open);
+      });
+
+      titleEl.appendChild(btn);
+      chartDiv.parentNode.insertBefore(panel,chartDiv);
     });
   })();
 

@@ -1,13 +1,14 @@
 """charts/comparative.py — comparative chart builders (LFC, volcano, heatmap, correlation matrix)."""
 from __future__ import annotations
+from typing import Any
 import math
 import numpy as np
 from .utils import hex_rgba, base_group_color
 from .distances import rows_to_ab
-from .stats_helpers import welch_ttest_p, bh_fdr, wilcoxon_p, sig_label
+from .stats_helpers import welch_ttest_p, bh_fdr, wilcoxon_p
 
 
-def build_diff_abundance(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_diff_abundance(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Log2 fold change per taxon: T84 vs T0 within each base group."""
     base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
     traces = []
@@ -32,7 +33,7 @@ def build_diff_abundance(rows: list[dict], taxa: list[str]) -> list[dict]:
     return traces
 
 
-def build_volcano(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_volcano(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Volcano: log2FC vs –log10(p); points coloured by BH-FDR q < 0.1."""
     base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
     traces = []
@@ -70,7 +71,7 @@ def build_volcano(rows: list[dict], taxa: list[str]) -> list[dict]:
     return traces
 
 
-def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_ancom_style(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """CLR-transformed paired Wilcoxon (T0→T84) per taxon, per base group.
 
     Centered log-ratio is the compositionally-correct transform for differential
@@ -78,9 +79,9 @@ def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
     step.  Results displayed as an effect-size bar (CLR mean diff) coloured by FDR.
     """
     base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
-    traces: list[dict] = []
+    traces: list[dict[str, Any]] = []
 
-    def _clr(r: dict) -> dict:
+    def _clr(r: dict) -> dict[str, Any]:
         """CLR-transform a single sample row (pseudocount 0.01)."""
         vals = {t: float(r.get(t) or 0) + 0.01 for t in taxa}
         gm   = math.exp(sum(math.log(v) for v in vals.values()) / len(vals))
@@ -102,7 +103,8 @@ def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
                 t84r = [clr_rows[r["sample_id"]][t] for r in bg_rows
                         if r["patient"] == p and (r.get("time") or 0) > 0  and r["sample_id"] in clr_rows]
                 if t0r and t84r:
-                    a.append(t0r[0]); b.append(t84r[0])
+                    a.append(t0r[0])
+                    b.append(t84r[0])
             diff  = round(float(np.mean(b)) - float(np.mean(a)), 4) if a else 0.0
             p_raw = wilcoxon_p(a, b)
             taxon_stats.append((t, diff, p_raw))
@@ -112,8 +114,10 @@ def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
         results = [(t, diff, p, q) for (t, diff, p), q in zip(taxon_stats, q_vals)]
 
         def _color(diff: float, q: float) -> str:
-            if q < 0.1 and diff > 0:  return "#D84E6A"
-            if q < 0.1 and diff < 0:  return "#4A7ED4"
+            if q < 0.1 and diff > 0:
+                return "#D84E6A"
+            if q < 0.1 and diff < 0:
+                return "#4A7ED4"
             return hex_rgba(c, 0.45)
 
         traces.append({
@@ -131,7 +135,7 @@ def build_ancom_style(rows: list[dict], taxa: list[str]) -> list[dict]:
     return traces
 
 
-def build_heatmap(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     return [{
         "type": "heatmap",
         "x": list(taxa),
@@ -142,7 +146,7 @@ def build_heatmap(rows: list[dict], taxa: list[str]) -> list[dict]:
     }]
 
 
-def build_corr_matrix(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_corr_matrix(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     ab = rows_to_ab(rows, taxa)
     if ab.shape[0] < 2:
         return []

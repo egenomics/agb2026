@@ -46,7 +46,8 @@ modules/groupD/
             ├── comparative.py       ← LFC bar, volcano, ANCOM-style CLR, heatmap, correlation
             ├── clinical.py          ← Clinical slopegraphs, Shannon scatter, taxa×clinical heatmap
             ├── stats.py             ← Wilcoxon / MW tests, LME trajectory, PERMANOVA, summary table
-            ├── insights.py          ← Dynamic text insights generated from chart payloads
+            ├── insights.py          ← Dynamic text insights (section banners) generated from chart payloads
+            ├── insights_charts.py   ← Per-chart ℹ explanations (what/finding/pills) for every chart panel
             ├── orchestrator.py      ← compute_chart_data() + ReportConfig (section selection)
             ├── renderer.py          ← Fills HTML templates (cohort + per-patient reports)
             ├── template.html        ← HTML/CSS/JS cohort report shell (all interactive controls)
@@ -135,7 +136,7 @@ microsee-report ... --mode all --output microsee_report.html
 - **Paired slopegraph** — one line per patient showing Shannon H′ at T0 and T84. Lines going up = increased diversity.
 - **Stability score** — Bray-Curtis dissimilarity for each patient (0 = identical T0 and T84 samples, 1 = completely different). Shorter bars = more stable microbiome.
 - **Diversity rank** — all samples ranked from lowest to highest Shannon H′.
-- **Patient radar** — spider/web chart showing group mean composition at T0 (filled) vs T84 (dashed). Each axis is one bacterial family.
+- **Patient radar** — per-patient spider/web chart showing T0 vs T84 vs group mean composition. Select any patient from the dropdown; each axis is one bacterial family. The group mean band provides cohort context.
 - **NMDS trajectories** — arrows showing where each patient's community moved in ordination space (T0 → T84). Short arrows = stable, long arrows = large shift.
 - **Small multiples** — individual stacked bar charts for every patient showing T0 and T84 side by side.
 

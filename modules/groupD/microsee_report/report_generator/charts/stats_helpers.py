@@ -107,9 +107,12 @@ def mannwhitney_p(a: list[float], b: list[float]) -> float:
 
 def sig_label(p: float) -> str:
     """Human-readable significance annotation for a p-value."""
-    if p < 0.001: return "p<0.001 ***"
-    if p < 0.01:  return f"p={p:.3f} **"
-    if p < 0.05:  return f"p={p:.3f} *"
+    if p < 0.001:
+        return "p<0.001 ***"
+    if p < 0.01:
+        return f"p={p:.3f} **"
+    if p < 0.05:
+        return f"p={p:.3f} *"
     return f"p={p:.3f} ns"
 
 
@@ -132,12 +135,16 @@ def welch_ttest_p(a: list[float], b: list[float]) -> float:
         (va / na) ** 2 / (na - 1) + (vb / nb) ** 2 / (nb - 1)
     )
     x = df / (df + t * t)
-    if x <= 0: return 0.0
-    if x >= 1: return 1.0
+    if x <= 0:
+        return 0.0
+    if x >= 1:
+        return 1.0
 
     def _ibeta(xv: float, av: float, bv: float) -> float:
-        if xv <= 0: return 0.0
-        if xv >= 1: return 1.0
+        if xv <= 0:
+            return 0.0
+        if xv >= 1:
+            return 1.0
         lbt = (av * math.log(xv) + bv * math.log(1 - xv)
                - math.lgamma(av) - math.lgamma(bv) + math.lgamma(av + bv))
 
@@ -150,13 +157,20 @@ def welch_ttest_p(a: list[float], b: list[float]) -> float:
             for m in range(1, 201):
                 m2  = 2 * m
                 aa2 = m * (bb - m) * xx / ((aa + m2 - 1) * (aa + m2))
-                d2  = 1.0 + aa2 * d2; d2 = fpmin if abs(d2) < fpmin else d2
-                c2  = 1.0 + aa2 / c2; c2 = fpmin if abs(c2) < fpmin else c2
-                d2  = 1.0 / d2; h *= d2 * c2
+                d2  = 1.0 + aa2 * d2
+                d2  = fpmin if abs(d2) < fpmin else d2
+                c2  = 1.0 + aa2 / c2
+                c2  = fpmin if abs(c2) < fpmin else c2
+                d2  = 1.0 / d2
+                h  *= d2 * c2
                 aa2 = -(aa + m) * (aa + bb + m) * xx / ((aa + m2) * (aa + m2 + 1))
-                d2  = 1.0 + aa2 * d2; d2 = fpmin if abs(d2) < fpmin else d2
-                c2  = 1.0 + aa2 / c2; c2 = fpmin if abs(c2) < fpmin else c2
-                d2  = 1.0 / d2; delta = d2 * c2; h *= delta
+                d2  = 1.0 + aa2 * d2
+                d2  = fpmin if abs(d2) < fpmin else d2
+                c2  = 1.0 + aa2 / c2
+                c2  = fpmin if abs(c2) < fpmin else c2
+                d2  = 1.0 / d2
+                delta = d2 * c2
+                h  *= delta
                 if abs(delta - 1.0) < eps:
                     break
             return h

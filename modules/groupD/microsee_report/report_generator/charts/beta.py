@@ -1,5 +1,6 @@
 """charts/beta.py — beta-diversity chart builders (PCoA, NMDS, dendrogram, delta heatmap)."""
 from __future__ import annotations
+from typing import Any
 import numpy as np
 from .utils import group_color, hex_rgba
 from .preprocessing import get_patient_timepoints, get_unique_patients
@@ -7,12 +8,12 @@ from .distances import rows_to_ab, bray_curtis_matrix, jaccard_matrix, pcoa, ave
 
 
 def build_pcoa_chart(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     taxa: list[str],
     groups: list[str],
     dist_type: str,
     bc_matrix: "np.ndarray | None" = None,
-) -> tuple[list[dict], float, float]:
+) -> tuple[list[dict[str, Any]], float, float]:
     if dist_type == "bray" and bc_matrix is not None:
         mat = bc_matrix
     else:
@@ -32,11 +33,11 @@ def build_pcoa_chart(
 
 
 def build_nmds_plot(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     taxa: list[str],
     groups: list[str],
     bc_matrix: "np.ndarray | None" = None,
-) -> tuple[list[dict], float, float]:
+) -> tuple[list[dict[str, Any]], float, float]:
     """NMDS-style plot (PCoA Bray-Curtis, diamond markers — matches NMDSPlot.tsx)."""
     mat = bc_matrix if bc_matrix is not None else bray_curtis_matrix(rows_to_ab(rows, taxa))
     xs, ys, pct1, pct2 = pcoa(mat)
@@ -53,11 +54,11 @@ def build_nmds_plot(
 
 
 def build_dendrogram(
-    rows: list[dict],
+    rows: list[dict[str, Any]],
     taxa: list[str],
     groups: list[str],
     bc_matrix: "np.ndarray | None" = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Hierarchical clustering dendrogram (average-linkage, Bray-Curtis)."""
     n = len(rows)
     if n < 3:
@@ -67,7 +68,7 @@ def build_dendrogram(
     sid_grp  = {r["sample_id"]: r.get("group", "") for r in rows}
     segments = average_linkage_dendrogram(mat)
 
-    traces: list[dict] = [{
+    traces: list[dict[str, Any]] = [{
         "type": "scatter", "mode": "lines",
         "x": xs, "y": ys,
         "line": {"color": "#C4A0A8", "width": 1.5},
@@ -79,7 +80,7 @@ def build_dendrogram(
         "type": "scatter", "mode": "markers",
         "x": [0.0] * n,
         "y": list(range(n)),
-        "marker": {"color": [group_color(sid_grp.get(l, ""), groups) for l in labels], "size": 8},
+        "marker": {"color": [group_color(sid_grp.get(sid, ""), groups) for sid in labels], "size": 8},
         "text": labels,
         "showlegend": False,
         "hovertemplate": "<b>%{text}</b><extra></extra>",
@@ -93,7 +94,7 @@ def build_dendrogram(
     return traces
 
 
-def build_delta_heatmap(rows: list[dict], taxa: list[str]) -> list[dict]:
+def build_delta_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Δ abundance heatmap: (T84 − T0) normalised to % per patient per taxon."""
     patients       = get_unique_patients(rows)
     patient_labels: list[str]       = []
