@@ -4,6 +4,7 @@ Runs against both inline strings and realistic fixture TSV files.
 """
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from report_generator.parsers import (
@@ -162,3 +163,71 @@ class TestFixtureCharts:
         assert "__DATA_JSON__" not in html
         assert "__INSIGHTS_JSON__" not in html
         assert len(html) > 100_000
+
+
+# ── Distance matrix correctness ───────────────────────────────────────────────
+
+from report_generator.charts.distances import bray_curtis_matrix, jaccard_matrix
+
+
+class TestBrayCurtisMatrix:
+    """Verify the vectorized bray_curtis_matrix against hand-computed values."""
+
+    def test_known_value(self):
+        # a=[3,1,2]  b=[2,4,0]
+        # num = |3-2|+|1-4|+|2-0| = 1+3+2 = 6
+        # den = (3+1+2)+(2+4+0)   = 6+6   = 12  →  BC = 0.5
+        ab  = np.array([[3., 1., 2.], [2., 4., 0.]])
+        mat = bray_curtis_matrix(ab)
+        assert mat[0, 1] == pytest.approx(0.5)
+        assert mat[1, 0] == pytest.approx(0.5)  # symmetric
+
+    def test_identical_samples_zero(self):
+        ab  = np.array([[1., 2., 3.], [1., 2., 3.]])
+        mat = bray_curtis_matrix(ab)
+        assert mat[0, 1] == pytest.approx(0.0)
+
+    def test_completely_disjoint_one(self):
+        # a=[1,0]  b=[0,1]: num=2, den=2  →  BC = 1.0
+        ab  = np.array([[1., 0.], [0., 1.]])
+        mat = bray_curtis_matrix(ab)
+        assert mat[0, 1] == pytest.approx(1.0)
+
+    def test_symmetric_diagonal_zero_bounded(self):
+        rng = np.random.default_rng(42)
+        ab  = rng.random((6, 10))
+        mat = bray_curtis_matrix(ab)
+        assert np.allclose(mat, mat.T), "not symmetric"
+        assert np.allclose(np.diag(mat), 0.0), "diagonal not zero"
+        assert np.all(mat >= 0) and np.all(mat <= 1), "values outside [0, 1]"
+
+
+class TestJaccardMatrix:
+    """Verify the vectorized jaccard_matrix against hand-computed values."""
+
+    def test_completely_disjoint_one(self):
+        # A=[100,0]  B=[0,100]: no shared presence  →  J = 1.0
+        ab  = np.array([[100., 0.], [0., 100.]])
+        mat = jaccard_matrix(ab, threshold=5.0)
+        assert mat[0, 1] == pytest.approx(1.0)
+
+    def test_identical_samples_zero(self):
+        ab  = np.array([[80., 20., 0.], [80., 20., 0.]])
+        mat = jaccard_matrix(ab, threshold=5.0)
+        assert mat[0, 1] == pytest.approx(0.0)
+
+    def test_partial_overlap(self):
+        # A=[50,50, 0]  B=[50, 0,50]  (threshold=5)
+        # pres_A=[T,T,F]  pres_B=[T,F,T]
+        # both=1 (taxon 0)  union=3  →  J = 1 - 1/3 = 2/3
+        ab  = np.array([[50., 50., 0.], [50., 0., 50.]])
+        mat = jaccard_matrix(ab, threshold=5.0)
+        assert mat[0, 1] == pytest.approx(2 / 3, abs=1e-6)
+
+    def test_symmetric_diagonal_zero_bounded(self):
+        rng = np.random.default_rng(99)
+        ab  = rng.random((6, 10)) * 100
+        mat = jaccard_matrix(ab, threshold=5.0)
+        assert np.allclose(mat, mat.T), "not symmetric"
+        assert np.allclose(np.diag(mat), 0.0), "diagonal not zero"
+        assert np.all(mat >= 0) and np.all(mat <= 1), "values outside [0, 1]"

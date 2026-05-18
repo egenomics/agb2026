@@ -1,7 +1,7 @@
 """charts/distances.py — distance matrices, PCoA ordination, and hierarchical clustering."""
 
 from __future__ import annotations
-import math
+import math  # used by pcoa (math.sqrt) and average_linkage_dendrogram
 import numpy as np
 
 
@@ -10,30 +10,23 @@ def rows_to_ab(rows: list[dict], taxa: list[str]) -> np.ndarray:
 
 
 def bray_curtis_matrix(ab: np.ndarray) -> np.ndarray:
-    n = ab.shape[0]
-    mat = np.zeros((n, n))
-    for i in range(n):
-        for j in range(i + 1, n):
-            num = np.sum(np.abs(ab[i] - ab[j]))
-            den = np.sum(ab[i] + ab[j])
-            d = float(num / den) if den > 0 else 0.0
-            mat[i, j] = mat[j, i] = d
-    return mat
+    # num[i,j] = Σ|ab[i,k] - ab[j,k]|  (broadcast diff, sum over taxa axis)
+    diff = np.abs(ab[:, None, :] - ab[None, :, :]).sum(axis=2)
+    # den[i,j] = Σab[i,k] + Σab[j,k]  (avoid 3-D intermediate for the sum)
+    row_sums = ab.sum(axis=1)
+    den = row_sums[:, None] + row_sums[None, :]
+    return np.where(den > 0, diff / den, 0.0)
 
 
 def jaccard_matrix(ab: np.ndarray, threshold: float = 5.0) -> np.ndarray:
-    n = ab.shape[0]
     totals = ab.sum(axis=1, keepdims=True)
     totals[totals == 0] = 1.0
-    pres = (ab / totals * 100) >= threshold
-    mat = np.zeros((n, n))
-    for i in range(n):
-        for j in range(i + 1, n):
-            either = int(np.sum(pres[i] | pres[j]))
-            both   = int(np.sum(pres[i] & pres[j]))
-            d = 1.0 - both / either if either > 0 else 0.0
-            mat[i, j] = mat[j, i] = d
-    return mat
+    pres     = (ab / totals * 100) >= threshold          # (n, taxa) bool
+    pres_int = pres.astype(np.int32)
+    both     = pres_int @ pres_int.T                     # (n, n): shared-presence count
+    counts   = pres_int.sum(axis=1)
+    union    = counts[:, None] + counts[None, :] - both  # inclusion-exclusion
+    return np.where(union > 0, 1.0 - both / np.maximum(union, 1), 0.0)
 
 
 def pcoa(dist_mat: np.ndarray) -> tuple[list[float], list[float], float, float]:

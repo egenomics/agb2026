@@ -6,7 +6,7 @@ Pydantic data models shared by parsers.py and the charts package.
 
 from __future__ import annotations
 from typing import Optional
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 
 # ── Raw upload payloads ───────────────────────────────────────────────────────

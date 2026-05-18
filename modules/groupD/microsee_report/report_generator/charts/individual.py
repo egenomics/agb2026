@@ -1,24 +1,27 @@
 """charts/individual.py — per-patient chart builders (slopegraph, stability, rank, radar, faceted, NMDS trajectories)."""
-
 from __future__ import annotations
+import math
 import numpy as np
-from .utils import hex_rgba, taxon_color, _base_group_color, _sorted_timepoints
+from .utils import hex_rgba, taxon_color, base_group_color
+from .preprocessing import (
+    get_patient_timepoints, get_unique_patients, get_base_groups, sorted_timepoints,
+)
 from .distances import rows_to_ab, bray_curtis_matrix, pcoa
 
 
 def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
     """Per-patient Shannon T0→T84 slopegraph."""
-    timepoints  = _sorted_timepoints(rows)
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
+    timepoints  = sorted_timepoints(rows)
+    base_groups = get_base_groups(rows)
     traces: list[dict] = []
-    patients = sorted(set(r["patient"] for r in rows))
+    patients = get_unique_patients(rows)
     for p in patients:
         p_rows = sorted([r for r in rows if r["patient"] == p],
                         key=lambda r: r.get("time") or 0)
         if len(p_rows) < 2:
             continue
         bg = p_rows[0].get("base_group", p_rows[0]["group"])
-        c  = _base_group_color(bg, base_groups)
+        c  = base_group_color(bg, base_groups)
         traces.append({
             "type": "scatter", "mode": "lines+markers", "name": p,
             "x": [r["timepoint"] for r in p_rows],
@@ -29,7 +32,7 @@ def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
             "hovertemplate": f"<b>{p}</b><br>%{{x}}<br>Shannon: %{{y:.3f}}<extra></extra>",
         })
     for bg in base_groups:
-        c = _base_group_color(bg, base_groups)
+        c = base_group_color(bg, base_groups)
         means, xs_used = [], []
         for tp in timepoints:
             vals = [float(r["shannon"]) for r in rows
@@ -50,16 +53,12 @@ def build_paired_slope(rows: list[dict], groups: list[str]) -> list[dict]:
 
 def build_stability_bar(rows: list[dict], taxa: list[str]) -> list[dict]:
     """Per-patient Bray-Curtis dissimilarity T0 vs T84, sorted horizontal bar."""
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
-    patients    = sorted(set(r["patient"] for r in rows))
+    base_groups = get_base_groups(rows)
     scores = []
-    for p in patients:
-        r0_list  = [r for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-        r84_list = sorted([r for r in rows if r["patient"] == p and (r.get("time") or 0) > 0],
-                          key=lambda r: r.get("time") or 0, reverse=True)
-        if not r0_list or not r84_list:
+    for p in get_unique_patients(rows):
+        r0, r84 = get_patient_timepoints(rows, p)
+        if r0 is None or r84 is None:
             continue
-        r0, r84 = r0_list[0], r84_list[0]
         ab0  = np.array([float(r0.get(t) or 0) for t in taxa])
         ab84 = np.array([float(r84.get(t) or 0) for t in taxa])
         num  = float(np.sum(np.abs(ab0 - ab84)))
@@ -72,7 +71,7 @@ def build_stability_bar(rows: list[dict], taxa: list[str]) -> list[dict]:
         "type": "bar", "orientation": "h",
         "x": [s["bc"] for s in scores],
         "y": [s["patient"] for s in scores],
-        "marker": {"color": [hex_rgba(_base_group_color(s["base_group"], base_groups), 0.8) for s in scores]},
+        "marker": {"color": [hex_rgba(base_group_color(s["base_group"], base_groups), 0.8) for s in scores]},
         "text": [str(s["bc"]) for s in scores],
         "textposition": "outside",
         "hovertemplate": "<b>%{y}</b><br>BC dissimilarity: %{x:.3f}<extra></extra>",
@@ -81,11 +80,11 @@ def build_stability_bar(rows: list[dict], taxa: list[str]) -> list[dict]:
 
 def build_diversity_rank(rows: list[dict]) -> list[dict]:
     """Samples ranked low→high by Shannon; circle = T0, diamond = T84."""
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
+    base_groups = get_base_groups(rows)
     sorted_rows = sorted(rows, key=lambda r: float(r.get("shannon") or 0))
     traces = []
     for bg in base_groups:
-        c    = _base_group_color(bg, base_groups)
+        c    = base_group_color(bg, base_groups)
         pts  = [(i, r) for i, r in enumerate(sorted_rows)
                 if r.get("base_group", r.get("group")) == bg]
         t0   = [(i, r) for i, r in pts if (r.get("time") or 0) == 0]
@@ -115,11 +114,11 @@ def build_diversity_rank(rows: list[dict]) -> list[dict]:
 
 def build_patient_radar(rows: list[dict], taxa: list[str]) -> list[dict]:
     """Radar: group mean T0 (filled) vs group mean T84 (dashed) per base_group."""
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
+    base_groups = get_base_groups(rows)
     short_taxa  = [t.replace("aceae", "")[:10] for t in taxa]
     traces = []
     for bg in base_groups:
-        c        = _base_group_color(bg, base_groups)
+        c        = base_group_color(bg, base_groups)
         t0_rows  = [r for r in rows if r.get("base_group", r.get("group")) == bg and (r.get("time") or 0) == 0]
         t84_rows = [r for r in rows if r.get("base_group", r.get("group")) == bg and (r.get("time") or 0) > 0]
         for label, g_rows, filled in [("T0", t0_rows, True), ("T84", t84_rows, False)]:
@@ -143,8 +142,7 @@ def build_patient_radar(rows: list[dict], taxa: list[str]) -> list[dict]:
 
 def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
     """True small-multiples: one subplot per patient, T0 vs T84 stacked bars."""
-    import math
-    patients = sorted(set(r["patient"] for r in rows))
+    patients = get_unique_patients(rows)
     n        = len(patients)
     n_cols   = min(4, n)
     n_rows   = math.ceil(n / n_cols)
@@ -183,12 +181,8 @@ def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
             "font": {"size": 10},
         })
 
-        r0_list  = [r for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-        r84_list = sorted([r for r in rows if r["patient"] == p and (r.get("time") or 0) > 0],
-                          key=lambda r: r.get("time") or 0, reverse=True)
-
-        for r, tp in [(r0_list[0] if r0_list else None, "T0"),
-                      (r84_list[0] if r84_list else None, "T84")]:
+        r0, r84 = get_patient_timepoints(rows, p)
+        for r, tp in [(r0, "T0"), (r84, "T84")]:
             if not r:
                 continue
             tot = sum(float(r.get(t) or 0) for t in taxa) or 1.0
@@ -211,28 +205,27 @@ def build_faceted_composition(rows: list[dict], taxa: list[str]) -> dict:
     return {"data": data, "layout": layout}
 
 
-def build_nmds_trajectories(rows: list[dict], taxa: list[str]) -> tuple[list[dict], float, float]:
+def build_nmds_trajectories(
+    rows: list[dict],
+    taxa: list[str],
+    bc_matrix: "np.ndarray | None" = None,
+) -> tuple[list[dict], float, float]:
     """PCoA (Bray-Curtis) with T0→T84 arrows per patient."""
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
-    ab  = rows_to_ab(rows, taxa)
-    mat = bray_curtis_matrix(ab)
+    base_groups = get_base_groups(rows)
+    mat = bc_matrix if bc_matrix is not None else bray_curtis_matrix(rows_to_ab(rows, taxa))
     xs, ys, pct1, pct2 = pcoa(mat)
     coord_map = {r["sample_id"]: (xs[i], ys[i]) for i, r in enumerate(rows)}
-    patients  = sorted(set(r["patient"] for r in rows))
     traces: list[dict] = []
-    for p in patients:
-        r0_list  = [r for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-        r84_list = sorted([r for r in rows if r["patient"] == p and (r.get("time") or 0) > 0],
-                          key=lambda r: r.get("time") or 0, reverse=True)
-        if not r0_list or not r84_list:
+    for p in get_unique_patients(rows):
+        r0, r84 = get_patient_timepoints(rows, p)
+        if r0 is None or r84 is None:
             continue
-        r0, r84 = r0_list[0], r84_list[0]
         c0 = coord_map.get(r0["sample_id"])
         c1 = coord_map.get(r84["sample_id"])
         if not c0 or not c1:
             continue
         bg = r0.get("base_group", r0.get("group", ""))
-        c  = _base_group_color(bg, base_groups)
+        c  = base_group_color(bg, base_groups)
         traces.append({
             "type": "scatter", "mode": "lines",
             "x": [c0[0], c1[0]], "y": [c0[1], c1[1]],
@@ -256,7 +249,7 @@ def build_nmds_trajectories(rows: list[dict], taxa: list[str]) -> tuple[list[dic
             "hovertemplate": f"<b>{p} T84</b><extra></extra>",
         })
     for bg in base_groups:
-        c = _base_group_color(bg, base_groups)
+        c = base_group_color(bg, base_groups)
         traces.append({
             "type": "scatter", "mode": "markers+lines",
             "x": [None], "y": [None],

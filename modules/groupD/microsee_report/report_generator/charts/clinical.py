@@ -1,49 +1,9 @@
 """charts/clinical.py — clinical outcome chart builders (slopegraph, Shannon correlation)."""
-
 from __future__ import annotations
-import math
 import numpy as np
-from .utils import hex_rgba, _base_group_color, _sorted_timepoints
-
-
-def _pearson_p(r_val: float, n: int) -> float:
-    """Two-tailed p-value for Pearson r using Fisher z-transformation."""
-    if n < 4:
-        return 1.0
-    z   = math.atanh(min(max(r_val, -0.9999), 0.9999)) * math.sqrt(n - 3)
-    az  = abs(z)
-    t   = 1.0 / (1.0 + 0.2316419 * az)
-    pd  = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))))
-    p1  = pd * math.exp(-0.5 * az ** 2) / math.sqrt(2 * math.pi)
-    return min(1.0, 2 * p1)
-
-
-def _spearman_r(a: list[float], b: list[float]) -> tuple[float, float]:
-    """Spearman rho and two-tailed p-value."""
-    n = len(a)
-    if n < 3:
-        return 0.0, 1.0
-    def _ranks(v: list[float]) -> list[float]:
-        sv = sorted(enumerate(v), key=lambda x: x[1])
-        r  = [0.0] * n
-        i  = 0
-        while i < n:
-            j = i
-            while j < n - 1 and sv[j][1] == sv[j + 1][1]:
-                j += 1
-            avg = (i + j + 2) / 2.0
-            for k in range(i, j + 1):
-                r[sv[k][0]] = avg
-            i = j + 1
-        return r
-    ra, rb = _ranks(a), _ranks(b)
-    ma, mb = sum(ra) / n, sum(rb) / n
-    num = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
-    da  = math.sqrt(sum((x - ma) ** 2 for x in ra))
-    db  = math.sqrt(sum((y - mb) ** 2 for y in rb))
-    rho = round(num / (da * db), 3) if da and db else 0.0
-    p   = _pearson_p(rho, n)
-    return rho, p
+from .utils import hex_rgba, base_group_color
+from .preprocessing import get_patient_timepoints, get_unique_patients, get_base_groups, sorted_timepoints
+from .stats_helpers import pearson_p, spearman_r
 
 
 def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
@@ -57,20 +17,15 @@ def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
     if not clinical_fields:
         return {"z": [], "x": [], "y": [], "text": [], "p": []}
 
-    patients = sorted(set(r["patient"] for r in rows))
-
-    # Compute Δ per patient for each taxon and clinical field
-    delta_tax: dict[str, list[float]] = {t: [] for t in taxa}
+    patients = get_unique_patients(rows)
+    delta_tax:  dict[str, list[float]] = {t: [] for t in taxa}
     delta_clin: dict[str, list[float]] = {f: [] for f in clinical_fields}
     valid_patients = []
 
     for p in patients:
-        t0r  = [r for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-        t84r = sorted([r for r in rows if r["patient"] == p and (r.get("time") or 0) > 0],
-                      key=lambda r: r.get("time") or 0, reverse=True)
-        if not t0r or not t84r:
+        r0, r84 = get_patient_timepoints(rows, p)
+        if r0 is None or r84 is None:
             continue
-        r0, r84 = t0r[0], t84r[0]
         valid_patients.append(p)
         for t in taxa:
             delta_tax[t].append(float(r84.get(t) or 0) - float(r0.get(t) or 0))
@@ -87,7 +42,7 @@ def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
     for t in taxa:
         row_z, row_t, row_p = [], [], []
         for f in clinical_fields:
-            rho, p = _spearman_r(delta_tax[t], delta_clin[f])
+            rho, p = spearman_r(delta_tax[t], delta_clin[f])
             row_z.append(rho)
             row_p.append(round(p, 3))
             stars = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else ""
@@ -101,9 +56,9 @@ def build_taxa_clinical_heatmap(rows: list[dict], taxa: list[str]) -> dict:
 
 
 def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
-    patients    = sorted(set(r["patient"] for r in rows))
-    timepoints  = _sorted_timepoints(rows)
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
+    patients    = get_unique_patients(rows)
+    timepoints  = sorted_timepoints(rows)
+    base_groups = get_base_groups(rows)
     traces: list[dict] = []
 
     for p in patients:
@@ -112,7 +67,7 @@ def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
         if len(p_rows) < 2:
             continue
         bg = p_rows[0].get("base_group", p_rows[0]["group"])
-        c  = _base_group_color(bg, base_groups)
+        c  = base_group_color(bg, base_groups)
         traces.append({
             "type": "scatter", "mode": "lines+markers", "name": p,
             "x": [r["timepoint"] for r in p_rows],
@@ -124,7 +79,7 @@ def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
         })
 
     for bg in base_groups:
-        c = _base_group_color(bg, base_groups)
+        c = base_group_color(bg, base_groups)
         means, xs_used = [], []
         for tp in timepoints:
             vals = [float(r.get(field) or 0)
@@ -146,7 +101,7 @@ def build_clinical_slope(rows: list[dict], field: str) -> list[dict]:
 
 def build_clinical_correlation(rows: list[dict], field: str) -> tuple[list[dict], float, float]:
     """Shannon vs clinical field scatter + regression line. Returns (traces, r, p)."""
-    base_groups = sorted(set(r.get("base_group", r["group"]) for r in rows))
+    base_groups = get_base_groups(rows)
     valid = [r for r in rows if float(r.get(field) or 0) > 0 and float(r.get("shannon") or 0) > 0]
     if len(valid) < 3:
         return [], 0.0, 1.0
@@ -158,7 +113,7 @@ def build_clinical_correlation(rows: list[dict], field: str) -> tuple[list[dict]
     dx    = float(np.sqrt(np.sum((xs - mx) ** 2)))
     dy    = float(np.sqrt(np.sum((ys - my) ** 2)))
     r_val = round(num / (dx * dy), 3) if dx and dy else 0.0
-    p_val = round(_pearson_p(r_val, len(valid)), 3)
+    p_val = round(pearson_p(r_val, len(valid)), 3)
 
     slope     = num / (dx ** 2 + 1e-10) if dx else 0.0
     intercept = my - slope * mx
@@ -166,7 +121,7 @@ def build_clinical_correlation(rows: list[dict], field: str) -> tuple[list[dict]
 
     traces: list[dict] = []
     for bg in base_groups:
-        c   = _base_group_color(bg, base_groups)
+        c   = base_group_color(bg, base_groups)
         pts = [r for r in valid if r.get("base_group", r.get("group")) == bg]
         if not pts:
             continue

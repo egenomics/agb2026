@@ -1,15 +1,23 @@
 """charts/beta.py — beta-diversity chart builders (PCoA, NMDS, dendrogram, delta heatmap)."""
-
 from __future__ import annotations
 import numpy as np
 from .utils import group_color, hex_rgba
+from .preprocessing import get_patient_timepoints, get_unique_patients
 from .distances import rows_to_ab, bray_curtis_matrix, jaccard_matrix, pcoa, average_linkage_dendrogram
 
 
-def build_pcoa_chart(rows: list[dict], taxa: list[str], groups: list[str],
-                     dist_type: str) -> tuple[list[dict], float, float]:
-    ab = rows_to_ab(rows, taxa)
-    mat = bray_curtis_matrix(ab) if dist_type == "bray" else jaccard_matrix(ab)
+def build_pcoa_chart(
+    rows: list[dict],
+    taxa: list[str],
+    groups: list[str],
+    dist_type: str,
+    bc_matrix: "np.ndarray | None" = None,
+) -> tuple[list[dict], float, float]:
+    if dist_type == "bray" and bc_matrix is not None:
+        mat = bc_matrix
+    else:
+        ab = rows_to_ab(rows, taxa)
+        mat = bray_curtis_matrix(ab) if dist_type == "bray" else jaccard_matrix(ab)
     xs, ys, pct1, pct2 = pcoa(mat)
     traces = [{
         "type": "scatter", "mode": "markers", "name": g,
@@ -23,10 +31,14 @@ def build_pcoa_chart(rows: list[dict], taxa: list[str], groups: list[str],
     return traces, pct1, pct2
 
 
-def build_nmds_plot(rows: list[dict], taxa: list[str], groups: list[str]) -> tuple[list[dict], float, float]:
+def build_nmds_plot(
+    rows: list[dict],
+    taxa: list[str],
+    groups: list[str],
+    bc_matrix: "np.ndarray | None" = None,
+) -> tuple[list[dict], float, float]:
     """NMDS-style plot (PCoA Bray-Curtis, diamond markers — matches NMDSPlot.tsx)."""
-    ab  = rows_to_ab(rows, taxa)
-    mat = bray_curtis_matrix(ab)
+    mat = bc_matrix if bc_matrix is not None else bray_curtis_matrix(rows_to_ab(rows, taxa))
     xs, ys, pct1, pct2 = pcoa(mat)
     traces = [{
         "type": "scatter", "mode": "markers", "name": g,
@@ -40,13 +52,17 @@ def build_nmds_plot(rows: list[dict], taxa: list[str], groups: list[str]) -> tup
     return traces, pct1, pct2
 
 
-def build_dendrogram(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
+def build_dendrogram(
+    rows: list[dict],
+    taxa: list[str],
+    groups: list[str],
+    bc_matrix: "np.ndarray | None" = None,
+) -> list[dict]:
     """Hierarchical clustering dendrogram (average-linkage, Bray-Curtis)."""
     n = len(rows)
     if n < 3:
         return []
-    ab       = rows_to_ab(rows, taxa)
-    mat      = bray_curtis_matrix(ab)
+    mat = bc_matrix if bc_matrix is not None else bray_curtis_matrix(rows_to_ab(rows, taxa))
     labels   = [r["sample_id"] for r in rows]
     sid_grp  = {r["sample_id"]: r.get("group", "") for r in rows}
     segments = average_linkage_dendrogram(mat)
@@ -79,17 +95,14 @@ def build_dendrogram(rows: list[dict], taxa: list[str], groups: list[str]) -> li
 
 def build_delta_heatmap(rows: list[dict], taxa: list[str]) -> list[dict]:
     """Δ abundance heatmap: (T84 − T0) normalised to % per patient per taxon."""
-    patients = sorted(set(r["patient"] for r in rows))
-    patient_labels: list[str] = []
-    delta_rows: list[list[float]] = []
+    patients       = get_unique_patients(rows)
+    patient_labels: list[str]       = []
+    delta_rows:     list[list[float]] = []
 
     for p in patients:
-        r0_list  = [r for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-        r84_list = sorted([r for r in rows if r["patient"] == p and (r.get("time") or 0) > 0],
-                          key=lambda r: r.get("time") or 0, reverse=True)
-        if not r0_list or not r84_list:
+        r0, r84 = get_patient_timepoints(rows, p)
+        if r0 is None or r84 is None:
             continue
-        r0, r84 = r0_list[0], r84_list[0]
         tot0  = sum(float(r0.get(t) or 0) for t in taxa) or 1
         tot84 = sum(float(r84.get(t) or 0) for t in taxa) or 1
         delta_rows.append([

@@ -27,7 +27,12 @@ Chart logic lives in charts/:
     comparative.py  — LFC bar, volcano (BH-FDR), ANCOM-style CLR, heatmap, correlation matrix
     clinical.py     — clinical slopegraph, Shannon correlation, taxa×clinical Spearman heatmap
     stats.py        — Wilcoxon/Mann-Whitney, longitudinal, LME trajectory, diversity table, PERMANOVA
-    renderer.py     — compute_chart_data(), render_html()
+    orchestrator.py — compute_chart_data() + ReportConfig (section selection, BC matrix caching)
+    insights.py     — dynamic text summaries generated from chart payloads
+    preprocessing.py— shared row helpers (sorted_timepoints, get_patient_timepoints, etc.)
+    metrics.py      — METRIC_LABELS dict + metric_value/pielou helpers
+    stats_helpers.py— pure stat functions (Wilcoxon, Mann-Whitney, Welch t, Spearman, BH-FDR)
+    renderer.py     — HTML template filling (cohort + per-patient reports)
 """
 
 from __future__ import annotations
@@ -126,7 +131,7 @@ def main() -> None:
 
     if args.mode in ("patient", "all"):
         patients = sorted(set(r.patient for r in result.rows))
-        stem     = out.stem if args.mode == "all" else out.stem
+        stem     = out.stem
         suffix   = out.suffix or ".html"
         parent   = out.parent
         log.info("Generating per-patient reports for %d patients ...", len(patients))

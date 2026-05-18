@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MicroSee — Patient __PATIENT_ID__</title>
+__PLOTLY_SCRIPT__
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:__FONT__;background:__BG__;color:__TEXT__;padding:24px}
+h1{font-size:22px;font-weight:800;color:#3E1A0E;margin-bottom:4px}
+.subtitle{font-size:13px;color:#8B5860;margin-bottom:24px}
+.score-card{background:#fff;border-radius:12px;padding:20px 24px;margin-bottom:20px;
+  box-shadow:0 1px 6px rgba(107,58,42,.10);display:flex;align-items:center;gap:20px}
+.score-num{font-size:48px;font-weight:800;color:#D97A3A;line-height:1}
+.score-right{display:flex;flex-direction:column;gap:4px}
+.score-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:#8B5860}
+.score-text{font-size:13px;color:__TEXT__;max-width:460px;line-height:1.5}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-card{background:#fff;border-radius:10px;padding:16px;
+  box-shadow:0 1px 4px rgba(107,58,42,.08)}
+.chart-title{font-size:13px;font-weight:700;color:#3E1A0E;margin-bottom:8px}
+.plot-div{width:100%;height:340px}
+.insight{background:#FFF8F3;border-left:4px solid #D97A3A;border-radius:0 8px 8px 0;
+  padding:12px 16px;font-size:13px;line-height:1.6;margin-top:16px}
+</style>
+</head>
+<body>
+<h1>Patient __PATIENT_ID__</h1>
+<div class="subtitle">Group: __GROUP__</div>
+
+<div class="score-card">
+  <div class="score-num">__BC__</div>
+  <div class="score-right">
+    <span class="score-label">Microbiome Stability (Bray-Curtis T0 → T84)</span>
+    <span class="score-text">
+      Your microbiome was <strong>__STAB_LABEL__</strong> between visits
+      (BC=__BC__ — 0 = identical, 1 = completely different).
+      __BC_STABILITY_TEXT__
+    </span>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="chart-card">
+    <div class="chart-title">Compositional Profile — Radar</div>
+    <div id="pt-radar" class="plot-div"></div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">Composition T0 vs T84</div>
+    <div id="pt-comp" class="plot-div"></div>
+  </div>
+</div>
+
+__CLINICAL_BLOCK__
+
+<div class="insight">
+  <strong>Key finding:</strong>
+  __INSIGHT_TEXT__
+</div>
+
+<script>
+(function(){
+  var D=__DATA_JSON__;
+  var L=__LAYOUT_JSON__;
+  var C=__CONFIG_JSON__;
+  function merge(b,e){return Object.assign(JSON.parse(JSON.stringify(b)),e);}
+  if(D.radar&&D.radar.length)
+    Plotly.newPlot('pt-radar',
+      D.radar.filter(function(t){return t.name&&t.name.includes('__PATIENT_ID__')||t.name&&t.name.includes('__GROUP__');}),
+      merge(L,{height:340,polar:{radialaxis:{visible:true,ticksuffix:'%'}},showlegend:true}), C);
+  if(D.comp&&D.comp.data&&D.comp.data.length)
+    Plotly.newPlot('pt-comp', D.comp.data, merge(L,D.comp.layout), C);
+  __CLINICAL_JS__
+})();
+</script>
+</body>
+</html>

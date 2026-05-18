@@ -50,8 +50,14 @@ microsee-report \
 | `charts/individual.py` | Paired slopegraph, stability bar, rank plot, patient radar, small multiples |
 | `charts/comparative.py` | LFC bar, volcano (BH-FDR), ANCOM-style CLR, abundance heatmap, correlation matrix |
 | `charts/clinical.py` | Clinical slopegraphs, Shannon scatter, taxa × clinical Spearman heatmap |
-| `charts/stats.py` | Wilcoxon / Mann-Whitney tests, LME trajectory, PERMANOVA, diversity summary table |
-| `charts/renderer.py` | Aggregates all chart data, fills HTML template |
+| `charts/stats.py` | Wilcoxon / Mann-Whitney tests, LME trajectory, PERMANOVA (numpy-vectorised), diversity summary table |
+| `charts/orchestrator.py` | `compute_chart_data()` + `ReportConfig` — coordinates all chart builders, caches Bray-Curtis matrix |
+| `charts/preprocessing.py` | Shared row helpers: `get_patient_timepoints`, `sorted_timepoints`, `get_base_groups`, `filter_rows` |
+| `charts/metrics.py` | `METRIC_LABELS` dict, `metric_value()`, `pielou_evenness()` — extracted to break circular import |
+| `charts/stats_helpers.py` | Pure stat functions: Wilcoxon, Mann-Whitney, Welch t, Pearson r, Spearman ρ, BH-FDR |
+| `charts/insights.py` | Dynamic text summaries generated from chart payloads (extracted from renderer) |
+| `charts/renderer.py` | Fills HTML templates — cohort report (`template.html`) and per-patient report (`patient_template.html`) |
 | `charts/template.html` | HTML/CSS/JS report shell — all controls, Plotly rendering, smooth scroll |
+| `charts/patient_template.html` | Per-patient HTML report shell — stability score, radar, composition, clinical charts |
 | `charts/plotly.min.js` | Bundled Plotly.js v2.35.2 — required for offline/HPC use |
 | `Dockerfile` | Container image (`python:3.11-slim` + deps, no source code baked in) |

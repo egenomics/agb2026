@@ -24,7 +24,7 @@ where = ["."]
 include = ["report_generator*"]
 
 [tool.setuptools.package-data]
-"report_generator.charts" = ["template.html", "plotly.min.js"]
+"report_generator.charts" = ["template.html", "patient_template.html", "plotly.min.js"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

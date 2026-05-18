@@ -219,7 +219,7 @@ def _parse_time_days(timepoint_str: str) -> Optional[int]:
     if m:
         return int(m.group(1)) * 7
     # Baseline / control synonyms
-    if s in ("baseline", "t0", "pre", "week0", "wk0", "visit0"):
+    if s in ("baseline", "pre", "week0", "wk0", "visit0"):
         return 0
     return None
 
@@ -241,8 +241,8 @@ def parse_metadata(content: str) -> MetadataResult:
     """
     # Skip QIIME2 type directive line (#q2:types)
     lines = [
-        l for l in content.strip().splitlines()
-        if l.strip() and not l.startswith("#q2:types")
+        line for line in content.strip().splitlines()
+        if line.strip() and not line.startswith("#q2:types")
     ]
     df = pd.read_csv(io.StringIO("\n".join(lines)), sep="\t", dtype=str).fillna("")
 
@@ -365,8 +365,10 @@ def parse_alpha_diversity(content: str) -> AlphaDiversityResult:
         def _safe_float(col: Optional[str]) -> float:
             if col is None or col not in row:
                 return 0.0
-            try:   return round(float(row[col]), 4)
-            except: return 0.0
+            try:
+                return round(float(row[col]), 4)
+            except (ValueError, TypeError):
+                return 0.0
 
         entries.append(AlphaDiversityEntry(
             sample_id=sid,
@@ -406,7 +408,7 @@ def parse_distance_matrix(content: str) -> DistanceMatrixResult:
     Returns DistanceMatrixResult.
     Raises ValueError on format or symmetry errors.
     """
-    lines = [l for l in content.splitlines() if l.strip()]
+    lines = [line for line in content.splitlines() if line.strip()]
     if len(lines) < 2:
         raise ValueError("Distance matrix file has fewer than 2 rows.")
 

@@ -33,19 +33,25 @@ modules/groupD/
         ├── requirements.txt        ← Pinned dependencies (for reference)
         ├── Dockerfile              ← Container image definition
         └── charts/
-            ├── config.py           ← Colour palette and Plotly layout defaults
-            ├── utils.py            ← Shared colour helpers (group + taxon palette)
-            ├── distances.py        ← Bray-Curtis, Jaccard, PCoA, clustering
-            ├── taxonomy.py         ← Stacked bar (27 filter combos), donut, sunburst
-            ├── alpha.py            ← Strip/box/violin, brackets, rarefaction, multi-metric
-            ├── beta.py             ← PCoA, NMDS, dendrogram, Δ abundance heatmap
-            ├── individual.py       ← Slopegraph, stability, rank plot, radar, small multiples
-            ├── comparative.py      ← LFC bar, volcano, ANCOM-style CLR, heatmap, correlation
-            ├── clinical.py         ← Clinical slopegraphs, Shannon scatter, taxa×clinical heatmap
-            ├── stats.py            ← Wilcoxon / MW tests, LME trajectory, PERMANOVA, summary table
-            ├── renderer.py         ← Aggregates all chart data, fills HTML template
-            ├── template.html       ← HTML/CSS/JS report shell (all interactive controls)
-            └── plotly.min.js       ← Bundled Plotly.js v2.35.2 (MUST be committed to git)
+            ├── config.py            ← Colour palette and Plotly layout defaults
+            ├── utils.py             ← Shared colour helpers (group + taxon palette)
+            ├── preprocessing.py     ← Shared row helpers (get_patient_timepoints, sorted_timepoints, …)
+            ├── metrics.py           ← METRIC_LABELS, metric_value(), pielou_evenness()
+            ├── stats_helpers.py     ← Pure stat functions (Wilcoxon, MW, Welch t, Spearman, BH-FDR)
+            ├── distances.py         ← Bray-Curtis, Jaccard, PCoA, clustering
+            ├── taxonomy.py          ← Stacked bar (27 filter combos), donut, sunburst
+            ├── alpha.py             ← Strip/box/violin, brackets, rarefaction, multi-metric
+            ├── beta.py              ← PCoA, NMDS, dendrogram, Δ abundance heatmap
+            ├── individual.py        ← Slopegraph, stability, rank plot, radar, small multiples
+            ├── comparative.py       ← LFC bar, volcano, ANCOM-style CLR, heatmap, correlation
+            ├── clinical.py          ← Clinical slopegraphs, Shannon scatter, taxa×clinical heatmap
+            ├── stats.py             ← Wilcoxon / MW tests, LME trajectory, PERMANOVA, summary table
+            ├── insights.py          ← Dynamic text insights generated from chart payloads
+            ├── orchestrator.py      ← compute_chart_data() + ReportConfig (section selection)
+            ├── renderer.py          ← Fills HTML templates (cohort + per-patient reports)
+            ├── template.html        ← HTML/CSS/JS cohort report shell (all interactive controls)
+            ├── patient_template.html← Per-patient HTML report shell
+            └── plotly.min.js        ← Bundled Plotly.js v2.35.2 (MUST be committed to git)
 ```
 
 ---

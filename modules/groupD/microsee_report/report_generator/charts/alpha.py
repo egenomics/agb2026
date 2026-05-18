@@ -1,40 +1,9 @@
 """charts/alpha.py — alpha-diversity chart builders (strip, box, violin, rarefaction, multi-metric)."""
-
 from __future__ import annotations
-import math
 import numpy as np
 from .utils import group_color, hex_rgba
-from .stats import _wilcoxon_p, _mannwhitney_p, _sig_label
-
-METRIC_LABELS: dict[str, str] = {
-    "shannon":  "Shannon H′",
-    "simpson":  "Simpson 1−D",
-    "pielou":   "Pielou J′",
-    "observed": "Observed Taxa",
-    "faith_pd": "Faith PD",
-}
-
-
-def _pielou(r: dict, taxa: list[str]) -> float:
-    probs = np.array([float(r.get(t) or 0) / 100.0 for t in taxa])
-    probs = probs[probs > 0]
-    obs   = len(probs)
-    if obs < 2:
-        return 0.0
-    return round(float(-np.sum(probs * np.log(probs + 1e-12))) / math.log(obs), 3)
-
-
-def _metric_val(r: dict, metric: str, taxa: list[str] | None = None) -> float:
-    """Read metric from row; compute pielou/observed from taxa if not stored."""
-    v = float(r.get(metric) or 0)
-    if v > 0:
-        return v
-    if taxa:
-        if metric == "pielou":
-            return _pielou(r, taxa)
-        if metric == "observed":
-            return float(sum(1 for t in taxa if float(r.get(t) or 0) > 0.5))
-    return 0.0
+from .metrics import METRIC_LABELS, metric_value, pielou_evenness  # noqa: F401 – re-export METRIC_LABELS
+from .stats_helpers import wilcoxon_p, mannwhitney_p, sig_label
 
 
 def build_alpha_strip(rows: list[dict], groups: list[str],
@@ -43,7 +12,7 @@ def build_alpha_strip(rows: list[dict], groups: list[str],
     for gi, g in enumerate(groups):
         g_rows = [r for r in rows if r["group"] == g]
         c   = group_color(g, groups)
-        ys  = [_metric_val(r, metric, taxa) for r in g_rows]
+        ys  = [metric_value(r, metric, taxa) for r in g_rows]
         xs  = [gi + ((i * 1337 + 17) % 100 - 50) / 200 for i in range(len(g_rows))]
         avg = float(np.mean(ys)) if ys else 0.0
         lbl = METRIC_LABELS.get(metric, metric)
@@ -70,7 +39,7 @@ def build_alpha_box(rows: list[dict], groups: list[str],
     lbl = METRIC_LABELS.get(metric, metric)
     return [{
         "type": "box", "name": g,
-        "y": [_metric_val(r, metric, taxa) for r in rows if r["group"] == g],
+        "y": [metric_value(r, metric, taxa) for r in rows if r["group"] == g],
         "boxpoints": "all", "jitter": 0.3, "pointpos": -1.8,
         "marker": {"color": hex_rgba(group_color(g, groups), 0.7), "size": 5},
         "line":   {"color": group_color(g, groups)},
@@ -83,7 +52,7 @@ def build_alpha_violin(rows: list[dict], groups: list[str],
     lbl = METRIC_LABELS.get(metric, metric)
     return [{
         "type": "violin", "name": g,
-        "y": [_metric_val(r, metric, taxa) for r in rows if r["group"] == g],
+        "y": [metric_value(r, metric, taxa) for r in rows if r["group"] == g],
         "box": {"visible": True}, "meanline": {"visible": True},
         "fillcolor": hex_rgba(group_color(g, groups), 0.4),
         "line": {"color": group_color(g, groups)},
@@ -94,7 +63,7 @@ def build_alpha_violin(rows: list[dict], groups: list[str],
 def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
                   metric: str, taxa: list[str]) -> dict:
     """Wilcoxon bracket shapes + annotations for one alpha metric box chart."""
-    all_vals = [_metric_val(r, metric, taxa) for r in rows]
+    all_vals = [metric_value(r, metric, taxa) for r in rows]
     if not all_vals:
         return {"shapes": [], "annots": [], "y_max": 1.0}
     y_max  = max(all_vals)
@@ -127,26 +96,26 @@ def _bracket_data(rows: list[dict], groups: list[str], base_groups: list[str],
         patients = sorted(set(r["patient"] for r in rows if r.get("base_group", r["group"]) == bg))
         a, b = [], []
         for p in patients:
-            t0v  = [_metric_val(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-            t84v = [_metric_val(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) > 0]
+            t0v  = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
+            t84v = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) > 0]
             if t0v and t84v:
                 a.append(t0v[0]); b.append(t84v[0])
-        p = _wilcoxon_p(a, b)
+        p = wilcoxon_p(a, b)
         highest += y_span * 0.14
-        _bracket(gpos[t0_g], gpos[t84_g], highest, _sig_label(p))
+        _bracket(gpos[t0_g], gpos[t84_g], highest, sig_label(p))
 
     if len(base_groups) == 2:
         bg1, bg2   = base_groups
         t84_g1 = f"{bg1}_T84"
         t84_g2 = f"{bg2}_T84"
         if t84_g1 in gpos and t84_g2 in gpos:
-            v1 = [_metric_val(r, metric, taxa) for r in rows
+            v1 = [metric_value(r, metric, taxa) for r in rows
                   if r.get("base_group", r["group"]) == bg1 and r.get("timepoint") == "T84"]
-            v2 = [_metric_val(r, metric, taxa) for r in rows
+            v2 = [metric_value(r, metric, taxa) for r in rows
                   if r.get("base_group", r["group"]) == bg2 and r.get("timepoint") == "T84"]
-            p = _mannwhitney_p(v1, v2)
+            p = mannwhitney_p(v1, v2)
             highest += y_span * 0.16
-            _bracket(gpos[t84_g1], gpos[t84_g2], highest, _sig_label(p) + " (T84)", dashed=True)
+            _bracket(gpos[t84_g1], gpos[t84_g2], highest, sig_label(p) + " (T84)", dashed=True)
 
     return {"shapes": shapes, "annots": annots, "y_max": round(highest + y_span * 0.10, 4)}
 
@@ -206,26 +175,24 @@ def build_rarefaction(rows: list[dict], taxa: list[str], groups: list[str]) -> l
 
 
 def build_multimet_alpha(rows: list[dict], taxa: list[str], groups: list[str]) -> list[dict]:
-    return [
-        trace
-        for g in groups
-        for g_rows, c in [([r for r in rows if r["group"] == g], group_color(g, groups))]
-        for trace in [
-            {
-                "type": "bar", "name": f"{g} — Observed",
-                "x": [r["sample_id"] for r in g_rows],
-                "y": [_metric_val(r, "observed", taxa) for r in g_rows],
-                "marker": {"color": hex_rgba(c, 0.8)},
-                "hovertemplate": f"<b>{g}</b><br>Observed taxa: %{{y}}<extra></extra>",
-                "yaxis": "y",
-            },
-            {
-                "type": "scatter", "mode": "markers", "name": f"{g} — Pielou J′",
-                "x": [r["sample_id"] for r in g_rows],
-                "y": [_metric_val(r, "pielou", taxa) for r in g_rows],
-                "marker": {"color": c, "size": 8, "symbol": "diamond"},
-                "hovertemplate": f"<b>{g}</b><br>Pielou J′: %{{y:.3f}}<extra></extra>",
-                "yaxis": "y2",
-            },
-        ]
-    ]
+    traces: list[dict] = []
+    for g in groups:
+        g_rows = [r for r in rows if r["group"] == g]
+        c = group_color(g, groups)
+        traces.append({
+            "type": "bar", "name": f"{g} — Observed",
+            "x": [r["sample_id"] for r in g_rows],
+            "y": [metric_value(r, "observed", taxa) for r in g_rows],
+            "marker": {"color": hex_rgba(c, 0.8)},
+            "hovertemplate": f"<b>{g}</b><br>Observed taxa: %{{y}}<extra></extra>",
+            "yaxis": "y",
+        })
+        traces.append({
+            "type": "scatter", "mode": "markers", "name": f"{g} — Pielou J′",
+            "x": [r["sample_id"] for r in g_rows],
+            "y": [metric_value(r, "pielou", taxa) for r in g_rows],
+            "marker": {"color": c, "size": 8, "symbol": "diamond"},
+            "hovertemplate": f"<b>{g}</b><br>Pielou J′: %{{y:.3f}}<extra></extra>",
+            "yaxis": "y2",
+        })
+    return traces

@@ -1,10 +1,6 @@
-"""charts/utils.py — shared colour helpers and timepoint utilities."""
-
+"""charts/utils.py — shared colour helpers and styling utilities."""
 from __future__ import annotations
 from .config import GROUP_COLORS, FALLBACK_COLOR, TAXA_COLORS, _EXTRA_TAXA_PALETTE
-
-_taxon_color_cache: dict[str, str] = {}
-_extra_index = 0
 
 
 def group_color(group: str, all_groups: list[str]) -> str:
@@ -14,14 +10,29 @@ def group_color(group: str, all_groups: list[str]) -> str:
         return FALLBACK_COLOR
 
 
+def base_group_color(base_group: str, base_groups: list[str]) -> str:
+    """Color for a base group (EAA, Whey) using the GROUP_COLORS palette."""
+    try:
+        return GROUP_COLORS[sorted(base_groups).index(base_group) % len(GROUP_COLORS)]
+    except ValueError:
+        return FALLBACK_COLOR
+
+
+# Private alias kept for modules that import the old underscore name.
+_base_group_color = base_group_color
+
+
 def taxon_color(taxon: str) -> str:
-    global _extra_index
+    """Return a consistent color for a taxon family name.
+
+    Named taxa use the curated TAXA_COLORS palette.  Unknown taxa receive a
+    deterministic color derived from the taxon name hash — the same taxon
+    always renders with the same color across reports and server restarts,
+    unlike the previous mutable-global accumulator.
+    """
     if taxon in TAXA_COLORS:
         return TAXA_COLORS[taxon]
-    if taxon not in _taxon_color_cache:
-        _taxon_color_cache[taxon] = _EXTRA_TAXA_PALETTE[_extra_index % len(_EXTRA_TAXA_PALETTE)]
-        _extra_index += 1
-    return _taxon_color_cache[taxon]
+    return _EXTRA_TAXA_PALETTE[hash(taxon) % len(_EXTRA_TAXA_PALETTE)]
 
 
 def hex_rgba(hex_color: str, alpha: float) -> str:
@@ -30,19 +41,11 @@ def hex_rgba(hex_color: str, alpha: float) -> str:
     return f"rgba({r},{g},{b},{alpha})"
 
 
-def _base_group_color(base_group: str, base_groups: list[str]) -> str:
-    """Color for a base group (EAA, Whey) using the same GROUP_COLORS palette."""
-    try:
-        return GROUP_COLORS[sorted(base_groups).index(base_group) % len(GROUP_COLORS)]
-    except ValueError:
-        return FALLBACK_COLOR
-
-
 def _sorted_timepoints(rows: list[dict]) -> list[str]:
-    """Return unique timepoints sorted by their numeric time value."""
-    tp_time: dict[str, int] = {}
-    for r in rows:
-        tp = r.get("timepoint")
-        if tp:
-            tp_time[tp] = int(r.get("time") or 0)
-    return sorted(tp_time.keys(), key=lambda tp: tp_time[tp])
+    """Thin wrapper — delegates to preprocessing.sorted_timepoints.
+
+    Kept so callers that haven't updated their imports still work.
+    Prefer importing sorted_timepoints from preprocessing directly.
+    """
+    from .preprocessing import sorted_timepoints
+    return sorted_timepoints(rows)
