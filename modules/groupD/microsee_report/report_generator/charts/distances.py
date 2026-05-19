@@ -1,9 +1,13 @@
 """charts/distances.py — distance matrices, PCoA ordination, and hierarchical clustering."""
 
 from __future__ import annotations
+
+import math
 from typing import Any
-import math  # used by pcoa (math.sqrt) and average_linkage_dendrogram
+
 import numpy as np
+
+_EMPTY_D: dict[int, float] = {}  # typed sentinel for D.get(k, _EMPTY_D) lookups
 
 
 def rows_to_ab(rows: list[dict[str, Any]], taxa: list[str]) -> np.ndarray:
@@ -54,7 +58,7 @@ def pcoa(dist_mat: np.ndarray) -> tuple[list[float], list[float], float, float]:
     return cx, cy, pct1, pct2
 
 
-def average_linkage_dendrogram(mat: np.ndarray) -> list:
+def average_linkage_dendrogram(mat: np.ndarray) -> list[tuple[list[float], list[float]]]:
     """Average-linkage clustering. Returns list of (xs, ys) segment tuples."""
     n = mat.shape[0]
     D: dict[int, dict[int, float]] = {
@@ -66,7 +70,7 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list:
     size   = {i: 1 for i in range(n)}
     active = set(range(n))
     next_id = n
-    segments: list = []
+    segments: list[tuple[list[float], list[float]]] = []
 
     for _ in range(n - 1):
         arr = sorted(active)
@@ -74,7 +78,7 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list:
         ci = cj = -1
         for a in range(len(arr)):
             for b in range(a + 1, len(arr)):
-                d = D.get(arr[a], {}).get(arr[b], float("inf"))
+                d = D.get(arr[a], _EMPTY_D).get(arr[b], float("inf"))
                 if d < min_d:
                     min_d, ci, cj = d, arr[a], arr[b]
         if ci < 0:
@@ -85,15 +89,18 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list:
         ni, nj = size[ci], size[cj]
         segments.append(([hi, min_d, min_d, hj], [pi, pi, pj, pj]))
 
-        D[next_id] = {}
+        new_d: dict[int, float] = {}
+        D[next_id] = new_d
         for k in active:
             if k in (ci, cj):
                 continue
-            dik = D.get(ci, {}).get(k, D.get(k, {}).get(ci, 0.0))
-            djk = D.get(cj, {}).get(k, D.get(k, {}).get(cj, 0.0))
+            dik = D.get(ci, _EMPTY_D).get(k, D.get(k, _EMPTY_D).get(ci, 0.0))
+            djk = D.get(cj, _EMPTY_D).get(k, D.get(k, _EMPTY_D).get(cj, 0.0))
             d   = (dik * ni + djk * nj) / (ni + nj)
             D[next_id][k] = d
-            D.setdefault(k, {})[next_id] = d
+            if k not in D:
+                D[k] = {}
+            D[k][next_id] = d
 
         pos[next_id]    = (pi * ni + pj * nj) / (ni + nj)
         height[next_id] = min_d

@@ -1,27 +1,49 @@
-"""charts/clinical.py — clinical outcome chart builders (slopegraph, Shannon correlation)."""
+"""charts/clinical.py — clinical outcome chart builders.
+
+Slopegraph, Shannon correlation scatter, and taxa x clinical heatmap.
+"""
 from __future__ import annotations
+
 from typing import Any
+
 import numpy as np
-from .utils import hex_rgba, base_group_color
-from .preprocessing import get_patient_timepoints, get_unique_patients, get_base_groups, sorted_timepoints
+
+from .preprocessing import (
+    get_base_groups,
+    get_patient_timepoints,
+    get_unique_patients,
+    sorted_timepoints,
+)
 from .stats_helpers import pearson_p, spearman_r
+from .utils import base_group_color, hex_rgba
+
+_MIN_PATIENTS = 3
+_MIN_PAIRS    = 2
+_P_001        = 0.001
+_P_01         = 0.01
+_P_05         = 0.05
 
 
-def build_taxa_clinical_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> dict[str, Any]:
-    """Spearman rho heatmap: all taxa × all clinical variables.
+def build_taxa_clinical_heatmap(
+    rows: list[dict[str, Any]], taxa: list[str],
+) -> dict[str, Any]:
+    """Spearman rho heatmap: all taxa x all clinical variables.
 
-    Uses the change (Δ = T84 − T0) for both taxon abundances and clinical values,
-    matching the paper's approach of asking 'do microbiome shifts correlate with
-    clinical improvements?'
+    Uses the change (delta = T84 - T0) for both taxon abundances and clinical
+    values, matching the paper's approach of asking 'do microbiome shifts
+    correlate with clinical improvements?'
     """
-    clinical_fields = [f for f in ("sixmwt", "il18") if any(float(r.get(f) or 0) != 0 for r in rows)]
+    clinical_fields = [
+        f for f in ("sixmwt", "il18")
+        if any(float(r.get(f) or 0) != 0 for r in rows)
+    ]
     if not clinical_fields:
         return {"z": [], "x": [], "y": [], "text": [], "p": []}
 
     patients = get_unique_patients(rows)
-    delta_tax:  dict[str, list[float]] = {t: [] for t in taxa}
-    delta_clin: dict[str, list[float]] = {f: [] for f in clinical_fields}
-    valid_patients = []
+    delta_tax:     dict[str, list[float]] = {t: [] for t in taxa}
+    delta_clin:    dict[str, list[float]] = {f: [] for f in clinical_fields}
+    valid_patients: list[str]             = []
 
     for p in patients:
         r0, r84 = get_patient_timepoints(rows, p)
@@ -33,21 +55,29 @@ def build_taxa_clinical_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> 
         for f in clinical_fields:
             delta_clin[f].append(float(r84.get(f) or 0) - float(r0.get(f) or 0))
 
-    if len(valid_patients) < 3:
+    if len(valid_patients) < _MIN_PATIENTS:
         return {"z": [], "x": [], "y": [], "text": [], "p": []}
 
     field_labels = {"sixmwt": "Δ 6MWT (m)", "il18": "Δ IL-18 (pg/mL)"}
     x_labels = [field_labels.get(f, f) for f in clinical_fields]
-    z, text_mat, p_mat = [], [], []
+    z:        list[list[float]] = []
+    text_mat: list[list[str]]   = []
+    p_mat:    list[list[float]] = []
 
     for t in taxa:
-        row_z, row_t, row_p = [], [], []
+        row_z: list[float] = []
+        row_t: list[str]   = []
+        row_p: list[float] = []
         for f in clinical_fields:
-            rho, p = spearman_r(delta_tax[t], delta_clin[f])
+            rho, pval = spearman_r(delta_tax[t], delta_clin[f])
             row_z.append(rho)
-            row_p.append(round(p, 3))
-            stars = "***" if p < 0.001 else "**" if p < 0.01 else "*" if p < 0.05 else ""
-            row_t.append(f"ρ={rho:+.2f}{stars}")
+            row_p.append(round(pval, 3))
+            stars = (
+                "***" if pval < _P_001 else
+                "**"  if pval < _P_01  else
+                "*"   if pval < _P_05  else ""
+            )
+            row_t.append(f"rho={rho:+.2f}{stars}")
         z.append(row_z)
         text_mat.append(row_t)
         p_mat.append(row_p)
@@ -58,16 +88,21 @@ def build_taxa_clinical_heatmap(rows: list[dict[str, Any]], taxa: list[str]) -> 
     }
 
 
-def build_clinical_slope(rows: list[dict[str, Any]], field: str) -> list[dict[str, Any]]:
+def build_clinical_slope(
+    rows: list[dict[str, Any]], field: str,
+) -> list[dict[str, Any]]:
+    """Per-patient slopegraph for one clinical field with group-mean dashed line."""
     patients    = get_unique_patients(rows)
     timepoints  = sorted_timepoints(rows)
     base_groups = get_base_groups(rows)
     traces: list[dict[str, Any]] = []
 
     for p in patients:
-        p_rows = sorted([r for r in rows if r["patient"] == p],
-                        key=lambda r: r.get("time") or 0)
-        if len(p_rows) < 2:
+        p_rows = sorted(
+            [r for r in rows if r["patient"] == p],
+            key=lambda r: r.get("time") or 0,
+        )
+        if len(p_rows) < _MIN_PAIRS:
             continue
         bg = p_rows[0].get("base_group", p_rows[0]["group"])
         c  = base_group_color(bg, base_groups)
@@ -83,11 +118,13 @@ def build_clinical_slope(rows: list[dict[str, Any]], field: str) -> list[dict[st
 
     for bg in base_groups:
         c = base_group_color(bg, base_groups)
-        means, xs_used = [], []
+        means:   list[float] = []
+        xs_used: list[str]   = []
         for tp in timepoints:
-            vals = [float(r.get(field) or 0)
-                    for r in rows
-                    if r.get("base_group", r["group"]) == bg and r["timepoint"] == tp]
+            vals = [
+                float(r.get(field) or 0) for r in rows
+                if r.get("base_group", r["group"]) == bg and r["timepoint"] == tp
+            ]
             if vals:
                 means.append(round(float(np.mean(vals)), 2))
                 xs_used.append(tp)
@@ -97,16 +134,24 @@ def build_clinical_slope(rows: list[dict[str, Any]], field: str) -> list[dict[st
                 "name": f"{bg} mean", "x": xs_used, "y": means,
                 "line": {"color": c, "width": 3, "dash": "dash"},
                 "marker": {"size": 10, "color": c, "symbol": "diamond"},
-                "hovertemplate": f"<b>{bg} mean</b><br>%{{x}}<br>%{{y:.1f}}<extra></extra>",
+                "hovertemplate": (
+                    f"<b>{bg} mean</b><br>%{{x}}<br>%{{y:.1f}}<extra></extra>"
+                ),
             })
     return traces
 
 
-def build_clinical_correlation(rows: list[dict[str, Any]], field: str) -> tuple[list[dict[str, Any]], float, float]:
+def build_clinical_correlation(
+    rows: list[dict[str, Any]],
+    field: str,
+) -> tuple[list[dict[str, Any]], float, float]:
     """Shannon vs clinical field scatter + regression line. Returns (traces, r, p)."""
     base_groups = get_base_groups(rows)
-    valid = [r for r in rows if float(r.get(field) or 0) > 0 and float(r.get("shannon") or 0) > 0]
-    if len(valid) < 3:
+    valid = [
+        r for r in rows
+        if float(r.get(field) or 0) > 0 and float(r.get("shannon") or 0) > 0
+    ]
+    if len(valid) < _MIN_PATIENTS:
         return [], 0.0, 1.0
 
     xs = np.array([float(r.get("shannon") or 0) for r in valid])

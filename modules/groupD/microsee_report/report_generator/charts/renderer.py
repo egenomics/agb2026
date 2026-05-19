@@ -5,27 +5,31 @@ payloads and injects them into templates.  All analytical logic lives upstream
 in orchestrator.py and insights.py.
 """
 from __future__ import annotations
+
 import json
-import numpy as np
 from pathlib import Path
 from typing import Any
 
-from .config import BASE_LAYOUT, BASE_CONFIG, THEME
-from .individual import build_patient_radar_profiles, build_faceted_composition
-from .clinical   import build_clinical_slope
+import numpy as np
 
-# Load Plotly.js from the bundled file so the report works offline on HPC nodes.
+from .clinical import build_clinical_slope
+from .config import BASE_CONFIG, BASE_LAYOUT, THEME
+from .individual import build_faceted_composition, build_patient_radar_profiles
+
 _PLOTLY_JS_PATH = Path(__file__).parent / "plotly.min.js"
-if _PLOTLY_JS_PATH.exists():
-    _PLOTLY_JS_INLINE = f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
-else:
-    _PLOTLY_URL = "https://cdn.plot.ly/plotly-2.35.2.min.js"
+_PLOTLY_CDN_URL = "https://cdn.plot.ly/plotly-2.35.2.min.js"
+
+
+def _load_plotly_js() -> str:
+    """Load Plotly.js inline for offline HPC use; fall back to CDN if unavailable."""
+    if _PLOTLY_JS_PATH.exists():
+        return f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
     try:
         import urllib.request
-        print(f"[MicroSee] plotly.min.js not found — downloading from {_PLOTLY_URL} ...")
-        urllib.request.urlretrieve(_PLOTLY_URL, _PLOTLY_JS_PATH)
-        _PLOTLY_JS_INLINE = f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
+        print(f"[MicroSee] plotly.min.js not found — downloading from {_PLOTLY_CDN_URL} ...")
+        urllib.request.urlretrieve(_PLOTLY_CDN_URL, _PLOTLY_JS_PATH)
         print("[MicroSee] plotly.min.js downloaded and cached.")
+        return f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
     except Exception:
         import warnings
         warnings.warn(
@@ -37,7 +41,10 @@ else:
             "Falling back to CDN — charts will be BLANK on offline nodes.\n",
             RuntimeWarning, stacklevel=2,
         )
-        _PLOTLY_JS_INLINE = f'<script src="{_PLOTLY_URL}"></script>'
+        return f'<script src="{_PLOTLY_CDN_URL}"></script>'
+
+
+_PLOTLY_JS_INLINE = _load_plotly_js()
 
 _TEMPLATE         = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
 _PATIENT_TEMPLATE = (Path(__file__).parent / "patient_template.html").read_text(encoding="utf-8")
@@ -185,7 +192,7 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         raise ValueError(f"Patient {patient_id!r} not found in result")
 
     bc    = _patient_bc(rows, taxa, patient_id)
-    group = p_rows[0].get("base_group", p_rows[0]["group"])
+    group: str = str(p_rows[0].get("base_group") or p_rows[0].get("group") or "")
     stab_label = (
         "very stable"         if bc < 0.10 else
         "stable"              if bc < 0.20 else
@@ -240,8 +247,7 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         patient_id, p_rows, rows, taxa, bc, pat_profile, result.has_clinical,
     )
 
-    html = _PATIENT_TEMPLATE
-    for placeholder, value in [
+    replacements: list[tuple[str, str]] = [
         ("__PATIENT_ID__",        patient_id),
         ("__GROUP__",             group),
         ("__BC__",                f"{bc:.3f}"),
@@ -257,14 +263,16 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         ("__BG__",                THEME["bg"]),
         ("__TEXT__",              THEME["text"]),
         ("__PLOTLY_SCRIPT__",     _PLOTLY_JS_INLINE),
-    ]:
+    ]
+    html = _PATIENT_TEMPLATE
+    for placeholder, value in replacements:
         html = html.replace(placeholder, value)
     return html
 
 
 # ── Cohort report ─────────────────────────────────────────────────────────────
 
-def render_html(chart_data: dict) -> str:
+def render_html(chart_data: dict[str, Any]) -> str:
     """Render the main cohort HTML report by filling placeholders in template.html."""
     has_clinical = chart_data["meta"]["has_clinical"]
     meta         = chart_data["meta"]

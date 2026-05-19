@@ -54,8 +54,7 @@ from report_generator.parsers import (
     parse_taxonomy,
     integrate,
 )
-from report_generator.charts import compute_chart_data, render_html
-from report_generator.charts.renderer import render_patient_html
+from report_generator.charts import compute_chart_data, render_html, render_patient_html
 
 log = logging.getLogger(__name__)
 

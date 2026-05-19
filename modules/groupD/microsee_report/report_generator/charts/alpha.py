@@ -3,13 +3,13 @@ from __future__ import annotations
 from typing import Any
 import numpy as np
 from .utils import group_color, hex_rgba
-from .metrics import METRIC_LABELS, metric_value, pielou_evenness  # noqa: F401 – re-export METRIC_LABELS
+from .metrics import METRIC_LABELS, metric_value
 from .stats_helpers import wilcoxon_p, mannwhitney_p, sig_label
 
 
 def build_alpha_strip(rows: list[dict[str, Any]], groups: list[str],
                       metric: str = "shannon", taxa: list[str] | None = None) -> list[dict[str, Any]]:
-    traces = []
+    traces: list[dict[str, Any]] = []
     for gi, g in enumerate(groups):
         g_rows = [r for r in rows if r["group"] == g]
         c   = group_color(g, groups)
@@ -95,16 +95,17 @@ def _bracket_data(rows: list[dict[str, Any]], groups: list[str], base_groups: li
         if not t0_g or not t84_g:
             continue
         patients = sorted(set(r["patient"] for r in rows if r.get("base_group", r["group"]) == bg))
-        a, b = [], []
-        for p in patients:
-            t0v  = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) == 0]
-            t84v = [metric_value(r, metric, taxa) for r in rows if r["patient"] == p and (r.get("time") or 0) > 0]
+        a: list[float] = []
+        b: list[float] = []
+        for pat in patients:
+            t0v  = [metric_value(r, metric, taxa) for r in rows if r["patient"] == pat and (r.get("time") or 0) == 0]
+            t84v = [metric_value(r, metric, taxa) for r in rows if r["patient"] == pat and (r.get("time") or 0) > 0]
             if t0v and t84v:
                 a.append(t0v[0])
                 b.append(t84v[0])
-        p = wilcoxon_p(a, b)
+        pval = wilcoxon_p(a, b)
         highest += y_span * 0.14
-        _bracket(gpos[t0_g], gpos[t84_g], highest, sig_label(p))
+        _bracket(gpos[t0_g], gpos[t84_g], highest, sig_label(pval))
 
     if len(base_groups) == 2:
         bg1, bg2   = base_groups

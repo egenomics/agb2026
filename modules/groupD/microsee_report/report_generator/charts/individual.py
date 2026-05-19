@@ -1,13 +1,19 @@
 """charts/individual.py — per-patient chart builders."""
 from __future__ import annotations
-from typing import Any
+
 import math
+from typing import Any
+
 import numpy as np
-from .utils import hex_rgba, taxon_color, base_group_color
+
+from .distances import bray_curtis_matrix, pcoa, rows_to_ab
 from .preprocessing import (
-    get_patient_timepoints, get_unique_patients, get_base_groups, sorted_timepoints,
+    get_base_groups,
+    get_patient_timepoints,
+    get_unique_patients,
+    sorted_timepoints,
 )
-from .distances import rows_to_ab, bray_curtis_matrix, pcoa
+from .utils import base_group_color, hex_rgba, taxon_color
 
 
 # ── Paired Slopegraph ─────────────────────────────────────────────────────────
@@ -39,7 +45,8 @@ def _slope_traces(rows: list[dict[str, Any]], metric: str) -> list[dict[str, Any
         })
     for bg in base_groups:
         c = base_group_color(bg, base_groups)
-        means, xs_used = [], []
+        means:   list[float] = []
+        xs_used: list[str]   = []
         for tp in timepoints:
             vals = [float(r.get(metric) or 0) for r in rows
                     if r.get("base_group", r["group"]) == bg and r["timepoint"] == tp]
@@ -62,7 +69,7 @@ def _slope_traces(rows: list[dict[str, Any]], metric: str) -> list[dict[str, Any
 def build_stability_bar(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Per-patient Bray-Curtis dissimilarity T0 vs T84, sorted horizontal bar."""
     base_groups = get_base_groups(rows)
-    scores = []
+    scores: list[dict[str, Any]] = []
     for p in get_unique_patients(rows):
         r0, r84 = get_patient_timepoints(rows, p)
         if r0 is None or r84 is None:
@@ -96,7 +103,7 @@ def build_diversity_rank(rows: list[dict[str, Any]]) -> dict[str, list[dict[str,
 def _rank_traces(rows: list[dict[str, Any]], metric: str) -> list[dict[str, Any]]:
     base_groups = get_base_groups(rows)
     sorted_rows = sorted(rows, key=lambda r: float(r.get(metric) or 0))
-    traces = []
+    traces: list[dict[str, Any]] = []
     for bg in base_groups:
         c   = base_group_color(bg, base_groups)
         pts = [(i, r) for i, r in enumerate(sorted_rows)
@@ -204,15 +211,16 @@ def build_patient_radar_profiles(rows: list[dict[str, Any]], taxa: list[str]) ->
                 "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",
             })
 
-        table = [
-            {
+        table: list[dict[str, Any]] = []
+        for i, t in enumerate(taxa):
+            v84_i: float | None = v84[i] if v84 is not None else None
+            delta: float | None = round(v84_i - v0[i], 1) if v84_i is not None else None
+            table.append({
                 "family": t.replace("aceae", ""),
-                "v0":    v0[i],
-                "v84":   v84[i] if v84 is not None else None,
-                "delta": round(v84[i] - v0[i], 1) if v84 is not None else None,
-            }
-            for i, t in enumerate(taxa)
-        ]
+                "v0": v0[i],
+                "v84": v84_i,
+                "delta": delta,
+            })
         profiles[p] = {"traces": traces, "table": table, "group": bg}
 
     return {"patients": patients, "profiles": profiles}
@@ -232,10 +240,12 @@ def build_faceted_composition(rows: list[dict[str, Any]], taxa: list[str]) -> di
 
     data: list[dict[str, Any]] = []
     annotations: list[dict[str, Any]] = []
-    layout: dict = {"barmode": "stack", "showlegend": True,
-                    "height": max(360, n_rows * 240),
-                    "margin": {"l": 40, "r": 10, "t": 20, "b": 40}}
-    shown: set = set()
+    layout: dict[str, Any] = {
+        "barmode": "stack", "showlegend": True,
+        "height": max(360, n_rows * 240),
+        "margin": {"l": 40, "r": 10, "t": 20, "b": 40},
+    }
+    shown: set[str] = set()
 
     for i, p in enumerate(patients):
         ri, ci  = divmod(i, n_cols)
@@ -290,7 +300,7 @@ def build_faceted_composition(rows: list[dict[str, Any]], taxa: list[str]) -> di
 def build_nmds_trajectories(
     rows: list[dict[str, Any]],
     taxa: list[str],
-    bc_matrix: "np.ndarray | None" = None,
+    bc_matrix: np.ndarray | None = None,
 ) -> tuple[list[dict[str, Any]], float, float]:
     """PCoA (Bray-Curtis) with T0→T84 arrows per patient."""
     base_groups = get_base_groups(rows)

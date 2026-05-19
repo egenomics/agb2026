@@ -16,7 +16,7 @@ TAXA_COLORS: dict[str, str] = {
 }
 
 # Extended palette for taxa families not listed above — cycles instead of all-grey.
-_EXTRA_TAXA_PALETTE = [
+EXTRA_TAXA_PALETTE = [
     "#6CB4E4", "#F4A261", "#E76F51", "#264653", "#2A9D8F",
     "#E9C46A", "#A8DADC", "#457B9D", "#1D3557", "#F1FAEE",
     "#B5838D", "#6D6875", "#EDC4B3", "#E8A598", "#CFBAF0",

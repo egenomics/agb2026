@@ -114,10 +114,10 @@ def parse_feature_table(content: str) -> FeatureTableResult:
     except Exception:
         raise ValueError("Feature table contains non-numeric count values.")
 
-    features = df.index.astype(str).tolist()
-    samples  = df.columns.astype(str).tolist()
-    counts   = {
-        feat: {samp: float(df.at[feat, samp]) for samp in samples}
+    features: list[str] = [str(f) for f in df.index]
+    samples: list[str] = [str(s) for s in df.columns]
+    counts: dict[str, dict[str, float]] = {
+        feat: {samp: float(str(df.at[feat, samp])) for samp in samples}
         for feat in features
     }
 
@@ -138,7 +138,7 @@ _FAMILY_RE = re.compile(r"f__([^;]+)")
 _SKIP_VALUES = {"", "uncultured", "unknown", "unidentified", "metagenome"}
 
 
-def _extract_family(taxon: str) -> str:
+def _extract_family(taxon: object) -> str:
     """Extract family-level name from a QIIME2/SILVA taxonomy string."""
     if not isinstance(taxon, str):
         return "Unclassified"
@@ -277,11 +277,15 @@ def parse_metadata(content: str) -> MetadataResult:
         sixmwt = 0.0
         il18   = 0.0
         if mwt_col:
-            try:   sixmwt = float(row[mwt_col])
-            except (ValueError, TypeError): pass
+            try:
+                sixmwt = float(str(row[mwt_col]))
+            except (ValueError, TypeError):
+                pass
         if il18_col:
-            try:   il18 = float(row[il18_col])
-            except (ValueError, TypeError): pass
+            try:
+                il18 = float(str(row[il18_col]))
+            except (ValueError, TypeError):
+                pass
 
         samples.append(SampleMetadata(
             sample_id=sid,
@@ -366,7 +370,7 @@ def parse_alpha_diversity(content: str) -> AlphaDiversityResult:
             if col is None or col not in row:
                 return 0.0
             try:
-                return round(float(row[col]), 4)
+                return round(float(str(row[col])), 4)
             except (ValueError, TypeError):
                 return 0.0
 

@@ -1,0 +1,12 @@
+{
+  "pythonVersion": "3.12",
+  "venvPath": "/Users/davitgudadze/Desktop/project/agb2026/microsee/microsee_backend",
+  "venv": "venv",
+  "extraPaths": [
+    "groupD/microsee_report"
+  ],
+  "typeCheckingMode": "basic",
+  "include": [
+    "groupD"
+  ]
+}

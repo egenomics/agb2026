@@ -1,13 +1,11 @@
 """charts — public API for the MicroSee report generator chart subpackage.
 
-compute_chart_data  — orchestrates all chart-data computation (orchestrator.py)
-render_html         — fills the HTML template with chart payloads (renderer.py)
-
-Both names are re-exported here for backward compatibility: callers that do
-    from report_generator.charts import compute_chart_data, render_html
-continue to work without any changes.
+compute_chart_data   — orchestrates all chart-data computation (orchestrator.py)
+ReportConfig         — section-selection config passed to compute_chart_data
+render_html          — fills the cohort HTML template with chart payloads (renderer.py)
+render_patient_html  — generates a self-contained per-patient HTML report (renderer.py)
 """
-from .orchestrator import compute_chart_data, ReportConfig  # noqa: F401
-from .renderer     import render_html                        # noqa: F401
+from .orchestrator import ReportConfig, compute_chart_data
+from .renderer import render_html, render_patient_html
 
-__all__ = ["compute_chart_data", "render_html", "ReportConfig"]
+__all__ = ["ReportConfig", "compute_chart_data", "render_html", "render_patient_html"]

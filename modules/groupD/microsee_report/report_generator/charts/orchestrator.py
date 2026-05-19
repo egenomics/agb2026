@@ -11,25 +11,33 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from .alpha import build_all_alpha_metrics, build_multimet_alpha, build_rarefaction
+from .beta import build_delta_heatmap, build_dendrogram, build_nmds_plot, build_pcoa_chart
+from .clinical import (
+    build_clinical_correlation,
+    build_clinical_slope,
+    build_taxa_clinical_heatmap,
+)
+from .comparative import (
+    build_ancom_style,
+    build_corr_matrix,
+    build_diff_abundance,
+    build_heatmap,
+    build_volcano,
+)
+from .distances import bray_curtis_matrix, rows_to_ab
+from .individual import (
+    build_diversity_rank,
+    build_faceted_composition,
+    build_nmds_trajectories,
+    build_paired_slope,
+    build_patient_radar_profiles,
+    build_stability_bar,
+)
+from .insights import generate_chart_explanations, generate_dynamic_insights
 from .preprocessing import get_base_groups
-from .distances    import rows_to_ab, bray_curtis_matrix
-
-from .taxonomy   import (build_taxonomy_views, build_top_taxa,
-                          build_donut, build_sunburst)
-from .alpha      import (build_all_alpha_metrics, build_rarefaction,
-                          build_multimet_alpha)
-from .beta       import (build_pcoa_chart, build_nmds_plot,
-                          build_dendrogram, build_delta_heatmap)
-from .individual import (build_paired_slope, build_stability_bar,
-                          build_diversity_rank, build_patient_radar_profiles,
-                          build_faceted_composition, build_nmds_trajectories)
-from .comparative import (build_diff_abundance, build_volcano, build_heatmap,
-                           build_corr_matrix, build_ancom_style)
-from .clinical   import (build_clinical_slope, build_clinical_correlation,
-                          build_taxa_clinical_heatmap)
-from .stats      import (build_longitudinal, build_stats_table,
-                          build_permanova_table, build_lme_trajectory)
-from .insights   import generate_dynamic_insights, generate_chart_explanations
+from .stats import build_lme_trajectory, build_longitudinal, build_permanova_table, build_stats_table
+from .taxonomy import build_donut, build_sunburst, build_taxonomy_views, build_top_taxa
 
 
 # ── Configuration dataclass ───────────────────────────────────────────────────
@@ -119,7 +127,6 @@ def compute_chart_data(
     if cfg.includes("beta"):
         bray_traces, bray_pct1, bray_pct2 = build_pcoa_chart(rows, taxa, groups, "bray", _bc_mat)
         jacc_traces, jacc_pct1, jacc_pct2 = build_pcoa_chart(rows, taxa, groups, "jaccard")
-        nmds_traces, nmds_pct1, nmds_pct2 = build_nmds_trajectories(rows, taxa, _bc_mat)
         nmds_sa_traces, nmds_sa_pct1, nmds_sa_pct2 = build_nmds_plot(rows, taxa, groups, _bc_mat)
 
         data["pcoa_bray"]     = {"traces": bray_traces, "pct1": bray_pct1, "pct2": bray_pct2}
@@ -135,11 +142,8 @@ def compute_chart_data(
         data["diversity_rank"]         = build_diversity_rank(rows)
         data["patient_radar_profiles"] = build_patient_radar_profiles(rows, taxa)
         data["faceted_composition"]    = build_faceted_composition(rows, taxa)
-        if cfg.includes("beta"):
-            data["nmds_trajectories"] = {"traces": nmds_traces, "pct1": nmds_pct1, "pct2": nmds_pct2}
-        else:
-            _t, _p1, _p2 = build_nmds_trajectories(rows, taxa, _bc_mat)
-            data["nmds_trajectories"] = {"traces": _t, "pct1": _p1, "pct2": _p2}
+        _t, _p1, _p2 = build_nmds_trajectories(rows, taxa, _bc_mat)
+        data["nmds_trajectories"] = {"traces": _t, "pct1": _p1, "pct2": _p2}
 
     # ── Comparative ───────────────────────────────────────────────────────────
     if cfg.includes("comparative"):
