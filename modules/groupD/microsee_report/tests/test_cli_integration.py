@@ -22,18 +22,22 @@ from report_generator.parsers import (
     parse_taxonomy,
 )
 
-# Minimal inline fixtures (same as test_charts.py) — fast on CI runners.
+# Two-group inline dataset (EAA vs Control, 4 patients, 2 timepoints).
+# Two groups are required for PERMANOVA, differential abundance, and volcano charts
+# to exercise real comparison logic rather than falling back to single-group stubs.
 FEATURE_TABLE = """\
-#OTU ID\tS1\tS2\tS3\tS4
-ASV1\t100\t200\t50\t80
-ASV2\t300\t150\t400\t200
-ASV3\t50\t50\t250\t100
+#OTU ID\tS1\tS2\tS3\tS4\tS5\tS6\tS7\tS8
+ASV1\t100\t200\t50\t80\t300\t310\t290\t305
+ASV2\t300\t150\t400\t200\t80\t70\t90\t75
+ASV3\t50\t50\t250\t100\t200\t210\t190\t205
+ASV4\t20\t80\t30\t60\t150\t160\t140\t155
 """
 TAXONOMY = """\
 Feature ID\tTaxon\tConfidence
 ASV1\td__Bacteria;p__Firmicutes;f__Lachnospiraceae\t0.99
 ASV2\td__Bacteria;p__Bacteroidota;f__Bacteroidaceae\t0.98
 ASV3\td__Bacteria;p__Firmicutes;f__Ruminococcaceae\t0.97
+ASV4\td__Bacteria;p__Proteobacteria;f__Enterobacteriaceae\t0.95
 """
 METADATA = """\
 sample-id\tsubject\tgroup\ttimepoint
@@ -41,6 +45,10 @@ S1\tPat1\tEAA\tT0
 S2\tPat1\tEAA\tT84
 S3\tPat2\tEAA\tT0
 S4\tPat2\tEAA\tT84
+S5\tPat3\tControl\tT0
+S6\tPat3\tControl\tT84
+S7\tPat4\tControl\tT0
+S8\tPat4\tControl\tT84
 """
 ALPHA = """\
 sample-id\tshannon_entropy\tsimpson\tfaith_pd
@@ -48,6 +56,10 @@ S1\t1.5\t0.75\t8.2
 S2\t1.8\t0.82\t9.1
 S3\t1.3\t0.70\t7.8
 S4\t1.6\t0.78\t8.5
+S5\t2.1\t0.88\t11.3
+S6\t2.0\t0.86\t10.9
+S7\t1.9\t0.84\t10.5
+S8\t2.2\t0.90\t11.8
 """
 
 PLOTLY_JS = Path(__file__).resolve().parents[1] / "report_generator" / "charts" / "plotly.min.js"

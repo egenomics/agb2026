@@ -28,17 +28,8 @@ from pathlib import Path
 if __name__ == "__main__" and __package__ is None:
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from report_generator.charts import compute_chart_data, render_html, render_patient_html
-from report_generator.charts.individual import build_patient_radar_profiles
-from report_generator.models import DistanceMatrixResult
-from report_generator.parsers import (
-    integrate,
-    parse_alpha_diversity,
-    parse_distance_matrix,
-    parse_feature_table,
-    parse_metadata,
-    parse_taxonomy,
-)
+# Heavy imports (numpy, pandas) are deferred to main() so that
+# --help and argument errors print instantly without a cold-start delay.
 
 log = logging.getLogger(__name__)
 
@@ -107,6 +98,18 @@ def _read_file(path: str, label: str) -> str:
 def main() -> None:
     _configure_logging()
     args = parse_args()
+
+    from report_generator.charts import compute_chart_data, render_html, render_patient_html
+    from report_generator.charts.individual import build_patient_radar_profiles
+    from report_generator.models import DistanceMatrixResult
+    from report_generator.parsers import (
+        integrate,
+        parse_alpha_diversity,
+        parse_distance_matrix,
+        parse_feature_table,
+        parse_metadata,
+        parse_taxonomy,
+    )
 
     distance_matrix: DistanceMatrixResult | None = None
 

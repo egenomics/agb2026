@@ -120,4 +120,12 @@ jobs:
         run: nextflow run workflows/groupD.nf -profile test,conda -ansi-log false
 
       - name: Verify cohort report published
-        run: test -f results/test/microsee_report.html
+        run: |
+          test -f results/test/microsee_report.html
+          python3 -c "
+          html = open('results/test/microsee_report.html').read()
+          assert 'Plotly.newPlot' in html, 'No Plotly charts rendered in report'
+          assert 'src=\"https://cdn.plot.ly' not in html, 'Report loads Plotly from CDN (not self-contained)'
+          assert len(html) >= 1_000_000, f'Report too small ({len(html):,} bytes) — Plotly.js may not be embedded'
+          print(f'Report OK: {len(html):,} bytes')
+          "
