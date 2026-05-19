@@ -14,6 +14,8 @@ The pipeline takes raw FASTQ reads from Group A and produces:
 
 ## Project folder structure
 
+DO NOT PANIC, THIS DISTRIBUTION IS TEMPRARY UNTIL WE HAVE THE WHOLE PIPELINE COMPLETE AND THEN ADAPT IT TO THE DESIRED MAIN BARNCH DISTRIBTION !!!!
+
 ```
 Group_B/
 ├── main.nf                        # Full pipeline entry point (all groups combined)
@@ -67,6 +69,8 @@ Group_B/
 ---
 
 ## Results folder structure
+
+---------------IMPORTANT FOR OTHER GROUPS THAT DEPEND ON GROUPB-------------
 
 When the pipeline runs, outputs are published to `results_test/` (or whichever `--outdir` is set):
 
