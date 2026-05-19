@@ -222,7 +222,7 @@ nextflow run workflows/groupD.nf -profile slurm,conda \
 > Without `--alpha`, Shannon and Simpson are estimated from family-level abundances,
 > which underestimates diversity. All other metrics (Faith PD, Pielou, Observed) will be absent.
 
-> **Docker / Singularity** — image `ghcr.io/agb2026/microsee-report:latest` is built by
+> **Docker / Singularity** — image `ghcr.io/egenomics/microsee-report:latest` is built by
 > [`.github/workflows/docker-report.yml`](../../.github/workflows/docker-report.yml)
 > on pushes to `main` / `Group_D`. Until the image exists in GHCR, use `-profile conda`.
 

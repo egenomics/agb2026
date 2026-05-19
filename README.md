@@ -111,7 +111,7 @@ Runtime pins (pip / conda / Docker): **pandas 2.3.3**, **numpy 2.4.1**, **pydant
 — see [`pyproject.toml`](modules/groupD/microsee_report/pyproject.toml).
 
 ```bash
-docker build -t ghcr.io/agb2026/microsee-report:latest \
+docker build -t ghcr.io/egenomics/microsee-report:latest \
     modules/groupD/microsee_report/report_generator/
 ```
 
@@ -123,7 +123,7 @@ docker build -t ghcr.io/agb2026/microsee-report:latest \
 ## CI
 
 [`test.yml`](.github/workflows/test.yml): ruff · mypy · pytest (3.10–3.12) · CLI integration · Nextflow smoke  
-[`docker-report.yml`](.github/workflows/docker-report.yml): build/push `ghcr.io/agb2026/microsee-report:latest` on `main`
+[`docker-report.yml`](.github/workflows/docker-report.yml): build/push `ghcr.io/egenomics/microsee-report:latest` on `main`
 
 ---
 

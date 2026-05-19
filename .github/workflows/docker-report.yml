@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE: ghcr.io/agb2026/microsee-report:latest
+  IMAGE: ghcr.io/egenomics/microsee-report:latest
 
 jobs:
   build:
