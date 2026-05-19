@@ -1,3 +1,6 @@
+# Runtime dependencies for the MicroSee Nextflow process.
+# The report_generator/ code is staged directly by Nextflow and does NOT need to be
+# installed as a package — only these library dependencies are required in the environment.
 name: microsee
 channels:
   - conda-forge
@@ -7,6 +10,3 @@ dependencies:
   - pandas>=2.2,<3
   - numpy>=1.26,<3
   - pydantic>=2.7,<3
-  - pip
-  - pip:
-      - microsee-report

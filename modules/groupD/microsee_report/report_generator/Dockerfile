@@ -9,4 +9,6 @@ RUN pip install --no-cache-dir \
     "numpy>=1.26,<3" \
     "pydantic>=2.7,<3"
 
+RUN python -c "import pandas, numpy, pydantic; print('deps ok')"
+
 WORKDIR /work

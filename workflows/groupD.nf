@@ -10,6 +10,7 @@
  *   params.taxonomy       path to taxonomy.tsv
  *   params.metadata       path to metadata.tsv
  *   params.alpha          path to alpha-diversity.tsv  (optional, omit or set to '')
+ *   params.mode           'cohort' (default) | 'patient' | 'all'
  *   params.outdir         where to publish the HTML report
  */
 
@@ -22,6 +23,7 @@ workflow GROUPD {
     taxonomy        // channel: path
     metadata        // channel: path
     alpha           // channel: path  (can be file('NO_FILE'))
+    mode            // val: 'cohort' | 'patient' | 'all'
 
     main:
     MICROSEE_REPORT(
@@ -30,10 +32,12 @@ workflow GROUPD {
         taxonomy,
         metadata,
         alpha,
+        mode,
     )
 
     emit:
-    report = MICROSEE_REPORT.out.report
+    report          = MICROSEE_REPORT.out.report
+    patient_reports = MICROSEE_REPORT.out.patient_reports
 }
 
 /*
@@ -44,6 +48,7 @@ workflow GROUPD {
  *       --taxonomy      path/to/taxonomy.tsv       \
  *       --metadata      path/to/metadata.tsv       \
  *       [--alpha        path/to/alpha-diversity.tsv] \
+ *       [--mode         all]                         \
  *       --outdir        results/
  */
 workflow {
@@ -61,6 +66,6 @@ workflow {
         taxonomy_ch,
         metadata_ch,
         alpha_ch,
+        params.mode,
     )
-    // Note: report_generator/ is passed inside GROUPD via projectDir
 }

@@ -1,3 +1,5 @@
+# Mirrors the dependencies in pyproject.toml — pyproject.toml is authoritative.
+# Regenerate with: pip-compile pyproject.toml  (or update manually to match)
 pandas>=2.2,<3
 numpy>=1.26,<3
 pydantic>=2.7,<3

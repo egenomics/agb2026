@@ -18,7 +18,7 @@ modules/groupD/
     ├── environment.yml             ← Conda environment definition
     ├── main.nf                     ← Nextflow process (MICROSEE_REPORT)
     ├── tests/
-    │   ├── data/                   ← Fixture TSVs (4 patients × 2 timepoints, all metrics)
+    │   ├── data/                   ← Fixture TSVs (12 patients × 2 timepoints = 24 samples, all metrics)
     │   │   ├── feature-table.tsv
     │   │   ├── taxonomy.tsv
     │   │   ├── metadata.tsv        ← includes sixmwt + il18 clinical columns
@@ -64,6 +64,8 @@ modules/groupD/
 pip install -e "modules/groupD/microsee_report"
 
 # 2. Generate a report using the bundled fixture data
+#    Note: the fixture metadata includes sixmwt and il18 columns, so the
+#    Clinical section will appear in this demo — this is the full-featured output.
 microsee-report \
     --feature-table modules/groupD/microsee_report/tests/data/feature-table.tsv \
     --taxonomy      modules/groupD/microsee_report/tests/data/taxonomy.tsv \
@@ -149,7 +151,7 @@ microsee-report ... --mode all --output microsee_report.html
 - **Abundance heatmap** — sample × family matrix, colour = relative abundance.
 - **Taxon correlation matrix** — which families tend to co-occur (positive correlation) or compete (negative)?
 
-### Clinical *(only shown if sixmwt / il18 columns are in metadata)*
+### Clinical *(only shown if sixmwt / il18 columns are in metadata — the bundled demo data always includes them)*
 **What it answers:** Does microbiome diversity correlate with physical function or inflammation?
 
 - **6MWT and IL-18 slopegraphs** — individual patient trajectories for the 6-minute walk test and IL-18 cytokine, with group mean dashed line.
@@ -173,12 +175,20 @@ microsee-report ... --mode all --output microsee_report.html
 ## Running via Nextflow
 
 ```bash
-# With conda (default)
+# With conda (default) — cohort report only
 nextflow run workflows/groupD.nf -profile conda \
     --feature_table path/to/feature-table.tsv \
     --taxonomy      path/to/taxonomy.tsv \
     --metadata      path/to/metadata.tsv \
     --alpha         path/to/alpha-diversity.tsv \
+    --outdir        results/
+
+# Cohort + one HTML per patient
+nextflow run workflows/groupD.nf -profile conda \
+    --feature_table path/to/feature-table.tsv \
+    --taxonomy      path/to/taxonomy.tsv \
+    --metadata      path/to/metadata.tsv \
+    --report_mode   all \
     --outdir        results/
 
 # With bundled test fixtures
@@ -188,6 +198,12 @@ nextflow run workflows/groupD.nf -profile test,conda
 nextflow run workflows/groupD.nf -profile slurm,conda \
     --feature_table ...
 ```
+
+> **Nextflow uses `python3` directly, not the `microsee-report` CLI.** The process stages
+> `report_generator/` into the work directory and runs `python3 report_generator/generate_report.py`.
+> This is equivalent to the CLI and works without `pip install` in every environment (conda, container,
+> bare Python). If you are debugging a failed process, look for `generate_report.py` errors in the
+> `.command.err` file inside the Nextflow work directory, not for a missing `microsee-report` binary.
 
 > **Alpha diversity file** — QIIME2 exports one metric per file (e.g. `shannon_entropy.tsv`,
 > `faith_pd.tsv`). Merge them into a single TSV before passing to `--alpha`:
@@ -219,7 +235,7 @@ pip install -e "modules/groupD/microsee_report[dev]"
 pytest modules/groupD/microsee_report/tests/ -v
 ```
 
-Tests cover inline string fixtures and the realistic 4-patient fixture TSV files.
+Tests cover inline string fixtures and the realistic 12-patient (24-sample) fixture TSV files.
 
 ---
 

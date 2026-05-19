@@ -66,12 +66,12 @@ agb2026/
 # Install the report generator
 pip install -e "modules/groupD/microsee_report"
 
-# Run with the bundled test data
+# Run with the bundled test data (12 patients × 2 timepoints, includes clinical columns)
 microsee-report \
-    --feature-table microsee/microsee_backend/tests/data/feature-table.tsv \
-    --taxonomy      microsee/microsee_backend/tests/data/taxonomy.tsv \
-    --metadata      microsee/microsee_backend/tests/data/metadata.tsv \
-    --alpha         microsee/microsee_backend/tests/data/alpha-diversity.tsv \
+    --feature-table modules/groupD/microsee_report/tests/data/feature-table.tsv \
+    --taxonomy      modules/groupD/microsee_report/tests/data/taxonomy.tsv \
+    --metadata      modules/groupD/microsee_report/tests/data/metadata.tsv \
+    --alpha         modules/groupD/microsee_report/tests/data/alpha-diversity.tsv \
     --output        microsee_report.html
 
 open microsee_report.html   # macOS; use xdg-open on Linux
