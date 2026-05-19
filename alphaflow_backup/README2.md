@@ -59,6 +59,11 @@ curl -L https://raw.githubusercontent.com/nf-core/ampliseq/2.9.0/modules/local/d
 # Fix PICRUST (If it's also showing that error)
 curl -L https://raw.githubusercontent.com/nf-core/ampliseq/2.9.0/modules/local/picrust.nf -o modules/local/picrust.nf
 
+# Download Filter and Trim
+curl -L https://github.com/nf-core/ampliseq/blob/master/modules/local/dada2_filtntrim.nf -o modules/nf-core/dada2/filtandtrim/main.nf
+
+# Download Learn Errors
+curl -L https://github.com/nf-core/ampliseq/blob/master/modules/local/dada2_err.nf -o modules/nf-core/dada2/learnerrors/main.nf
 
 nf-core pipelines schema build
 ````

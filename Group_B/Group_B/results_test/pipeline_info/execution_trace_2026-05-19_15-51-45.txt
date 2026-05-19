@@ -1,0 +1,8 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+2	56/07ac7d	177491	GROUPB:DADA2_FILTNTRIM (test_sample)	CACHED	0	2026-05-19 14:19:39.432	8.8s	6.4s	116.4%	747.3 MB	2.5 GB	41.4 MB	170.1 KB
+1	20/fc4fde	177516	GROUPB:FASTQC (test_sample)	CACHED	0	2026-05-19 14:19:39.459	14.7s	13s	34.1%	273.4 MB	6 GB	11.9 MB	3.3 MB
+3	55/28b4ff	178868	GROUPB:DADA2_ERR (null)	CACHED	0	2026-05-19 14:19:48.293	11.4s	9.1s	110.0%	959.2 MB	3 GB	41.6 MB	630.4 KB
+4	3f/446e9a	179594	GROUPB:MULTIQC (alphaflow_qc)	CACHED	0	2026-05-19 14:19:54.200	7.3s	4.9s	79.9%	308.7 MB	4.6 GB	64.1 MB	5.2 MB
+5	d6/67e739	181058	GROUPB:DADA2_DENOISING (null)	CACHED	0	2026-05-19 14:44:16.336	10.9s	7s	114.0%	724.2 MB	2.3 GB	40.4 MB	13.8 KB
+7	f9/95dffa	186809	GROUPB:DADA2_TAXONOMY ([prefix_1.dada.rds, prefix_2.dada.rds],silva_nr99_v138.1_train_set.fa.gz)	FAILED	1	2026-05-19 15:51:48.951	7.3s	7.2s	-	-	-	-	-
+6	96/ab2f98	187314	GROUPB:PICRUST (prefix.seqtab.rds,[prefix_1.dada.rds, prefix_2.dada.rds])	FAILED	2	2026-05-19 15:51:56.235	2.8s	2.8s	-	-	-	-	-

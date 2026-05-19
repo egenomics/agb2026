@@ -1,0 +1,156 @@
+<!--
+  ~ Copyright 2013-2024, Seqera Labs
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+<html>
+<head>
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+</head>
+<body>
+<pre class="mermaid" style="text-align: center;">
+%%{
+  init: {
+    'theme': 'base',
+    'themeVariables': {
+      'primaryColor': '#B6ECE2',
+      'primaryTextColor': '#160F26',
+      'primaryBorderColor': '#065647',
+      'lineColor': '#545555',
+      'clusterBkg': '#BABCBD22',
+      'clusterBorder': '#DDDEDE',
+      'fontFamily': 'arial'
+    }
+  }
+}%%
+flowchart TB
+    subgraph " "
+    v0["Channel.fromPath"]
+    v40["database"]
+    v41["outfile"]
+    v42["taxlevels_input"]
+    v48["db"]
+    v49["save_output_fastqs"]
+    v50["save_reads_assignment"]
+    v58["source"]
+    v59["message"]
+    end
+    subgraph "GROUPB [GROUPB]"
+    v9(["FASTQC"])
+    v18(["MULTIQC"])
+    v24(["DADA2_FILTNTRIM"])
+    v27(["DADA2_ERR"])
+    v35(["DADA2_DENOISING"])
+    v43(["DADA2_TAXONOMY"])
+    v51(["KRAKEN2"])
+    v60(["PICRUST"])
+    v12(( ))
+    v23(( ))
+    v26(( ))
+    end
+    subgraph " "
+    v10[" "]
+    v11[" "]
+    v19[" "]
+    v20[" "]
+    v21[" "]
+    v22["multiqc_report"]
+    v25[" "]
+    v28[" "]
+    v29[" "]
+    v30[" "]
+    v31[" "]
+    v32[" "]
+    v33[" "]
+    v36[" "]
+    v37[" "]
+    v38[" "]
+    v39[" "]
+    v44[" "]
+    v45[" "]
+    v46[" "]
+    v47["outfile"]
+    v52[" "]
+    v53[" "]
+    v54[" "]
+    v55[" "]
+    v56[" "]
+    v57[" "]
+    v61[" "]
+    v62[" "]
+    v63[" "]
+    v64["pathways"]
+    v65[" "]
+    end
+    v1(( ))
+    v0 --> v1
+    v1 --> v9
+    v9 --> v11
+    v9 --> v10
+    v9 --> v12
+    v12 --> v18
+    v18 --> v22
+    v18 --> v21
+    v18 --> v20
+    v18 --> v19
+    v23 --> v24
+    v24 --> v25
+    v24 --> v26
+    v26 --> v27
+    v27 --> v33
+    v27 --> v32
+    v27 --> v31
+    v27 --> v30
+    v27 --> v29
+    v27 --> v28
+    v27 --> v26
+    v26 --> v35
+    v35 --> v43
+    v35 --> v60
+    v35 --> v39
+    v35 --> v38
+    v35 --> v37
+    v35 --> v36
+    v40 --> v43
+    v41 --> v43
+    v42 --> v43
+    v43 --> v47
+    v43 --> v46
+    v43 --> v45
+    v43 --> v44
+    v48 --> v51
+    v49 --> v51
+    v50 --> v51
+    v1 --> v51
+    v51 --> v57
+    v51 --> v56
+    v51 --> v55
+    v51 --> v54
+    v51 --> v53
+    v51 --> v52
+    v58 --> v60
+    v59 --> v60
+    v60 --> v65
+    v60 --> v64
+    v60 --> v63
+    v60 --> v62
+    v60 --> v61
+    v1 --> v23
+
+</pre>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  mermaid.initialize({ startOnLoad: true, maxTextSize: Number.MAX_SAFE_INTEGER, maxEdges: Number.MAX_SAFE_INTEGER });
+</script>
+</body>
+</html>

@@ -1,0 +1,3 @@
+Sample	Reports	Occurrences	% of all reads
+ATCG	1	1	50.0
+TAGC	1	1	50.0

@@ -1,0 +1,310 @@
+=== Netejant directoris de treball conflictius ===
+=== Llançant Nextflow Test ===
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `test_groupB.nf` [pedantic_ptolemy] DSL2 - revision: 38769e3f60
+
+[-        ] GROUPB:FASTQC          -
+[-        ] GROUPB:MULTIQC         -
+[-        ] GROUPB:DADA2_FILTNTRIM -
+[-        ] GROUPB:DADA2_ERR       -
+
+[20/fc4fde] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[-        ] GROUPB:MULTIQC                 -
+[56/07ac7d] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[55/28b4ff] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1
+[-        ] GROUPB:DADA2_DENOISING         -
+[-        ] GROUPB:DADA2_TAXONOMY          -
+[-        ] GROUPB:PICRUST                 -
+
+executor >  local (1)
+[20/fc4fde] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[3f/446e9a] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[56/07ac7d] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[55/28b4ff] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[d6/67e739] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[59/86702e] GRO…138.2_toGenus_trainset.fa) | 0 of 1
+[-        ] GROUPB:PICRUST                 | 0 of 1
+
+executor >  local (2)
+[20/fc4fde] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[3f/446e9a] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[56/07ac7d] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[55/28b4ff] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[d6/67e739] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[59/86702e] GRO…138.2_toGenus_trainset.fa) | 0 of 1
+[ff/81c950] GRO…a.rds, prefix_2.dada.rds]) | 0 of 1
+ERROR ~ Error executing process > 'GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)'
+
+Caused by:
+  Process `GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  #!/usr/bin/env Rscript
+      suppressPackageStartupMessages(library(dada2))
+      set.seed(100) # Initialize random number generator for reproducibility
+  
+      taxlevels <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  
+      fasta_input <- if (grepl("[.]rds$", "prefix.seqtab.rds", ignore.case = TRUE)) readRDS("prefix.seqtab.rds") else "prefix.seqtab.rds"
+      seq <- getSequences(fasta_input, collapse = TRUE, silence = FALSE)
+      taxa <- assignTaxonomy(seq, "silva_nr99_v138.2_toGenus_trainset.fa", taxLevels = taxlevels, , multithread = 4, verbose=TRUE, outputBootstraps = TRUE)
+  
+      # (1) Make a data frame, add ASV_ID from seq
+      tx <- data.frame(ASV_ID = names(seq), taxa, sequence = row.names(taxa$tax), row.names = names(seq))
+  
+      # (2) Set confidence to the bootstrap for the most specific taxon
+      # extract columns with taxonomic values
+      tax <- tx[ , grepl( "tax." , names( tx ) ) ]
+      # find first occurrence of NA
+      res <- max.col(is.na(tax), ties = "first")
+      # correct if no NA is present in column to NA
+      if(any(res == 1)) is.na(res) <- (res == 1) & !is.na(tax[[1]])
+      # find index of last entry before NA, which is the bootstrap value
+      res <- res-1
+      # if NA choose last entry
+      res[is.na(res)] <- ncol(tax)
+      # extract bootstrap values
+      boot <- tx[ , grepl( "boot." , names( tx ) ) ]
+      boot$last_tax <- res
+      valid_boot <- apply(boot,1,function(x) x[x[length(x)]][1]/100 )
+      # replace missing bootstrap values (NA) with 0
+      valid_boot[is.na(valid_boot)] <- 0
+      # add bootstrap values to column confidence
+      tx$confidence <- valid_boot
+  
+      # (3) Reorder columns before writing to file
+      expected_order <- c("ASV_ID",paste0("tax.",taxlevels),"confidence","sequence")
+      expected_order <- intersect(expected_order,colnames(tx))
+      taxa_export <- subset(tx, select = expected_order)
+      colnames(taxa_export) <- sub("tax.", "", colnames(taxa_export))
+      rownames(taxa_export) <- names(seq)
+  
+      write.table(taxa_export, file = "ASV_taxonomy.tsv", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE, na = '')
+  
+      # Save a version with rownames for addSpecies
+      taxa_export <- cbind( ASV_ID = tx$ASV_ID, taxa$tax, confidence = tx$confidence)
+      saveRDS(taxa_export, "ASV_tax.rds")
+  
+      write.table('assignTaxonomy	
+  taxlevels	c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  seed	100', file = "assignTaxonomy.args.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, na = '')
+      writeLines(c("\"GROUPB:DADA2_TAXONOMY\":", paste0("    R: ", paste0(R.Version()[c("major","minor")], collapse = ".")),paste0("    dada2: ", packageVersion("dada2")) ), "versions.yml")
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+  INFO:    Mounting image with FUSE.
+  WARNING: squashfuse mount failed, falling back to extraction: use of image "/data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img" as overlay requires squashfuse to be installed: exec: "squashfuse": executable file not found in $PATH
+  INFO:    Converting SIF file to temporary sandbox...
+  Error: No seqs provided to classify.
+  In addition: Warning message:
+  In min(nchar(seqs)) : no non-missing arguments to min; returning Inf
+  Execution halted
+  INFO:    Cleaning up image...
+
+Work dir:
+  /data/upfagb/u269315/agb2026/Group_B/work/59/86702e731e69841621cdee1d226258
+
+Container:
+  /data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img
+
+Tip: view the complete command output by changing to the process work dir and entering the command `cat .command.out`
+
+ -- Check '.nextflow.log' file for details
+
+executor >  local (2)
+[20/fc4fde] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[3f/446e9a] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[56/07ac7d] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[55/28b4ff] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[d6/67e739] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[59/86702e] GRO…138.2_toGenus_trainset.fa) | 0 of 1 ✘
+[ff/81c950] GRO…a.rds, prefix_2.dada.rds]) | 0 of 1
+Execution cancelled -- Finishing pending tasks before exit
+ERROR ~ Error executing process > 'GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)'
+
+Caused by:
+  Process `GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  #!/usr/bin/env Rscript
+      suppressPackageStartupMessages(library(dada2))
+      set.seed(100) # Initialize random number generator for reproducibility
+  
+      taxlevels <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  
+      fasta_input <- if (grepl("[.]rds$", "prefix.seqtab.rds", ignore.case = TRUE)) readRDS("prefix.seqtab.rds") else "prefix.seqtab.rds"
+      seq <- getSequences(fasta_input, collapse = TRUE, silence = FALSE)
+      taxa <- assignTaxonomy(seq, "silva_nr99_v138.2_toGenus_trainset.fa", taxLevels = taxlevels, , multithread = 4, verbose=TRUE, outputBootstraps = TRUE)
+  
+      # (1) Make a data frame, add ASV_ID from seq
+      tx <- data.frame(ASV_ID = names(seq), taxa, sequence = row.names(taxa$tax), row.names = names(seq))
+  
+      # (2) Set confidence to the bootstrap for the most specific taxon
+      # extract columns with taxonomic values
+      tax <- tx[ , grepl( "tax." , names( tx ) ) ]
+      # find first occurrence of NA
+      res <- max.col(is.na(tax), ties = "first")
+      # correct if no NA is present in column to NA
+      if(any(res == 1)) is.na(res) <- (res == 1) & !is.na(tax[[1]])
+      # find index of last entry before NA, which is the bootstrap value
+      res <- res-1
+      # if NA choose last entry
+      res[is.na(res)] <- ncol(tax)
+      # extract bootstrap values
+      boot <- tx[ , grepl( "boot." , names( tx ) ) ]
+      boot$last_tax <- res
+      valid_boot <- apply(boot,1,function(x) x[x[length(x)]][1]/100 )
+      # replace missing bootstrap values (NA) with 0
+      valid_boot[is.na(valid_boot)] <- 0
+      # add bootstrap values to column confidence
+      tx$confidence <- valid_boot
+  
+      # (3) Reorder columns before writing to file
+      expected_order <- c("ASV_ID",paste0("tax.",taxlevels),"confidence","sequence")
+      expected_order <- intersect(expected_order,colnames(tx))
+      taxa_export <- subset(tx, select = expected_order)
+      colnames(taxa_export) <- sub("tax.", "", colnames(taxa_export))
+      rownames(taxa_export) <- names(seq)
+  
+      write.table(taxa_export, file = "ASV_taxonomy.tsv", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE, na = '')
+  
+      # Save a version with rownames for addSpecies
+      taxa_export <- cbind( ASV_ID = tx$ASV_ID, taxa$tax, confidence = tx$confidence)
+      saveRDS(taxa_export, "ASV_tax.rds")
+  
+      write.table('assignTaxonomy	
+  taxlevels	c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  seed	100', file = "assignTaxonomy.args.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, na = '')
+      writeLines(c("\"GROUPB:DADA2_TAXONOMY\":", paste0("    R: ", paste0(R.Version()[c("major","minor")], collapse = ".")),paste0("    dada2: ", packageVersion("dada2")) ), "versions.yml")
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+  INFO:    Mounting image with FUSE.
+  WARNING: squashfuse mount failed, falling back to extraction: use of image "/data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img" as overlay requires squashfuse to be installed: exec: "squashfuse": executable file not found in $PATH
+  INFO:    Converting SIF file to temporary sandbox...
+  Error: No seqs provided to classify.
+  In addition: Warning message:
+  In min(nchar(seqs)) : no non-missing arguments to min; returning Inf
+  Execution halted
+  INFO:    Cleaning up image...
+
+Work dir:
+  /data/upfagb/u269315/agb2026/Group_B/work/59/86702e731e69841621cdee1d226258
+
+Container:
+  /data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img
+
+Tip: view the complete command output by changing to the process work dir and entering the command `cat .command.out`
+
+ -- Check '.nextflow.log' file for details
+
+executor >  local (2)
+[20/fc4fde] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[3f/446e9a] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[56/07ac7d] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[55/28b4ff] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[d6/67e739] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[59/86702e] GRO…138.2_toGenus_trainset.fa) | 0 of 1 ✘
+[ff/81c950] GRO…a.rds, prefix_2.dada.rds]) | 0 of 1 ✘
+Execution cancelled -- Finishing pending tasks before exit
+ERROR ~ Error executing process > 'GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)'
+
+Caused by:
+  Process `GROUPB:DADA2_TAXONOMY (prefix.seqtab.rds,silva_nr99_v138.2_toGenus_trainset.fa)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  #!/usr/bin/env Rscript
+      suppressPackageStartupMessages(library(dada2))
+      set.seed(100) # Initialize random number generator for reproducibility
+  
+      taxlevels <- c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  
+      fasta_input <- if (grepl("[.]rds$", "prefix.seqtab.rds", ignore.case = TRUE)) readRDS("prefix.seqtab.rds") else "prefix.seqtab.rds"
+      seq <- getSequences(fasta_input, collapse = TRUE, silence = FALSE)
+      taxa <- assignTaxonomy(seq, "silva_nr99_v138.2_toGenus_trainset.fa", taxLevels = taxlevels, , multithread = 4, verbose=TRUE, outputBootstraps = TRUE)
+  
+      # (1) Make a data frame, add ASV_ID from seq
+      tx <- data.frame(ASV_ID = names(seq), taxa, sequence = row.names(taxa$tax), row.names = names(seq))
+  
+      # (2) Set confidence to the bootstrap for the most specific taxon
+      # extract columns with taxonomic values
+      tax <- tx[ , grepl( "tax." , names( tx ) ) ]
+      # find first occurrence of NA
+      res <- max.col(is.na(tax), ties = "first")
+      # correct if no NA is present in column to NA
+      if(any(res == 1)) is.na(res) <- (res == 1) & !is.na(tax[[1]])
+      # find index of last entry before NA, which is the bootstrap value
+      res <- res-1
+      # if NA choose last entry
+      res[is.na(res)] <- ncol(tax)
+      # extract bootstrap values
+      boot <- tx[ , grepl( "boot." , names( tx ) ) ]
+      boot$last_tax <- res
+      valid_boot <- apply(boot,1,function(x) x[x[length(x)]][1]/100 )
+      # replace missing bootstrap values (NA) with 0
+      valid_boot[is.na(valid_boot)] <- 0
+      # add bootstrap values to column confidence
+      tx$confidence <- valid_boot
+  
+      # (3) Reorder columns before writing to file
+      expected_order <- c("ASV_ID",paste0("tax.",taxlevels),"confidence","sequence")
+      expected_order <- intersect(expected_order,colnames(tx))
+      taxa_export <- subset(tx, select = expected_order)
+      colnames(taxa_export) <- sub("tax.", "", colnames(taxa_export))
+      rownames(taxa_export) <- names(seq)
+  
+      write.table(taxa_export, file = "ASV_taxonomy.tsv", sep = "\t", row.names = FALSE, col.names = TRUE, quote = FALSE, na = '')
+  
+      # Save a version with rownames for addSpecies
+      taxa_export <- cbind( ASV_ID = tx$ASV_ID, taxa$tax, confidence = tx$confidence)
+      saveRDS(taxa_export, "ASV_tax.rds")
+  
+      write.table('assignTaxonomy	
+  taxlevels	c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+  seed	100', file = "assignTaxonomy.args.txt", row.names = FALSE, col.names = FALSE, quote = FALSE, na = '')
+      writeLines(c("\"GROUPB:DADA2_TAXONOMY\":", paste0("    R: ", paste0(R.Version()[c("major","minor")], collapse = ".")),paste0("    dada2: ", packageVersion("dada2")) ), "versions.yml")
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+  INFO:    Mounting image with FUSE.
+  WARNING: squashfuse mount failed, falling back to extraction: use of image "/data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img" as overlay requires squashfuse to be installed: exec: "squashfuse": executable file not found in $PATH
+  INFO:    Converting SIF file to temporary sandbox...
+  Error: No seqs provided to classify.
+  In addition: Warning message:
+  In min(nchar(seqs)) : no non-missing arguments to min; returning Inf
+  Execution halted
+  INFO:    Cleaning up image...
+
+Work dir:
+  /data/upfagb/u269315/agb2026/Group_B/work/59/86702e731e69841621cdee1d226258
+
+Container:
+  /data/upfagb/jvillanueva/apptainer_cache/depot.galaxyproject.org-singularity-bioconductor-dada2-1.30.0--r43hf17093f_0.img
+
+Tip: view the complete command output by changing to the process work dir and entering the command `cat .command.out`
+
+ -- Check '.nextflow.log' file for details
+

@@ -1,0 +1,126 @@
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `test_groupB.nf` [loving_faraday] DSL2 - revision: bb81284306
+
+[-        ] GROUPB:FASTQC          -
+[-        ] GROUPB:MULTIQC         -
+[-        ] GROUPB:DADA2_FILTNTRIM -
+[-        ] GROUPB:DADA2_ERR       -
+[-        ] GROUPB:DADA2_DENOISING -
+[-        ] GROUPB:DADA2_TAXONOMY  -
+
+executor >  local (1)
+[b7/a5b6cb] GROUPB:FASTQC (test_sample) | 0 of 1
+[-        ] GROUPB:MULTIQC              -
+[-        ] GROUPB:DADA2_FILTNTRIM      -
+[-        ] GROUPB:DADA2_ERR            -
+[-        ] GROUPB:DADA2_DENOISING      -
+[-        ] GROUPB:DADA2_TAXONOMY       -
+[-        ] GROUPB:KRAKEN2              -
+[-        ] GROUPB:PICRUST              -
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/81/81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-81-81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c-data.img]
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0f/0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-0f-0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82-data.img]
+WARN: Singularity cache directory has not been defined -- Remote image will be stored in the path: /data/upfagb/u269315/agb2026/Group_B/work/singularity -- Use the environment variable NXF_SINGULARITY_CACHEDIR to specify a different location
+
+executor >  local (1)
+[b7/a5b6cb] GROUPB:FASTQC (test_sample) | 0 of 1
+[-        ] GROUPB:MULTIQC              -
+[-        ] GROUPB:DADA2_FILTNTRIM      -
+[-        ] GROUPB:DADA2_ERR            -
+[-        ] GROUPB:DADA2_DENOISING      -
+[-        ] GROUPB:DADA2_TAXONOMY       -
+[-        ] GROUPB:KRAKEN2              -
+[-        ] GROUPB:PICRUST              -
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/81/81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-81-81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c-data.img]
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0f/0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-0f-0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82-data.img]
+WARN: Singularity cache directory has not been defined -- Remote image will be stored in the path: /data/upfagb/u269315/agb2026/Group_B/work/singularity -- Use the environment variable NXF_SINGULARITY_CACHEDIR to specify a different location
+ERROR ~ Error executing process > 'GROUPB:FASTQC (test_sample)'
+
+Caused by:
+  Process `GROUPB:FASTQC (test_sample)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  printf "%s %s\n" 1/test_R1.fastq.gz test_sample_1.gz 2/test_R2.fastq.gz test_sample_2.gz | while read old_name new_name; do
+      [ -f "${new_name}" ] || ln -s $old_name $new_name
+  done
+  
+  fastqc \
+      --quiet \
+      --threads 1 \
+      --memory 3072 \
+      test_sample_1.gz test_sample_2.gz
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+  ERROR  : No setuid installation found, for unprivileged installation use: ./mconfig --without-suid
+  
+
+Work dir:
+  /data/upfagb/u269315/agb2026/Group_B/work/b7/a5b6cb9e123921804fb06f2631740c
+
+Container:
+  /data/upfagb/u269315/agb2026/Group_B/work/singularity/depot.galaxyproject.org-singularity-fastqc-0.12.1--hdfd78af_0.img
+
+Tip: when you have fixed the problem you can continue the execution adding the option `-resume` to the run command line
+
+ -- Check '.nextflow.log' file for details
+
+executor >  local (1)
+[b7/a5b6cb] GROUPB:FASTQC (test_sample) | 0 of 1 ✘
+[-        ] GROUPB:MULTIQC              -
+[-        ] GROUPB:DADA2_FILTNTRIM      -
+[-        ] GROUPB:DADA2_ERR            -
+[-        ] GROUPB:DADA2_DENOISING      -
+[-        ] GROUPB:DADA2_TAXONOMY       -
+[-        ] GROUPB:KRAKEN2              -
+[-        ] GROUPB:PICRUST              -
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/81/81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-81-81153df5d53322e6d91b2c4c9bc4da50774fb1d101ead002fe75bb75fc6f036c-data.img]
+Pulling Singularity image https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/0f/0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82/data [cache /data/upfagb/u269315/agb2026/Group_B/work/singularity/community-cr-prod.seqera.io-docker-registry-v2-blobs-sha256-0f-0f827dcea51be6b5c32255167caa2dfb65607caecdc8b067abd6b71c267e2e82-data.img]
+Execution cancelled -- Finishing pending tasks before exit
+WARN: Singularity cache directory has not been defined -- Remote image will be stored in the path: /data/upfagb/u269315/agb2026/Group_B/work/singularity -- Use the environment variable NXF_SINGULARITY_CACHEDIR to specify a different location
+ERROR ~ Error executing process > 'GROUPB:FASTQC (test_sample)'
+
+Caused by:
+  Process `GROUPB:FASTQC (test_sample)` terminated with an error exit status (1)
+
+
+Command executed:
+
+  printf "%s %s\n" 1/test_R1.fastq.gz test_sample_1.gz 2/test_R2.fastq.gz test_sample_2.gz | while read old_name new_name; do
+      [ -f "${new_name}" ] || ln -s $old_name $new_name
+  done
+  
+  fastqc \
+      --quiet \
+      --threads 1 \
+      --memory 3072 \
+      test_sample_1.gz test_sample_2.gz
+
+Command exit status:
+  1
+
+Command output:
+  (empty)
+
+Command error:
+  ERROR  : No setuid installation found, for unprivileged installation use: ./mconfig --without-suid
+  
+
+Work dir:
+  /data/upfagb/u269315/agb2026/Group_B/work/b7/a5b6cb9e123921804fb06f2631740c
+
+Container:
+  /data/upfagb/u269315/agb2026/Group_B/work/singularity/depot.galaxyproject.org-singularity-fastqc-0.12.1--hdfd78af_0.img
+
+Tip: when you have fixed the problem you can continue the execution adding the option `-resume` to the run command line
+
+ -- Check '.nextflow.log' file for details
+
