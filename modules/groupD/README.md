@@ -196,7 +196,7 @@ nextflow run workflows/groupD.nf -profile conda \
     --feature_table path/to/feature-table.tsv \
     --taxonomy      path/to/taxonomy.tsv \
     --metadata      path/to/metadata.tsv \
-    --report_mode   all \
+    --mode          all \
     --outdir        results/
 
 # With bundled test fixtures
