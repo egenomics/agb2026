@@ -8,6 +8,10 @@ The pipeline takes raw FASTQ reads from Group A and produces:
 
 ---
 
+## Our Mermaid flowchart :)
+
+![alt text](Flowchart_groupB.png)
+
 ## Project folder structure
 
 ```
