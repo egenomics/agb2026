@@ -2,7 +2,7 @@ process MICROSEE_REPORT {
     tag "microsee_report"
     label 'process_low'
 
-    conda "conda-forge::python=3.11 conda-forge::pandas=2.3.3 conda-forge::numpy=2.4.1 conda-forge::pydantic=2.13.4"
+    conda "conda-forge::python=3.11 conda-forge::pandas=2.3.3 conda-forge::numpy=2.4.6 conda-forge::pydantic=2.13.4"
     container 'ghcr.io/egenomics/microsee-report:latest'
 
     publishDir params.outdir, mode: 'copy'
