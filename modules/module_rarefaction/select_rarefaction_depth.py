@@ -34,7 +34,6 @@ try:
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
-    import matplotlib.ticker
     from matplotlib.lines import Line2D
     HAS_PLOT = True
 except ImportError:
@@ -438,3 +437,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+    # qiime2 filter for 3rd part
+    # use alpha diversity from module to make curves 
