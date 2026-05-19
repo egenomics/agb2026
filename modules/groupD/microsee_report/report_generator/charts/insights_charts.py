@@ -19,7 +19,6 @@ from .preprocessing import (
     sorted_timepoints,
 )
 
-
 # ── Section helpers ───────────────────────────────────────────────────────────
 
 
