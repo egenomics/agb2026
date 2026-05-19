@@ -3,7 +3,7 @@ process MICROSEE_REPORT {
     label 'process_low'
 
     conda "conda-forge::python=3.11 conda-forge::pandas=2.3.3 conda-forge::numpy=2.4.1 conda-forge::pydantic=2.13.4"
-    container 'ghcr.io/agb2026/microsee:latest'
+    container 'ghcr.io/egenomics/microsee-report:latest'
 
     publishDir params.outdir, mode: 'copy'
 
@@ -32,11 +32,7 @@ process MICROSEE_REPORT {
     # This file must be committed to git; it cannot be downloaded on offline HPC nodes.
     if [ ! -f report_generator/charts/plotly.min.js ]; then
         echo "ERROR: report_generator/charts/plotly.min.js not found." >&2
-        echo "Commit it to git first — see README Troubleshooting section." >&2
-        echo "  curl -fsSL https://cdn.plot.ly/plotly-2.35.2.min.js \\" >&2
-        echo "       -o modules/groupD/microsee_report/report_generator/charts/plotly.min.js" >&2
-        echo "  git add modules/groupD/microsee_report/report_generator/charts/plotly.min.js" >&2
-        echo "  git commit -m 'Bundle Plotly.js v2.35.2 for offline HPC use'" >&2
+        echo "This file must be committed to git — see README Troubleshooting." >&2
         exit 1
     fi
 
