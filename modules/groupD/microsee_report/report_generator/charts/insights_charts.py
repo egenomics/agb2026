@@ -22,7 +22,9 @@ from .preprocessing import (
 # ── Section helpers ───────────────────────────────────────────────────────────
 
 
-def _explain_taxonomy(result: Any, taxa: list[str], rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+def _explain_taxonomy(
+    result: Any, taxa: list[str], rows: list[dict[str, Any]]
+) -> dict[str, dict[str, Any]]:
     if not taxa:
         return {}
     means = {t: float(np.mean([float(r.get(t) or 0) for r in rows])) for t in taxa}
@@ -118,7 +120,8 @@ def _explain_alpha(base_groups: list[str], rows: list[dict[str, Any]]) -> dict[s
                 "Switch the Metric button to compare Shannon, Simpson, Pielou evenness, Observed taxa, "
                 "and Faith PD — consistent patterns across metrics are more reliable than any single measure."
             ),
-            "pills": [f"{bg} mean {v:.2f}" for bg, v in list(bg_shan.items())[:3]] + ["Shannon H′ shown"],
+            "pills": [f"{bg} mean {v:.2f}" for bg, v in list(bg_shan.items())[:3]]
+            + ["Shannon H′ shown"],
         },
         "alpha_box": {
             "what": (
@@ -246,7 +249,11 @@ def _explain_beta(
                 "If NMDS and PCoA show similar groupings, the community structure is robust. "
                 "Discrepancies suggest non-linear variation that PCoA misses."
             ),
-            "pills": [f"NMDS1 {nmds['pct1']:.1f}%", f"NMDS2 {nmds.get('pct2', 0):.1f}%", "Rank-order"],
+            "pills": [
+                f"NMDS1 {nmds['pct1']:.1f}%",
+                f"NMDS2 {nmds.get('pct2', 0):.1f}%",
+                "Rank-order",
+            ],
         }
 
     ex["dendrogram"] = {
@@ -544,7 +551,11 @@ def _explain_comparative(chart_data: dict[str, Any]) -> dict[str, dict[str, Any]
                 "row-wise patterns (patients with similar overall composition). "
                 "A column that is dark only in T0 or only in T84 rows suggests a temporal shift."
             ),
-            "pills": ["Sample × taxon matrix", "Colour = relative abundance (%)", "Hover for exact value"],
+            "pills": [
+                "Sample × taxon matrix",
+                "Colour = relative abundance (%)",
+                "Hover for exact value",
+            ],
         },
         "corr_matrix": {
             "what": (
@@ -592,9 +603,13 @@ def _explain_clinical(
             il18_per_p.setdefault(p, {})[tp] = il18_v
 
     n_mwt_tot = sum(1 for pd in mwt_per_p.values() if "T0" in pd and "T84" in pd)
-    n_mwt_imp = sum(1 for pd in mwt_per_p.values() if "T0" in pd and "T84" in pd and pd["T84"] > pd["T0"])
+    n_mwt_imp = sum(
+        1 for pd in mwt_per_p.values() if "T0" in pd and "T84" in pd and pd["T84"] > pd["T0"]
+    )
     n_il18_tot = sum(1 for pd in il18_per_p.values() if "T0" in pd and "T84" in pd)
-    n_il18_imp = sum(1 for pd in il18_per_p.values() if "T0" in pd and "T84" in pd and pd["T84"] < pd["T0"])
+    n_il18_imp = sum(
+        1 for pd in il18_per_p.values() if "T0" in pd and "T84" in pd and pd["T84"] < pd["T0"]
+    )
 
     ex["clinical_mwt"] = {
         "what": (
