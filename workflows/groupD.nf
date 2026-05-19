@@ -29,7 +29,7 @@ workflow GROUPD {
 
     main:
     MICROSEE_REPORT(
-        Channel.of(file("${projectDir}/modules/groupD/microsee_report/report_generator")),
+        Channel.of(file("${projectDir}/../modules/groupD/microsee_report/report_generator")),
         feature_table,
         taxonomy,
         metadata,
