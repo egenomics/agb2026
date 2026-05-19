@@ -1,0 +1,42 @@
+=== Netejant directoris de treball conflictius ===
+=== Llançant Nextflow Test ===
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `test_groupB.nf` [elegant_euclid] DSL2 - revision: 38769e3f60
+
+[-        ] GROUPB:FASTQC          -
+[-        ] GROUPB:MULTIQC         -
+[-        ] GROUPB:DADA2_FILTNTRIM -
+[-        ] GROUPB:DADA2_ERR       -
+[-        ] GROUPB:DADA2_DENOISING -
+[-        ] GROUPB:DADA2_TAXONOMY  -
+[-        ] GROUPB:DADA2_EXPORT    -
+[-        ] GROUPB:PICRUST         -
+
+executor >  local (1)
+[5d/c8735a] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[f1/9c7909] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[48/3dc889] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[e6/04ba8e] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[dc/244db8] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[86/938164] GRO…138.2_toGenus_trainset.fa) | 0 of 1
+[19/6145c0] GROUPB:DADA2_EXPORT (1)        | 1 of 1, cached: 1 ✔
+[4f/ad43c5] GRO…_seqs.fasta,asv_table.tsv) | 1 of 1, cached: 1 ✔
+
+executor >  local (1)
+[5d/c8735a] GROUPB:FASTQC (test_sample)    | 1 of 1, cached: 1 ✔
+[f1/9c7909] GROUPB:MULTIQC (alphaflow_qc)  | 1 of 1, cached: 1 ✔
+[48/3dc889] GRO…A2_FILTNTRIM (test_sample) | 1 of 1, cached: 1 ✔
+[e6/04ba8e] GROUPB:DADA2_ERR (null)        | 1 of 1, cached: 1 ✔
+[dc/244db8] GROUPB:DADA2_DENOISING (null)  | 1 of 1, cached: 1 ✔
+[86/938164] GRO…138.2_toGenus_trainset.fa) | 1 of 1 ✔
+[19/6145c0] GROUPB:DADA2_EXPORT (1)        | 1 of 1, cached: 1 ✔
+[4f/ad43c5] GRO…_seqs.fasta,asv_table.tsv) | 1 of 1, cached: 1 ✔
+Completed at: 19-May-2026 17:11:44
+Duration    : 1m 29s
+CPU hours   : 0.4 (73.3% cached)
+Succeeded   : 1
+Cached      : 7
+
+

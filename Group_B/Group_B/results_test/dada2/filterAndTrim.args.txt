@@ -1,1 +1,0 @@
-filterAndTrim	truncLen = c(240, 200),

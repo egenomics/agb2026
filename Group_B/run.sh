@@ -20,3 +20,4 @@ nextflow run test_groupB.nf \
     --input assets/samplesheet_test.csv \
     --outdir results_test \
     -ansi log \
+    -resume

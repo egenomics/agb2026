@@ -65,8 +65,7 @@ Values: Number of reads
 
 |Sample|Unique Reads|Duplicate Reads|
 |---|---|---|
-|test_sample_2|1|0|
-|test_sample_1|1|0|
+|test_sample|13,299|289,282|
 
 ----------------------
 
@@ -87,13 +86,11 @@ Plot type: x/y line
 X axis: Position (bp)
 Y axis: Phred Score
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
 X values are in  bp
 
-test_sample_1 1: 9, 2: 9, 3: 9, 4: 9
-
-test_sample_2 1: 9, 2: 9, 3: 9, 4: 9
+test_sample 1: 36, 2: 38, 3: 38, 4: 38, 5: 38, 6: 38, 7: 38, 8: 38, 9: 38, 10: 38, 15: 38, 20: 38, 25: 38, 30: 38, 35: 38, 40: 38, 45: 37, 50: 37, 55: 37, 60: 36, 65: 35, 70: 35, 75: 33, 80: 33, 85: 32, 90: 30, 95: 28, 100: 27, 105: 24, 110: 23, 115: 20, 120: 17, 125: 15, 130: 11, 135: 7, 140: 4, 145: 3, 150: 3
 
 ----------------------
 
@@ -111,11 +108,9 @@ Plot type: x/y line
 X axis: Mean Sequence Quality (Phred Score)
 Y axis: Count
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
-test_sample_1 9: 1
-
-test_sample_2 9: 1
+test_sample 2: 15, 3: 4, 4: 4, 5: 18, 6: 24, 7: 11, 8: 18, 9: 28, 10: 27, 11: 33, 12: 47, 13: 75, 14: 108, 15: 229, 16: 533, 17: 1,184, 18: 2,372, 19: 4,203, 20: 6,254, 21: 8,260, 22: 9,921, 23: 12,141, 24: 13,596, 25: 15,373, 26: 16,997, 27: 20,108, 28: 23,268, 29: 26,612, 30: 29,360, 31: 31,441, 32: 29,888, 33: 24,146, 34: 14,139, 35: 8,430, 36: 3,386, 37: 326, 38: 2
 
 ----------------------
 
@@ -164,7 +159,7 @@ analysis.</em>
             </div>
             <div class="clearfix"></div>
         </div>
-        <script type="application/json" class="fastqc_seq_content">["fastqc", {"test_sample_1": {"1": {"base": 1.0, "g": 0.0, "a": 100.0, "t": 0.0, "c": 0.0}, "2": {"base": 2.0, "g": 0.0, "a": 0.0, "t": 100.0, "c": 0.0}, "3": {"base": 3.0, "g": 0.0, "a": 0.0, "t": 0.0, "c": 100.0}, "4": {"base": 4.0, "g": 100.0, "a": 0.0, "t": 0.0, "c": 0.0}}, "test_sample_2": {"1": {"base": 1.0, "g": 0.0, "a": 0.0, "t": 100.0, "c": 0.0}, "2": {"base": 2.0, "g": 0.0, "a": 100.0, "t": 0.0, "c": 0.0}, "3": {"base": 3.0, "g": 100.0, "a": 0.0, "t": 0.0, "c": 0.0}, "4": {"base": 4.0, "g": 0.0, "a": 0.0, "t": 0.0, "c": 100.0}}}]</script>
+        <script type="application/json" class="fastqc_seq_content">["fastqc", {"test_sample": {"1": {"base": 1.0, "g": 1.48, "a": 2.22, "t": 95.96, "c": 0.34}, "2": {"base": 2.0, "g": 0.22, "a": 99.61, "t": 0.13, "c": 0.05}, "3": {"base": 3.0, "g": 0.04, "a": 0.05, "t": 0.12, "c": 99.78}, "4": {"base": 4.0, "g": 90.7, "a": 9.12, "t": 0.06, "c": 0.12}, "5": {"base": 5.0, "g": 43.48, "a": 1.27, "t": 55.14, "c": 0.11}, "6": {"base": 6.0, "g": 0.94, "a": 98.94, "t": 0.07, "c": 0.04}, "7": {"base": 7.0, "g": 85.49, "a": 6.2, "t": 8.15, "c": 0.17}, "8": {"base": 8.0, "g": 99.49, "a": 0.3, "t": 0.12, "c": 0.09}, "9": {"base": 9.0, "g": 47.95, "a": 23.12, "t": 28.6, "c": 0.32}, "10": {"base": "10-14", "g": 28.4, "a": 29.11, "t": 12.38, "c": 30.11}, "15": {"base": "15-19", "g": 39.94, "a": 0.14, "t": 39.93, "c": 19.99}, "20": {"base": "20-24", "g": 26.51, "a": 17.2, "t": 20.87, "c": 35.41}, "25": {"base": "25-29", "g": 20.75, "a": 31.46, "t": 46.6, "c": 1.19}, "30": {"base": "30-34", "g": 39.92, "a": 20.07, "t": 31.92, "c": 8.09}, "35": {"base": "35-39", "g": 34.51, "a": 20.15, "t": 32.54, "c": 12.79}, "40": {"base": "40-44", "g": 50.16, "a": 41.79, "t": 0.08, "c": 7.97}, "45": {"base": "45-49", "g": 34.14, "a": 11.61, "t": 21.45, "c": 32.8}, "50": {"base": "50-54", "g": 55.0, "a": 23.53, "t": 7.16, "c": 14.3}, "55": {"base": "55-59", "g": 34.96, "a": 14.92, "t": 39.73, "c": 10.39}, "60": {"base": "60-64", "g": 25.84, "a": 38.56, "t": 27.95, "c": 7.65}, "65": {"base": "65-69", "g": 26.92, "a": 18.87, "t": 33.59, "c": 20.63}, "70": {"base": "70-74", "g": 38.06, "a": 23.6, "t": 35.86, "c": 2.48}, "75": {"base": "75-79", "g": 16.69, "a": 42.22, "t": 18.41, "c": 22.68}, "80": {"base": "80-84", "g": 59.13, "a": 8.21, "t": 10.61, "c": 22.05}, "85": {"base": "85-89", "g": 0.3, "a": 39.88, "t": 26.08, "c": 33.74}, "90": {"base": "90-94", "g": 23.6, "a": 9.39, "t": 19.94, "c": 47.08}, "95": {"base": "95-99", "g": 29.16, "a": 32.74, "t": 27.53, "c": 10.58}, "100": {"base": "100-104", "g": 30.52, "a": 13.36, "t": 32.29, "c": 23.83}, "105": {"base": "105-109", "g": 24.07, "a": 48.79, "t": 17.16, "c": 9.98}, "110": {"base": "110-114", "g": 38.11, "a": 8.07, "t": 29.05, "c": 24.76}, "115": {"base": "115-119", "g": 16.44, "a": 24.41, "t": 36.78, "c": 22.38}, "120": {"base": "120-124", "g": 44.2, "a": 27.41, "t": 27.65, "c": 0.74}, "125": {"base": "125-129", "g": 35.51, "a": 25.26, "t": 19.95, "c": 19.28}, "130": {"base": "130-134", "g": 63.47, "a": 29.95, "t": 4.57, "c": 2.01}, "135": {"base": "135-139", "g": 50.01, "a": 23.98, "t": 15.21, "c": 10.79}, "140": {"base": "140-144", "g": 40.28, "a": 36.02, "t": 20.63, "c": 3.06}, "145": {"base": "145-149", "g": 21.19, "a": 12.78, "t": 33.2, "c": 32.83}, "150": {"base": "150-152", "g": 67.83, "a": 2.15, "t": 28.79, "c": 1.23}}}]</script>
         
 
 ----------------------
@@ -195,26 +190,22 @@ Y axis: Percentage
 
 ### Percentages
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
 Y values are in %
 
 X values are in %
 
-test_sample_1 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 2, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4, 46: 4, 47: 4, 48: 4, 49: 4, 50: 4, 51: 4, 52: 4, 53: 4, 54: 4, 55: 4, 56: 4, 57: 4, 58: 4, 59: 4, 60: 4, 61: 4, 62: 4, 63: 2, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0, 70: 0, 71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
-
-test_sample_2 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 2, 39: 4, 40: 4, 41: 4, 42: 4, 43: 4, 44: 4, 45: 4, 46: 4, 47: 4, 48: 4, 49: 4, 50: 4, 51: 4, 52: 4, 53: 4, 54: 4, 55: 4, 56: 4, 57: 4, 58: 4, 59: 4, 60: 4, 61: 4, 62: 4, 63: 2, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0, 70: 0, 71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
+test_sample 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 0, 39: 0, 40: 0, 41: 0, 42: 0, 43: 0, 44: 3, 45: 6, 46: 4, 47: 3, 48: 4, 49: 3, 50: 3, 51: 5, 52: 7, 53: 8, 54: 10, 55: 10, 56: 8, 57: 6, 58: 5, 59: 3, 60: 1, 61: 0, 62: 0, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0, 70: 0, 71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
 
 
 ### Counts
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
 X values are in %
 
-test_sample_1 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 0, 39: 1, 40: 1, 41: 1, 42: 1, 43: 1, 44: 1, 45: 1, 46: 1, 47: 1, 48: 1, 49: 1, 50: 1, 51: 1, 52: 1, 53: 1, 54: 1, 55: 1, 56: 1, 57: 1, 58: 1, 59: 1, 60: 1, 61: 1, 62: 1, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0, 70: 0, 71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
-
-test_sample_2 0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 11: 0, 12: 0, 13: 0, 14: 0, 15: 0, 16: 0, 17: 0, 18: 0, 19: 0, 20: 0, 21: 0, 22: 0, 23: 0, 24: 0, 25: 0, 26: 0, 27: 0, 28: 0, 29: 0, 30: 0, 31: 0, 32: 0, 33: 0, 34: 0, 35: 0, 36: 0, 37: 0, 38: 0, 39: 1, 40: 1, 41: 1, 42: 1, 43: 1, 44: 1, 45: 1, 46: 1, 47: 1, 48: 1, 49: 1, 50: 1, 51: 1, 52: 1, 53: 1, 54: 1, 55: 1, 56: 1, 57: 1, 58: 1, 59: 1, 60: 1, 61: 1, 62: 1, 63: 0, 64: 0, 65: 0, 66: 0, 67: 0, 68: 0, 69: 0, 70: 0, 71: 0, 72: 0, 73: 0, 74: 0, 75: 0, 76: 0, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
+test_sample 0: 1, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 2, 10: 4, 11: 7, 12: 8, 13: 5, 14: 5, 15: 4, 16: 4, 17: 5, 18: 3, 19: 3, 20: 3, 21: 2, 22: 2, 23: 1, 24: 2, 25: 2, 26: 1, 27: 2, 28: 3, 29: 10, 30: 13, 31: 36, 32: 53, 33: 31, 34: 41, 35: 83, 36: 88, 37: 54, 38: 47, 39: 55, 40: 69, 41: 209, 42: 439, 43: 1,354, 44: 12,024, 45: 19,789, 46: 15,116, 47: 10,707, 48: 12,107, 49: 11,972, 50: 11,343, 51: 17,858, 52: 21,614, 53: 24,968, 54: 32,651, 55: 31,469, 56: 25,361, 57: 19,481, 58: 15,310, 59: 11,358, 60: 4,051, 61: 1,224, 62: 513, 63: 261, 64: 173, 65: 152, 66: 86, 67: 64, 68: 113, 69: 95, 70: 27, 71: 16, 72: 8, 73: 1, 74: 0, 75: 0, 76: 1, 77: 0, 78: 0, 79: 0, 80: 0, 81: 0, 82: 0, 83: 0, 84: 0, 85: 0, 86: 0, 87: 0, 88: 0, 89: 0, 90: 0, 91: 0, 92: 0, 93: 0, 94: 0, 95: 0, 96: 0, 97: 0, 98: 0, 99: 0, 100: 0
 
 
 
@@ -237,21 +228,19 @@ Plot type: x/y line
 X axis: Position in Read (bp)
 Y axis: Percentage N-Count
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
 Y values are in %
 
 X values are in  bp
 
-test_sample_1 1: 0, 2: 0, 3: 0, 4: 0
-
-test_sample_2 1: 0, 2: 0, 3: 0, 4: 0
+test_sample 1: 6, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 1, 9: 0, 10: 0, 15: 0, 20: 0, 25: 0, 30: 0, 35: 0, 40: 0, 45: 0, 50: 0, 55: 0, 60: 0, 65: 0, 70: 0, 75: 0, 80: 0, 85: 0, 90: 0, 95: 0, 100: 0, 105: 0, 110: 0, 115: 0, 120: 0, 125: 0, 130: 0, 135: 0, 140: 0, 145: 0, 150: 0
 
 ----------------------
 
 Tool: FastQC
 Section: Sequence Length Distribution
-<div class="alert alert-info">All samples have sequences of a single length (4bp)</div>
+<div class="alert alert-info">All samples have sequences of a single length (152bp)</div>
 
 ----------------------
 
@@ -283,13 +272,11 @@ Plot type: x/y line
 X axis: Sequence Duplication Level
 Y axis: % of Library
 
-Samples: test_sample_1, test_sample_2
+Samples: test_sample
 
 Y values are in %
 
-test_sample_1 1: 100, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, >10: 0, >50: 0, >100: 0, >500: 0, >1k: 0, >5k: 0, >10k+: 0
-
-test_sample_2 1: 100, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, >10: 0, >50: 0, >100: 0, >500: 0, >1k: 0, >5k: 0, >10k+: 0
+test_sample 1: 2, 2: 1, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, >10: 5, >50: 2, >100: 7, >500: 7, >1k: 23, >5k: 13, >10k+: 33
 
 ----------------------
 
@@ -317,10 +304,9 @@ Title: FastQC: Overrepresented sequences sample summary
 Plot type: bar plot
 Values: Percentage of Total Sequences
 
-|Sample|Top overrepresented sequence|
-|---|---|
-|test_sample_2|100 %|
-|test_sample_1|100 %|
+|Sample|Top overrepresented sequence|Sum of remaining overrepresented sequences|
+|---|---|---|
+|test_sample|14 %|64 %|
 
 ----------------------
 
@@ -332,7 +318,7 @@ Title: FastQC: Top overrepresented sequences
 
 Plot type: violin plot
 
-Number of samples: 2
+Number of samples: 20
 
 Metrics:
 Reports - Number of FastQC reports where this sequence is founds as overrepresented
@@ -341,8 +327,55 @@ Occurrences - Total number of occurrences of the sequence (among the samples whe
 
 |Overrepresented sequence|Reports|Occurrences|% of all reads|
 |---|---|---|---|
-|ATCG|1|1|50.0000|
-|TAGC|1|1|50.0000|
+|AACGTAGGTCACAAGCGTTGTCCGGAATTACTGGGTGTAAAGGGAGCGCA|1|4,525|1.4955|
+|TACAGAGGATGCAAGCGTTATCCGGAATGATTGGGCGTAAAGCGTCTGTA|1|3,410|1.1270|
+|TACAGAGGGTGCAAGCGTTAATCGGAATTACTGGGCGTAAAGCGCGCGTA|1|5,773|1.9079|
+|TACAGAGGTCTCAAGCGTTGTTCGGAATCACTGGGCGTAAAGCGTGCGTA|1|6,220|2.0556|
+|TACGGAAGGTCCAGGCGTTATCCGGATTTATTGGGTTTAAAGGGAGCGTA|1|6,995|2.3118|
+|TACGGAGGATCCGAGCGTTATCCGGATTTATTGGGTTTAAAGGGAGCGTA|1|45,381|14.9980|
+|TACGGAGGATGCGAGCGTTATCCGGATTTATTGGGTTTAAAGGGTGCGTA|1|4,070|1.3451|
+|TACGGAGGGTGCGAGCGTTAATCGGAATAACTGGGCGTAAAGGGCACGCA|1|13,390|4.4253|
+|TACGTAGGGCGCGAGCGTTGTCCGGAATTATTGGGCGTAAAGAGCTTGTA|1|4,261|1.4082|
+|TACGTAGGGGGCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGTA|1|5,613|1.8550|
+|TACGTAGGGTGCGAGCGTTAATCGGAATTACTGGGCGTAAAGCGAGCGCA|1|11,062|3.6559|
+|TACGTAGGGTGCGAGCGTTGTCCGGAATTACTGGGCGTAAAGAGCTCGTA|1|8,038|2.6565|
+|TACGTAGGGTGCGAGCGTTGTCCGGAATTACTGGGCGTAAAGGGCTCGTA|1|3,357|1.1095|
+|TACGTAGGTCCCGAGCGTTGTCCGGATTTATTGGGCGTAAAGCGAGCGCA|1|16,193|5.3516|
+|TACGTAGGTGGCAAGCGTTATCCGGAATTATTGGGCGTAAAGCGCGCGTA|1|13,959|4.6133|
+|TACGTAGGTGGCAAGCGTTGTCCGGAATTATTGGGCGTAAAGCGCGCGCA|1|6,959|2.2999|
+|TACGTAGGTGGCAAGCGTTGTCCGGATTTATTGGGCGTAAAGCGAGCGCA|1|3,497|1.1557|
+|TACGTATGGAGCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGTGTA|1|3,588|1.1858|
+|TACGTATGGTGCAAGCGTTATCCGGATTTACTGGGTGTAAAGGGAGCGCA|1|2,912|0.9624|
+|TACGTATGTCACAAGCGTTATCCGGATTTATTGGGCGTAAAGCGCGTCTA|1|4,920|1.6260|
+
+----------------------
+
+Tool: FastQC
+Section: Adapter Content
+Section description: The cumulative percentage count of the proportion of your
+            library which has seen each of the adapter sequences at each position.
+Section help text: Note that only samples with ≥ 0.1% adapter contamination are shown.
+There may be several lines per sample, as one is shown for each adapter
+detected in the file.
+From the <a href="http://www.bioinformatics.babraham.ac.uk/projects/fastqc/Help/3%20Analysis%20Modules/10%20Adapter%20Content.html">FastQC Help</a>:
+<em>The plot shows a cumulative percentage count of the proportion
+of your library which has seen each of the adapter sequences at each position.
+Once a sequence has been seen in a read it is counted as being present
+right through to the end of the read so the percentages you see will only
+increase as the read length goes on.</em>
+Title: FastQC: Adapter Content
+
+Plot type: x/y line
+X axis: Position (bp)
+Y axis: % of Sequences
+
+Samples: test_sample - polyg
+
+Y values are in %
+
+X values are in  bp
+
+test_sample - polyg 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0, 9: 0, 10: 0, 15: 0, 20: 0, 25: 0, 30: 0, 35: 0, 40: 0, 45: 0, 50: 0, 55: 0, 60: 0, 65: 0, 70: 0, 75: 0, 80: 0, 85: 0, 90: 0, 95: 0, 100: 0, 105: 0, 110: 0, 115: 0, 120: 0, 125: 0, 130: 0, 135: 0, 140: 0
 
 ----------------------
 
@@ -371,7 +404,6 @@ X axis: Section Name
 Y axis: Sample
 Z axis: z
 
-|Sample|Basic Statistics|Per Base Sequence Quality|Per Sequence Quality Scores|Per Base Sequence Content|Per Sequence GC Content|Per Base N Content|Sequence Length Distribution|Sequence Duplication Levels|Overrepresented Sequences|Adapter Content|
-|---|---|---|---|---|---|---|---|---|---|---|
-|test_sample_1|1|1|0.25|0.25|0.25|1|1|1|0.25|0.5|
-|test_sample_2|1|1|0.25|0.25|0.25|1|1|1|0.25|0.5|
+|Sample|Basic Statistics|Per Base Sequence Quality|Per Tile Sequence Quality|Per Sequence Quality Scores|Per Base Sequence Content|Per Sequence GC Content|Per Base N Content|Sequence Length Distribution|Sequence Duplication Levels|Overrepresented Sequences|Adapter Content|
+|---|---|---|---|---|---|---|---|---|---|---|---|
+|test_sample|1|0.25|0.25|1|0.25|0.25|0.5|1|0.25|0.25|1|

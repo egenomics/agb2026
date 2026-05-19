@@ -17,6 +17,7 @@ include { DADA2_TAXONOMY              } from '../modules/local/dada2/dada2_taxon
 include { KRAKEN2_KRAKEN2 as KRAKEN2  } from '../modules/nf-core/kraken2/kraken2/main'
 
 // Functional Annotation Modules
+include { DADA2_EXPORT                } from '../modules/local/dada2/dada2_export'
 include { PICRUST                     } from '../modules/local/picrust'
 
 /*
@@ -59,8 +60,8 @@ workflow GROUPB {
     // STEP 2: TAXONOMIC PROFILING
     // ==========================================
     // 1. Package the truncation thresholds as lists to satisfy the module's internal [1] indexing
-    ch_filt_input = ch_samplesheet.map { meta, reads -> 
-        tuple(meta, reads, [0, 240], [0, 200]) 
+    ch_filt_input = ch_samplesheet.map { meta, reads ->
+        tuple(meta, reads, [0, 140], [0, 0])
     }
 
     // 2. Filter and Trim using the updated, structurally perfect data stream
@@ -98,10 +99,12 @@ workflow GROUPB {
     // ==========================================
     // STEP 3: FUNCTIONAL ANNOTATION
     // ==========================================
-    // PICRUSt2 automatically triggers as soon as DADA2 finishes the ASV table
+    // Convert DADA2 seqtab RDS to FASTA + TSV for PICRUSt2
+    DADA2_EXPORT(DADA2_DENOISING.out.asv_table)
+
     PICRUST(
-        DADA2_DENOISING.out.asv_table.map { meta, rds -> rds },
-        DADA2_DENOISING.out.denoised.map { meta, rds -> rds },
+        DADA2_EXPORT.out.fasta,
+        DADA2_EXPORT.out.table,
         "metagenome",
         true
     )

@@ -37,10 +37,11 @@ process DADA2_TAXONOMY {
 
     fasta_input <- if (grepl("[.]rds\$", \"$fasta\", ignore.case = TRUE)) readRDS(\"$fasta\") else \"$fasta\"
     seq <- getSequences(fasta_input, collapse = TRUE, silence = FALSE)
+    asv_ids <- if (is.null(names(seq))) paste0("ASV", seq_along(seq)) else names(seq)
     taxa <- assignTaxonomy(seq, \"$database\", taxLevels = taxlevels, $args, multithread = $task.cpus, verbose=TRUE, outputBootstraps = TRUE)
 
     # (1) Make a data frame, add ASV_ID from seq
-    tx <- data.frame(ASV_ID = names(seq), taxa, sequence = row.names(taxa\$tax), row.names = names(seq))
+    tx <- data.frame(ASV_ID = asv_ids, taxa, sequence = row.names(taxa\$tax), row.names = asv_ids)
 
     # (2) Set confidence to the bootstrap for the most specific taxon
     # extract columns with taxonomic values
@@ -67,7 +68,7 @@ process DADA2_TAXONOMY {
     expected_order <- intersect(expected_order,colnames(tx))
     taxa_export <- subset(tx, select = expected_order)
     colnames(taxa_export) <- sub("tax.", "", colnames(taxa_export))
-    rownames(taxa_export) <- names(seq)
+    rownames(taxa_export) <- asv_ids
 
     write.table(taxa_export, file = \"$outfile\", sep = "\\t", row.names = FALSE, col.names = TRUE, quote = FALSE, na = '')
 
