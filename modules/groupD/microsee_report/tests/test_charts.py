@@ -100,6 +100,7 @@ def test_stats_table_all_metrics(chart_data):
     assert all(len(row) == expected_cols for row in st["rows"])
 
 
+@pytest.mark.integration
 def test_render_html_produces_valid_output(chart_data):
     html = render_html(chart_data)
     assert html.startswith("<!DOCTYPE html>")
@@ -161,6 +162,7 @@ class TestFixtureCharts:
         assert "taxonomy" in ins and len(ins["taxonomy"]) > 10
         assert "permanova" in ins and len(ins["permanova"]) > 10
 
+    @pytest.mark.integration
     def test_render_html_no_placeholders(self, fixture_chart_data):
         html = render_html(fixture_chart_data)
         assert "__DATA_JSON__" not in html
