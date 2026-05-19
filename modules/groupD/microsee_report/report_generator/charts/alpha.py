@@ -1,10 +1,13 @@
 """charts/alpha.py — alpha-diversity chart builders (strip, box, violin, rarefaction, multi-metric)."""
 from __future__ import annotations
+
 from typing import Any
+
 import numpy as np
-from .utils import group_color, hex_rgba
+
 from .metrics import METRIC_LABELS, metric_value
-from .stats_helpers import wilcoxon_p, mannwhitney_p, sig_label
+from .stats_helpers import mannwhitney_p, sig_label, wilcoxon_p
+from .utils import group_color, hex_rgba
 
 
 def build_alpha_strip(rows: list[dict[str, Any]], groups: list[str],
@@ -152,8 +155,8 @@ def build_rarefaction(rows: list[dict[str, Any]], taxa: list[str], groups: list[
             continue
         mean_c = np.mean(curves, axis=0)
         std_c  = np.std(curves,  axis=0) if len(curves) > 1 else np.zeros(len(depths))
-        upper  = [round(float(m + s), 2) for m, s in zip(mean_c, std_c)]
-        lower  = [round(max(0.0, float(m - s)), 2) for m, s in zip(mean_c, std_c)]
+        upper  = [round(float(m + s), 2) for m, s in zip(mean_c, std_c, strict=False)]
+        lower  = [round(max(0.0, float(m - s)), 2) for m, s in zip(mean_c, std_c, strict=False)]
         mean_v = [round(float(v), 2) for v in mean_c]
         sd_avg = round(float(np.mean(std_c)), 1)
         # Upper boundary (invisible — tonexty fills from below)

@@ -1,0 +1,21 @@
+# Ignore everything by default, then whitelist what Docker needs.
+# This keeps build contexts small and avoids leaking local state into images.
+
+**
+
+# Whitelist the report_generator package (the only thing baked into images)
+!modules/groupD/microsee_report/report_generator/
+!modules/groupD/microsee_report/pyproject.toml
+!modules/groupD/microsee_report/environment.yml
+
+# Never include
+**/__pycache__/
+**/*.pyc
+**/.venv/
+**/*.egg-info/
+**/.mypy_cache/
+**/.ruff_cache/
+**/.pytest_cache/
+**/node_modules/
+**/.git/
+**/.DS_Store

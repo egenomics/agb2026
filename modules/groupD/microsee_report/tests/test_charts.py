@@ -7,12 +7,15 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from report_generator.parsers import (
-    parse_feature_table, parse_taxonomy, parse_metadata,
-    parse_alpha_diversity, integrate,
-)
 from report_generator.charts import compute_chart_data, render_html
-
+from report_generator.charts.distances import bray_curtis_matrix, jaccard_matrix
+from report_generator.parsers import (
+    integrate,
+    parse_alpha_diversity,
+    parse_feature_table,
+    parse_metadata,
+    parse_taxonomy,
+)
 
 FEATURE_TABLE = """\
 #OTU ID\tS1\tS2\tS3\tS4
@@ -166,8 +169,6 @@ class TestFixtureCharts:
 
 
 # ── Distance matrix correctness ───────────────────────────────────────────────
-
-from report_generator.charts.distances import bray_curtis_matrix, jaccard_matrix
 
 
 class TestBrayCurtisMatrix:

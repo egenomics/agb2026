@@ -8,16 +8,20 @@ generate_chart_explanations lives in insights_charts.py and is re-exported here
 so callers only need to import from this module.
 """
 from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
 
+from .insights_charts import generate_chart_explanations
 from .preprocessing import (
-    get_patient_timepoints, get_base_groups, get_unique_patients, sorted_timepoints,
+    get_base_groups,
+    get_patient_timepoints,
+    get_unique_patients,
+    sorted_timepoints,
 )
-from .insights_charts import generate_chart_explanations  # noqa: F401  (re-export)
 
-__all__ = ["generate_dynamic_insights", "generate_chart_explanations"]
+__all__ = ["generate_chart_explanations", "generate_dynamic_insights"]
 
 
 # ── Section-level one-liners ──────────────────────────────────────────────────

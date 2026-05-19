@@ -4,13 +4,12 @@ from pathlib import Path
 import pytest
 
 from report_generator.parsers import (
-    parse_feature_table,
-    parse_taxonomy,
-    parse_metadata,
-    parse_alpha_diversity,
     integrate,
+    parse_alpha_diversity,
+    parse_feature_table,
+    parse_metadata,
+    parse_taxonomy,
 )
-
 
 FEATURE_TABLE = """\
 #OTU ID\tS1\tS2\tS3
@@ -113,7 +112,7 @@ def test_missing_taxonomy_column_raises():
         parse_taxonomy("col1\tcol2\nA\tB\n")
 
 
-# ── Fixture-file tests (realistic 12-patient × 2-timepoint dataset) ───────────
+# ── Fixture-file tests (realistic 12-patient x 2-timepoint dataset) ───────────
 
 _DATA = Path(__file__).parent / "data"
 

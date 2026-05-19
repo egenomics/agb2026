@@ -3,31 +3,41 @@ parsers.py — QIIME2 TSV parsing functions for the MicroSee report generator.
 
 Pure parsing functions — no FastAPI, no HTTP, no I/O.
 Each function takes a raw string and returns a typed result or raises ValueError.
+
+The integration step (joining all parsed results) lives in integrator.py.
+It is re-exported here so callers can use either import path.
 """
 
 from __future__ import annotations
 
-import re
 import io
 import logging
-from typing import Optional
+import re
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
+from .integrator import integrate
 from .models import (
+    AlphaDiversityEntry,
+    AlphaDiversityResult,
+    DistanceMatrixResult,
     FeatureTableResult,
-    TaxonomyResult,
     MetadataResult,
     SampleMetadata,
-    AlphaDiversityResult,
-    AlphaDiversityEntry,
-    DistanceMatrixResult,
-    IntegrateResult,
-    SampleRow,
+    TaxonomyResult,
 )
 
 logger = logging.getLogger(__name__)
+
+__all__ = [
+    "integrate",
+    "parse_alpha_diversity",
+    "parse_distance_matrix",
+    "parse_feature_table",
+    "parse_metadata",
+    "parse_taxonomy",
+]
 
 
 # ── Shared helpers ────────────────────────────────────────────────────────────
@@ -50,7 +60,7 @@ def _read_tsv(content: str, skip_prefixes: tuple[str, ...] = ("#",)) -> pd.DataF
         raise ValueError(f"Could not parse TSV: {exc}") from exc
 
 
-def _find_column(df: pd.DataFrame, patterns: list[str]) -> Optional[str]:
+def _find_column(df: pd.DataFrame, patterns: list[str]) -> str | None:
     """Return the first column matching any of the regex patterns (case-insensitive)."""
     for pattern in patterns:
         for col in df.columns:
@@ -85,7 +95,6 @@ def parse_feature_table(content: str) -> FeatureTableResult:
     Returns FeatureTableResult with samples, features, and count matrix.
     Raises ValueError on format errors.
     """
-    # Strip the biom comment line specifically
     lines = [
         line for line in content.strip().splitlines()
         if line.strip() and not line.startswith("# Constructed")
@@ -93,14 +102,12 @@ def parse_feature_table(content: str) -> FeatureTableResult:
     if not lines:
         raise ValueError("Feature table is empty.")
 
-    # QIIME2 sometimes uses '#OTU ID' as the index column name
     content_clean = "\n".join(lines)
     try:
         df = pd.read_csv(io.StringIO(content_clean), sep="\t", index_col=0)
     except Exception as exc:
         raise ValueError(f"Cannot parse feature table: {exc}") from exc
 
-    # Drop empty rows/columns
     df = df.dropna(how="all").fillna(0)
 
     if df.empty:
@@ -108,11 +115,10 @@ def parse_feature_table(content: str) -> FeatureTableResult:
     if len(df.columns) == 0:
         raise ValueError("Feature table has no sample columns.")
 
-    # Ensure all values are numeric
     try:
         df = df.apply(pd.to_numeric, errors="coerce").fillna(0)
-    except Exception:
-        raise ValueError("Feature table contains non-numeric count values.")
+    except Exception as exc:
+        raise ValueError("Feature table contains non-numeric count values.") from exc
 
     features: list[str] = [str(f) for f in df.index]
     samples: list[str] = [str(s) for s in df.columns]
@@ -121,7 +127,7 @@ def parse_feature_table(content: str) -> FeatureTableResult:
         for feat in features
     }
 
-    logger.info(f"Parsed feature table: {len(features)} features × {len(samples)} samples")
+    logger.info("Parsed feature table: %d features × %d samples", len(features), len(samples))
 
     return FeatureTableResult(
         samples=samples,
@@ -181,14 +187,14 @@ def parse_taxonomy(content: str) -> TaxonomyResult:
 
     if unclassified_pct > 80:
         logger.warning(
-            f"{unclassified_pct}% of features are unclassified at family level. "
-            "Check that your taxonomy file uses SILVA or Greengenes format."
+            "%.1f%% of features are unclassified at family level. "
+            "Check that your taxonomy file uses SILVA or Greengenes format.",
+            unclassified_pct,
         )
 
     logger.info(
-        f"Parsed taxonomy: {len(assignments)} features, "
-        f"{len(unique_families)} families, "
-        f"{unclassified_pct}% unclassified"
+        "Parsed taxonomy: %d features, %d families, %.1f%% unclassified",
+        len(assignments), len(unique_families), unclassified_pct,
     )
 
     return TaxonomyResult(
@@ -200,25 +206,21 @@ def parse_taxonomy(content: str) -> TaxonomyResult:
 
 # ── Metadata ──────────────────────────────────────────────────────────────────
 
-def _parse_time_days(timepoint_str: str) -> Optional[int]:
+def _parse_time_days(timepoint_str: str) -> int | None:
     """
     Convert a timepoint string to integer days.
     Examples: 'T0'→0, 'T84'→84, 'Week12'→84, 'baseline'→0, '0'→0
     Returns None if unparseable.
     """
     s = str(timepoint_str).strip().lower()
-    # Direct numeric
     if re.fullmatch(r"\d+", s):
         return int(s)
-    # T<N> pattern
     m = re.match(r"t(\d+)", s)
     if m:
         return int(m.group(1))
-    # Week<N> or wk<N> → convert to days
     m = re.match(r"(?:week|wk)(\d+)", s)
     if m:
         return int(m.group(1)) * 7
-    # Baseline / control synonyms
     if s in ("baseline", "pre", "week0", "wk0", "visit0"):
         return 0
     return None
@@ -239,7 +241,6 @@ def parse_metadata(content: str) -> MetadataResult:
     Returns MetadataResult.
     Raises ValueError if sample-id column is missing.
     """
-    # Skip QIIME2 type directive line (#q2:types)
     lines = [
         line for line in content.strip().splitlines()
         if line.strip() and not line.startswith("#q2:types")
@@ -268,12 +269,10 @@ def parse_metadata(content: str) -> MetadataResult:
         tp_raw  = str(row[tp_col]).strip()   if tp_col   else ""
         pat_raw = str(row[pat_col]).strip()  if pat_col  else re.sub(r"_T\d+$", "", sid)
 
-        # Derive base_group and full group
         base_group = grp_raw or sid
         time_days  = _parse_time_days(tp_raw) if tp_raw else None
         full_group = f"{base_group}_{tp_raw}" if (base_group and tp_raw) else base_group
 
-        # Clinical columns
         sixmwt = 0.0
         il18   = 0.0
         if mwt_col:
@@ -307,8 +306,8 @@ def parse_metadata(content: str) -> MetadataResult:
     timepoints    = sorted(set(s.timepoint  for s in samples if s.timepoint))
 
     logger.info(
-        f"Parsed metadata: {len(samples)} samples, "
-        f"{len(groups)} groups, clinical={'yes' if has_clinical else 'no'}"
+        "Parsed metadata: %d samples, %d groups, clinical=%s",
+        len(samples), len(groups), "yes" if has_clinical else "no",
     )
 
     return MetadataResult(
@@ -332,6 +331,15 @@ _ALPHA_PATTERNS: dict[str, list[str]] = {
 }
 
 
+def _safe_float(row: pd.Series, col: str | None) -> float:
+    if col is None or col not in row:
+        return 0.0
+    try:
+        return round(float(str(row[col])), 4)
+    except (ValueError, TypeError):
+        return 0.0
+
+
 def parse_alpha_diversity(content: str) -> AlphaDiversityResult:
     """
     Parse a QIIME2 alpha-diversity.tsv export.
@@ -346,8 +354,7 @@ def parse_alpha_diversity(content: str) -> AlphaDiversityResult:
 
     sid_col = _require_column(df, [r"^#?sample[-_]?id$", r"^id$"], "sample-id")
 
-    # Detect which metric columns exist
-    detected: dict[str, str] = {}  # metric_name → actual column name
+    detected: dict[str, str] = {}
     for metric, patterns in _ALPHA_PATTERNS.items():
         col = _find_column(df, patterns)
         if col and col != sid_col:
@@ -366,29 +373,21 @@ def parse_alpha_diversity(content: str) -> AlphaDiversityResult:
         if not sid:
             continue
 
-        def _safe_float(col: Optional[str]) -> float:
-            if col is None or col not in row:
-                return 0.0
-            try:
-                return round(float(str(row[col])), 4)
-            except (ValueError, TypeError):
-                return 0.0
-
         entries.append(AlphaDiversityEntry(
             sample_id=sid,
-            shannon  =_safe_float(detected.get("shannon")),
-            simpson  =_safe_float(detected.get("simpson")),
-            observed =_safe_float(detected.get("observed")),
-            faith_pd =_safe_float(detected.get("faith_pd")),
-            pielou   =_safe_float(detected.get("pielou")),
+            shannon  =_safe_float(row, detected.get("shannon")),
+            simpson  =_safe_float(row, detected.get("simpson")),
+            observed =_safe_float(row, detected.get("observed")),
+            faith_pd =_safe_float(row, detected.get("faith_pd")),
+            pielou   =_safe_float(row, detected.get("pielou")),
         ))
 
     if not entries:
         raise ValueError("Alpha diversity file has no valid sample rows.")
 
     logger.info(
-        f"Parsed alpha diversity: {len(entries)} samples, "
-        f"metrics: {list(detected.keys())}"
+        "Parsed alpha diversity: %d samples, metrics: %s",
+        len(entries), list(detected.keys()),
     )
 
     return AlphaDiversityResult(
@@ -408,7 +407,6 @@ def parse_distance_matrix(content: str) -> DistanceMatrixResult:
         sample1    0       0.42       ...
         sample2    0.42    0          ...
 
-    Uses pandas with index_col=0 to correctly handle the leading tab.
     Returns DistanceMatrixResult.
     Raises ValueError on format or symmetry errors.
     """
@@ -417,11 +415,7 @@ def parse_distance_matrix(content: str) -> DistanceMatrixResult:
         raise ValueError("Distance matrix file has fewer than 2 rows.")
 
     try:
-        df = pd.read_csv(
-            io.StringIO("\n".join(lines)),
-            sep="\t",
-            index_col=0,
-        )
+        df = pd.read_csv(io.StringIO("\n".join(lines)), sep="\t", index_col=0)
     except Exception as exc:
         raise ValueError(f"Cannot parse distance matrix: {exc}") from exc
 
@@ -442,165 +436,10 @@ def parse_distance_matrix(content: str) -> DistanceMatrixResult:
     except Exception as exc:
         raise ValueError(f"Distance matrix contains non-numeric values: {exc}") from exc
 
-    # Symmetry check
     max_asymmetry = float(np.max(np.abs(mat - mat.T)))
     if max_asymmetry > 1e-4:
-        logger.warning(f"Distance matrix asymmetry detected: max={max_asymmetry:.6f}")
+        logger.warning("Distance matrix asymmetry detected: max=%.6f", max_asymmetry)
 
-    logger.info(f"Parsed distance matrix: {n} × {n}")
+    logger.info("Parsed distance matrix: %d × %d", n, n)
 
-    return DistanceMatrixResult(
-        samples=samples,
-        matrix=mat.tolist(),
-        n=n,
-    )
-
-
-# ── Integration ───────────────────────────────────────────────────────────────
-
-def integrate(
-    feature_table: FeatureTableResult,
-    taxonomy:      TaxonomyResult,
-    metadata:      MetadataResult,
-    alpha:         Optional[AlphaDiversityResult] = None,
-) -> IntegrateResult:
-    """
-    Combine parsed QIIME2 outputs into chart-ready SampleRow objects.
-
-    Steps:
-    1. Aggregate ASV counts to family level using taxonomy assignments
-    2. Convert to relative abundance (%)
-    3. Join with metadata
-    4. Join with alpha diversity (if provided)
-    5. Compute Shannon + Simpson if not in alpha file
-    6. Sort taxa by mean abundance descending
-
-    Returns IntegrateResult.
-    Raises ValueError if no samples survive the join.
-    """
-    warnings: list[str] = []
-
-    # ── Step 1: aggregate to family level ──
-    family_counts: dict[str, dict[str, float]] = {}  # family → {sample_id: count}
-
-    for feature_id, sample_counts in feature_table.counts.items():
-        family = taxonomy.assignments.get(feature_id, "Unclassified")
-        if family == "Unclassified":
-            continue
-        if family not in family_counts:
-            family_counts[family] = {s: 0.0 for s in feature_table.samples}
-        for sample_id, count in sample_counts.items():
-            family_counts[family][sample_id] = family_counts[family].get(sample_id, 0.0) + count
-
-    if not family_counts:
-        raise ValueError(
-            "No features could be assigned to a family. "
-            "Check that taxonomy.tsv uses the same feature IDs as feature-table.tsv "
-            "and uses SILVA/Greengenes format with 'f__' family prefixes."
-        )
-
-    # ── Step 2: relative abundance per sample ──
-    families = list(family_counts.keys())
-    rel_ab: dict[str, dict[str, float]] = {}  # sample_id → {family: pct}
-
-    for sample_id in feature_table.samples:
-        totals = {fam: family_counts[fam].get(sample_id, 0.0) for fam in families}
-        total  = sum(totals.values()) or 1.0
-        rel_ab[sample_id] = {fam: round(cnt / total * 100, 3) for fam, cnt in totals.items()}
-
-    # ── Step 3: build alpha lookup ──
-    alpha_lookup: dict[str, AlphaDiversityEntry] = {}
-    if alpha:
-        alpha_lookup = {e.sample_id: e for e in alpha.samples}
-
-    # ── Step 4: build metadata lookup ──
-    meta_lookup: dict[str, SampleMetadata] = {s.sample_id: s for s in metadata.samples}
-
-    # ── Step 5: join everything ──
-    rows: list[SampleRow] = []
-    missing_meta: list[str] = []
-
-    for sample_id in feature_table.samples:
-        meta = meta_lookup.get(sample_id)
-        if meta is None:
-            missing_meta.append(sample_id)
-            continue
-
-        ab    = rel_ab.get(sample_id, {})
-        alph  = alpha_lookup.get(sample_id)
-
-        # Compute Shannon/Simpson if not in alpha file.
-        # WARNING: fallback computes from family-level relative abundances, which
-        # collapses ASV-level variation and systematically underestimates diversity.
-        # Pass --alpha with the QIIME2 alpha-diversity export to get accurate values.
-        if alph and alph.shannon > 0:
-            shannon = alph.shannon
-            simpson = alph.simpson
-        else:
-            if not alpha:
-                logger.warning(
-                    "No alpha diversity file supplied — Shannon/Simpson estimated from "
-                    "family-level abundances for %s. Values will be lower than ASV-level "
-                    "estimates. Pass --alpha for accurate diversity metrics.", sample_id
-                )
-            props   = np.array([ab.get(fam, 0.0) for fam in families], dtype=float)
-            tot     = props.sum() or 1.0
-            p       = props / tot
-            shannon = float(-np.sum(p[p > 0] * np.log(p[p > 0])))
-            simpson = float(1 - np.sum(p ** 2))
-
-        row = SampleRow(
-            sample_id  = sample_id,
-            patient    = meta.patient,
-            group      = meta.group,
-            base_group = meta.base_group,
-            timepoint  = meta.timepoint,
-            time       = meta.time,
-            shannon    = round(shannon, 4),
-            simpson    = round(simpson, 4),
-            pielou     = round(alph.pielou,   4) if alph else 0.0,
-            observed   = round(alph.observed, 4) if alph else 0.0,
-            faith_pd   = round(alph.faith_pd, 4) if alph else 0.0,
-            sixmwt     = meta.sixmwt,
-            il18       = meta.il18,
-            **ab,  # taxon abundances as extra fields
-        )
-        rows.append(row)
-
-    if not rows:
-        raise ValueError(
-            f"No samples survived the metadata join. "
-            f"Feature table samples: {feature_table.samples[:5]}. "
-            f"Metadata samples: {[s.sample_id for s in metadata.samples[:5]]}. "
-            "Make sure sample IDs match exactly between files."
-        )
-
-    if missing_meta:
-        warnings.append(
-            f"{len(missing_meta)} samples in feature-table.tsv have no metadata: "
-            f"{missing_meta[:5]}"
-            f"{'...' if len(missing_meta) > 5 else ''}"
-        )
-
-    # ── Step 6: sort taxa by mean abundance descending ──
-    mean_ab    = {fam: np.mean([rel_ab[s].get(fam, 0.0) for s in rel_ab]) for fam in families}
-    taxa_sorted = sorted(families, key=lambda f: mean_ab[f], reverse=True)
-
-    has_clinical = any(r.sixmwt > 0 or r.il18 > 0 for r in rows)
-    groups       = sorted(set(r.group for r in rows))
-
-    logger.info(
-        f"Integration complete: {len(rows)} samples, "
-        f"{len(taxa_sorted)} families, "
-        f"groups={groups}"
-    )
-
-    return IntegrateResult(
-        rows         = rows,
-        taxa         = taxa_sorted,
-        n_samples    = len(rows),
-        n_taxa       = len(taxa_sorted),
-        groups       = groups,
-        has_clinical = has_clinical,
-        warnings     = warnings,
-    )
+    return DistanceMatrixResult(samples=samples, matrix=mat.tolist(), n=n)

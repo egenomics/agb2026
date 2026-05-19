@@ -1,5 +1,9 @@
-# Mirrors the dependencies in pyproject.toml — pyproject.toml is authoritative.
-# Regenerate with: pip-compile pyproject.toml  (or update manually to match)
-pandas>=2.2,<3
-numpy>=1.26,<3
-pydantic>=2.7,<3
+# Pinned runtime dependencies — regenerate with:
+#   pip freeze | grep -E "^(pandas|numpy|pydantic)==" > requirements.txt
+#
+# pyproject.toml is authoritative for compatible ranges (>=x,<y).
+# This file pins exact versions for reproducible container builds and CI installs.
+# Update after any intentional dependency upgrade.
+pandas==2.3.3
+numpy==2.4.1
+pydantic==2.13.4

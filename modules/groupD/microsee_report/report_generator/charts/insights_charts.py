@@ -7,12 +7,16 @@ Kept separate from insights.py (section-level one-liners) because this module is
 ~700 lines and the two concerns are independent.
 """
 from __future__ import annotations
+
 from typing import Any
 
 import numpy as np
 
 from .preprocessing import (
-    get_patient_timepoints, get_base_groups, get_unique_patients, sorted_timepoints,
+    get_base_groups,
+    get_patient_timepoints,
+    get_unique_patients,
+    sorted_timepoints,
 )
 
 
@@ -198,14 +202,14 @@ def generate_chart_explanations(
 
     # ── Beta diversity ────────────────────────────────────────────────────────
 
-    bray = chart_data.get("pcoa_bray", {})
-    jacc = chart_data.get("pcoa_jaccard", {})
-    nmds = chart_data.get("nmds", {})
-    pm   = chart_data.get("permanova", {})
+    bray: dict[str, Any] = chart_data.get("pcoa_bray") or {}
+    jacc: dict[str, Any] = chart_data.get("pcoa_jaccard") or {}
+    nmds: dict[str, Any] = chart_data.get("nmds") or {}
+    pm:   dict[str, Any] = chart_data.get("permanova") or {}
 
     if bray.get("pct1") is not None:
-        top_driver = pm.get("top_name", "individual identity") if pm else "individual identity"
-        top_R2     = pm.get("top_R2", 0.0)
+        top_driver: str   = str(pm.get("top_name") or "individual identity")
+        top_R2:     float = float(pm.get("top_R2") or 0.0)
 
         ex["pcoa_bray"] = {
             "what": (
@@ -432,6 +436,19 @@ def generate_chart_explanations(
 
     # ── Comparative ───────────────────────────────────────────────────────────
 
+    # Extract top LFC hits from diff_abundance traces
+    _da_traces = chart_data.get("diff_abundance") or []
+    _lfc_up: tuple[str, float, str] = ("", 0.0, "")
+    _lfc_dn: tuple[str, float, str] = ("", 0.0, "")
+    for _tr in _da_traces:
+        _bg = _tr.get("name", "")
+        for _taxon, _v in zip(_tr.get("y", []), _tr.get("x", []), strict=False):
+            _lfc_v = float(_v)
+            if _lfc_v > _lfc_up[1]:
+                _lfc_up = (str(_taxon), _lfc_v, _bg)
+            if _lfc_v < _lfc_dn[1]:
+                _lfc_dn = (str(_taxon), _lfc_v, _bg)
+
     ex["diff_abundance"] = {
         "what": (
             "Log2 Fold Change (LFC) bar chart comparing T84 vs T0 abundance for each family. "
@@ -440,12 +457,32 @@ def generate_chart_explanations(
             "Bars are grouped by treatment group so EAA and Whey responses can be compared side by side."
         ),
         "finding": (
+            f"Largest increase: {_lfc_up[0]} (Log2FC={_lfc_up[1]:+.2f} in {_lfc_up[2]}); "
+            f"largest decrease: {_lfc_dn[0]} (Log2FC={_lfc_dn[1]:+.2f} in {_lfc_dn[2]}). "
+            "A large difference between EAA and Whey bars for the same family indicates "
+            "a group-specific response — cross-check in the ANCOM and Volcano charts."
+        ) if _lfc_up[0] else (
             "Families on the right of zero increased during the study; those on the left decreased. "
             "A large difference in bar height between EAA and Whey for the same family indicates "
             "a group-specific response worth further investigation."
         ),
-        "pills": ["Log2 scale", "T84 vs T0", "EAA vs Whey grouped"],
+        "pills": (
+            [f"Top +: {_lfc_up[0]}", f"Log2FC={_lfc_up[1]:+.2f}", "EAA vs Whey grouped"]
+            if _lfc_up[0] else ["Log2 scale", "T84 vs T0", "EAA vs Whey grouped"]
+        ),
     }
+
+    # Count significant volcano hits (marker color "#D84E6A" = passed both thresholds)
+    _vol_traces = chart_data.get("volcano") or []
+    _sig_names_vol: list[str] = []
+    for _tr in _vol_traces:
+        _colors = (_tr.get("marker") or {}).get("color", [])
+        _texts  = _tr.get("text", [])
+        for _color, _text in zip(_colors, _texts, strict=False):
+            if _color == "#D84E6A":
+                _sig_names_vol.append(f"{_text} ({_tr.get('name', '')})")
+    _n_sig_vol = len(_sig_names_vol)
+    _vol_top   = ", ".join(_sig_names_vol[:3]) + (" …" if _n_sig_vol > 3 else "")
 
     ex["volcano"] = {
         "what": (
@@ -456,12 +493,28 @@ def generate_chart_explanations(
             "Red points pass both thresholds — they changed a lot AND the change is statistically reliable."
         ),
         "finding": (
-            "Most families cluster near zero (little change) or low on the y-axis (not significant). "
-            "Red-highlighted points represent the most biologically meaningful hits — "
-            "the families that both changed substantially and survived statistical testing."
+            f"{_n_sig_vol} {'family' if _n_sig_vol == 1 else 'families'} passed both thresholds "
+            f"(|LFC| > 0.5 and FDR q < 0.1): {_vol_top}. "
+            "These are the most biologically meaningful hits — large fold-change AND statistically robust. "
+            "Cross-check against the ANCOM chart for CLR-corrected confirmation."
+        ) if _n_sig_vol > 0 else (
+            "No family passed both thresholds — changes were either small or high-variance. "
+            "Broaden the LFC or FDR cut-offs, or inspect the ANCOM chart for CLR-corrected results."
         ),
-        "pills": ["FDR q < 0.1 threshold", "|LFC| > 0.5 threshold", "Red = significant hits"],
+        "pills": [
+            f"{_n_sig_vol} significant {'hit' if _n_sig_vol == 1 else 'hits'}",
+            "FDR q < 0.1 · |LFC| > 0.5",
+            "Red = both thresholds",
+        ],
     }
+
+    # Count significant ANCOM hits (red = "#D84E6A" up, blue = "#4A7ED4" down)
+    _ancom_traces = chart_data.get("ancom_style") or []
+    _n_sig_ancom = sum(
+        1 for _tr in _ancom_traces
+        for _c in (_tr.get("marker") or {}).get("color", [])
+        if _c in ("#D84E6A", "#4A7ED4")
+    )
 
     ex["ancom"] = {
         "what": (
@@ -471,12 +524,17 @@ def generate_chart_explanations(
             "Red bars = significantly increased (FDR q < 0.1); blue = significantly decreased."
         ),
         "finding": (
-            "CLR results are more reliable than simple fold-changes for microbiome data. "
-            "If a family appears significant in both the LFC bar chart AND this CLR chart, "
-            "the evidence for a real shift is stronger. "
-            "Discrepancies between the two charts reveal composition-driven artefacts."
+            f"{_n_sig_ancom} {'family reached' if _n_sig_ancom == 1 else 'families reached'} FDR q < 0.1 "
+            f"after CLR transformation. "
+            f"{'Overlap with the Volcano hits is the strongest evidence of a real shift. ' if _n_sig_ancom > 0 else ''}"
+            "Discrepancies between CLR and LFC charts reveal composition-driven artefacts in the raw fold-changes."
         ),
-        "pills": ["CLR-transformed", "Paired Wilcoxon", "FDR BH-corrected", "More robust than LFC"],
+        "pills": [
+            f"{_n_sig_ancom} significant {'family' if _n_sig_ancom == 1 else 'families'}",
+            "CLR-transformed",
+            "Paired Wilcoxon · BH-FDR",
+            "More robust than LFC",
+        ],
     }
 
     ex["heatmap"] = {
@@ -514,8 +572,32 @@ def generate_chart_explanations(
     # ── Clinical ──────────────────────────────────────────────────────────────
 
     if result.has_clinical:
-        corr_mwt  = chart_data.get("corr_mwt",  {})
-        corr_il18 = chart_data.get("corr_il18", {})
+        corr_mwt:  dict[str, Any] = chart_data.get("corr_mwt")  or {}
+        corr_il18: dict[str, Any] = chart_data.get("corr_il18") or {}
+
+        # Count patients who improved on each clinical measure (T84 vs T0)
+        _mwt_per_p:  dict[str, dict[str, float]] = {}
+        _il18_per_p: dict[str, dict[str, float]] = {}
+        for _r in rows:
+            _p  = _r["patient"]
+            _tp = _r.get("timepoint", "")
+            _mwt_v  = float(_r.get("sixmwt") or 0)
+            _il18_v = float(_r.get("il18")   or 0)
+            if _mwt_v  > 0:
+                _mwt_per_p.setdefault(_p,  {})[_tp] = _mwt_v
+            if _il18_v > 0:
+                _il18_per_p.setdefault(_p, {})[_tp] = _il18_v
+
+        _n_mwt_tot  = sum(1 for _pd in _mwt_per_p.values()  if "T0" in _pd and "T84" in _pd)
+        _n_mwt_imp  = sum(
+            1 for _pd in _mwt_per_p.values()
+            if "T0" in _pd and "T84" in _pd and _pd["T84"] > _pd["T0"]
+        )
+        _n_il18_tot = sum(1 for _pd in _il18_per_p.values() if "T0" in _pd and "T84" in _pd)
+        _n_il18_imp = sum(
+            1 for _pd in _il18_per_p.values()
+            if "T0" in _pd and "T84" in _pd and _pd["T84"] < _pd["T0"]
+        )
 
         ex["clinical_mwt"] = {
             "what": (
@@ -525,11 +607,19 @@ def generate_chart_explanations(
                 "The dashed line shows the group mean. Higher 6MWT = better physical function."
             ),
             "finding": (
+                f"{_n_mwt_imp} of {_n_mwt_tot} patients improved their 6MWT distance by T84. "
+                "Compare EAA vs Whey mean lines (dashed) — a larger upward shift in one group "
+                "suggests that supplement may better support physical function."
+            ) if _n_mwt_tot > 0 else (
                 "Upward-sloping lines indicate patients who improved their walking capacity during the study. "
                 "Compare EAA vs Whey mean lines — a larger upward shift in one group suggests "
                 "that supplement may better support physical function."
             ),
-            "pills": ["6MWT = 6-minute walk distance", "Higher = better function", "Group mean dashed"],
+            "pills": [
+                f"{_n_mwt_imp}/{_n_mwt_tot} improved" if _n_mwt_tot > 0 else "6MWT",
+                "6MWT = 6-minute walk distance",
+                "Higher = better function",
+            ],
         }
 
         ex["clinical_il18"] = {
@@ -540,16 +630,24 @@ def generate_chart_explanations(
                 "The dashed line shows the group mean."
             ),
             "finding": (
+                f"{_n_il18_imp} of {_n_il18_tot} patients reduced their IL-18 level by T84. "
+                "Compare EAA vs Whey mean lines (dashed) — a greater downward shift in one group "
+                "suggests that supplement had a larger anti-inflammatory effect."
+            ) if _n_il18_tot > 0 else (
                 "Downward-sloping lines indicate patients who reduced systemic inflammation during the study. "
                 "Compare EAA vs Whey to see which supplement had a larger anti-inflammatory effect. "
                 "IL-18 reductions may reflect changes in gut permeability or microbiome composition."
             ),
-            "pills": ["IL-18 pro-inflammatory marker", "Lower = less inflammation", "Group mean dashed"],
+            "pills": [
+                f"{_n_il18_imp}/{_n_il18_tot} reduced" if _n_il18_tot > 0 else "IL-18",
+                "IL-18 pro-inflammatory marker",
+                "Lower = less inflammation",
+            ],
         }
 
         if corr_mwt.get("r") is not None:
-            r_mwt = corr_mwt["r"]
-            p_mwt = float(corr_mwt.get("p") or 1.0)
+            r_mwt: float = float(corr_mwt["r"])
+            p_mwt: float = float(corr_mwt.get("p") or 1.0)
             ex["corr_mwt"] = {
                 "what": (
                     "Scatter plot of Shannon diversity (x) vs 6MWT distance (y) across all samples. "
@@ -571,8 +669,8 @@ def generate_chart_explanations(
             }
 
         if corr_il18.get("r") is not None:
-            r_il18 = corr_il18["r"]
-            p_il18 = float(corr_il18.get("p") or 1.0)
+            r_il18: float = float(corr_il18["r"])
+            p_il18: float = float(corr_il18.get("p") or 1.0)
             ex["corr_il18"] = {
                 "what": (
                     "Scatter plot of Shannon diversity (x) vs IL-18 cytokine level (y) across all samples. "
@@ -610,6 +708,17 @@ def generate_chart_explanations(
 
     # ── Longitudinal ──────────────────────────────────────────────────────────
 
+    # Extract per-group Shannon change (T84 - T0) from longitudinal traces
+    _long_traces  = chart_data.get("longitudinal") or []
+    _long_changes: list[tuple[str, float]] = []
+    for _tr in _long_traces:
+        _xs = _tr.get("x", [])
+        _ys = _tr.get("y", [])
+        if "T0" in _xs and "T84" in _xs:
+            _delta = float(_ys[_xs.index("T84")]) - float(_ys[_xs.index("T0")])
+            _long_changes.append((str(_tr.get("name", "")), _delta))
+    _long_str = "; ".join(f"{_g} {_d:+.3f}" for _g, _d in _long_changes)
+
     ex["longitudinal"] = {
         "what": (
             "Line chart showing mean Shannon diversity per group at each timepoint. "
@@ -619,11 +728,17 @@ def generate_chart_explanations(
             "This is a summary view — the LME chart adds confidence intervals and individual patient lines."
         ),
         "finding": (
+            f"Shannon H′ change T0→T84: {_long_str}. "
+            "A positive value means average diversity increased; a diverging pattern between groups "
+            "suggests a supplement-specific effect on the gut microbiome."
+        ) if _long_changes else (
             "Compare the slope and endpoint height of EAA vs Whey lines. "
             "A diverging pattern (one group increasing while the other stays flat) would suggest "
             "the supplements have different effects on gut microbiome diversity."
         ),
-        "pills": ["Group mean per timepoint", "Shannon H′", "Summary view"],
+        "pills": (
+            [f"{_g}: {_d:+.3f}" for _g, _d in _long_changes[:2]] + ["Shannon H′"]
+        ) if _long_changes else ["Group mean per timepoint", "Shannon H′", "Summary view"],
     }
 
     ex["lme"] = {
@@ -644,14 +759,15 @@ def generate_chart_explanations(
     # ── Statistics ────────────────────────────────────────────────────────────
 
     if pm.get("rows"):
-        top_name = pm.get("top_name", "Unknown")
-        top_R2   = pm.get("top_R2", 0.0)
-        supp_row = next(
-            (r for r in pm["rows"] if "Group" in str(r[0]) or "Suppl" in str(r[0])),
+        top_name: str   = str(pm.get("top_name") or "Unknown")
+        top_R2:   float = float(pm.get("top_R2") or 0.0)
+        pm_rows: list[Any] = pm.get("rows") or []
+        supp_row: list[Any] | None = next(
+            (r for r in pm_rows if "Group" in str(r[0]) or "Suppl" in str(r[0])),
             None,
         )
-        supp_p  = float(supp_row[3]) if supp_row else 1.0
-        supp_R2 = float(supp_row[1]) if supp_row else 0.0
+        supp_p:  float = float(supp_row[3]) if supp_row is not None else 1.0
+        supp_R2: float = float(supp_row[1]) if supp_row is not None else 0.0
 
         ex["permanova"] = {
             "what": (

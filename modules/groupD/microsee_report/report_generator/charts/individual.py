@@ -15,7 +15,6 @@ from .preprocessing import (
 )
 from .utils import base_group_color, hex_rgba, taxon_color
 
-
 # ── Paired Slopegraph ─────────────────────────────────────────────────────────
 
 def build_paired_slope(rows: list[dict[str, Any]], groups: list[str]) -> dict[str, list[dict[str, Any]]]:
@@ -187,7 +186,7 @@ def build_patient_radar_profiles(rows: list[dict[str, Any]], taxa: list[str]) ->
 
         traces: list[dict[str, Any]] = [{
             "type": "scatterpolar", "fill": "toself",
-            "r": v0 + [v0[0]], "theta": short_taxa + [short_taxa[0]],
+            "r": [*v0, v0[0]], "theta": [*short_taxa, short_taxa[0]],
             "fillcolor": hex_rgba(c, 0.2),
             "line": {"color": hex_rgba(c, 0.8), "width": 2},
             "name": f"{p} T0",
@@ -196,7 +195,7 @@ def build_patient_radar_profiles(rows: list[dict[str, Any]], taxa: list[str]) ->
         if v84 is not None:
             traces.append({
                 "type": "scatterpolar", "fill": "none",
-                "r": v84 + [v84[0]], "theta": short_taxa + [short_taxa[0]],
+                "r": [*v84, v84[0]], "theta": [*short_taxa, short_taxa[0]],
                 "line": {"color": c, "width": 2.5, "dash": "dash"},
                 "name": f"{p} T84",
                 "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",
@@ -205,7 +204,7 @@ def build_patient_radar_profiles(rows: list[dict[str, Any]], taxa: list[str]) ->
             gm = gmeans[bg]
             traces.append({
                 "type": "scatterpolar", "fill": "none",
-                "r": gm + [gm[0]], "theta": short_taxa + [short_taxa[0]],
+                "r": [*gm, gm[0]], "theta": [*short_taxa, short_taxa[0]],
                 "line": {"color": "#C4A0A8", "width": 1.5, "dash": "dot"},
                 "name": f"{bg} mean T0",
                 "hovertemplate": "<b>%{theta}</b>: %{r:.1f}%<extra></extra>",

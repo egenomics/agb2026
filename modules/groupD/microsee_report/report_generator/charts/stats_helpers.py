@@ -10,8 +10,9 @@ independently testable.
 from __future__ import annotations
 
 import math
-import numpy as np
+from collections.abc import Sequence
 
+import numpy as np
 
 # ── Shared normal-distribution helper ────────────────────────────────────────
 
@@ -28,13 +29,13 @@ def _phi_complement(z: float) -> float:
 
 # ── Wilcoxon signed-rank test ─────────────────────────────────────────────────
 
-def wilcoxon_p(a: list[float], b: list[float]) -> float:
+def wilcoxon_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Wilcoxon signed-rank p-value.
 
     Exact enumeration for n ≤ 20; normal approximation with continuity
     correction for larger samples.
     """
-    diffs = [float(x) - float(y) for x, y in zip(a, b) if float(x) != float(y)]
+    diffs = [float(x) - float(y) for x, y in zip(a, b, strict=False) if float(x) != float(y)]
     n = len(diffs)
     if n < 2:
         return 1.0
@@ -52,16 +53,16 @@ def wilcoxon_p(a: list[float], b: list[float]) -> float:
             ranks[sorted_idx[k]] = avg
         i = j + 1
 
-    w_plus  = sum(r for r, d in zip(ranks, diffs) if d > 0)
+    w_plus  = sum(r for r, d in zip(ranks, diffs, strict=False) if d > 0)
     total_w = n * (n + 1) / 2.0
     w_obs   = min(w_plus, total_w - w_plus)
 
     if n <= 20:
-        cnt = sum(
-            1 for mask in range(1 << n)
-            if (s := sum(ranks[i] for i in range(n) if (mask >> i) & 1)) <= w_obs
-            or s >= total_w - w_obs
-        )
+        cnt = 0
+        for mask in range(1 << n):
+            s = sum(ranks[i] for i in range(n) if (mask >> i) & 1)
+            if s <= w_obs or s >= total_w - w_obs:
+                cnt += 1
         return round(cnt / (1 << n), 4)
 
     mu    = total_w / 2.0
@@ -72,7 +73,7 @@ def wilcoxon_p(a: list[float], b: list[float]) -> float:
 
 # ── Mann-Whitney U test ───────────────────────────────────────────────────────
 
-def mannwhitney_p(a: list[float], b: list[float]) -> float:
+def mannwhitney_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Mann-Whitney U p-value (normal approximation)."""
     na, nb = len(a), len(b)
     if na < 2 or nb < 2:
@@ -91,7 +92,7 @@ def mannwhitney_p(a: list[float], b: list[float]) -> float:
             ranks[k] = avg
         i = j + 1
 
-    r_a   = sum(r for r, (_, g) in zip(ranks, combined) if g == 0)
+    r_a   = sum(r for r, (_, g) in zip(ranks, combined, strict=False) if g == 0)
     u_a   = r_a - na * (na + 1) / 2.0
     u     = min(u_a, na * nb - u_a)
     mu    = na * nb / 2.0
@@ -118,7 +119,7 @@ def sig_label(p: float) -> str:
 
 # ── Welch's t-test (incomplete beta via continued fraction) ───────────────────
 
-def welch_ttest_p(a: list[float], b: list[float]) -> float:
+def welch_ttest_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Welch's t-test p-value (unequal variances, numpy only)."""
     ar, br = np.array(a, dtype=float), np.array(b, dtype=float)
     na, nb = len(ar), len(br)
@@ -194,13 +195,13 @@ def pearson_p(r_val: float, n: int) -> float:
 
 # ── Spearman rank correlation ─────────────────────────────────────────────────
 
-def spearman_r(a: list[float], b: list[float]) -> tuple[float, float]:
+def spearman_r(a: Sequence[float], b: Sequence[float]) -> tuple[float, float]:
     """Spearman ρ and two-tailed p-value."""
     n = len(a)
     if n < 3:
         return 0.0, 1.0
 
-    def _ranks(v: list[float]) -> list[float]:
+    def _ranks(v: Sequence[float]) -> list[float]:
         sv = sorted(enumerate(v), key=lambda x: x[1])
         r  = [0.0] * n
         i  = 0
@@ -216,7 +217,7 @@ def spearman_r(a: list[float], b: list[float]) -> tuple[float, float]:
 
     ra, rb = _ranks(a), _ranks(b)
     ma, mb = sum(ra) / n, sum(rb) / n
-    num    = sum((x - ma) * (y - mb) for x, y in zip(ra, rb))
+    num    = sum((x - ma) * (y - mb) for x, y in zip(ra, rb, strict=False))
     da     = math.sqrt(sum((x - ma) ** 2 for x in ra))
     db     = math.sqrt(sum((y - mb) ** 2 for y in rb))
     rho    = round(num / (da * db), 3) if da and db else 0.0
@@ -225,7 +226,7 @@ def spearman_r(a: list[float], b: list[float]) -> tuple[float, float]:
 
 # ── Benjamini-Hochberg FDR ────────────────────────────────────────────────────
 
-def bh_fdr(p_values: list[float]) -> list[float]:
+def bh_fdr(p_values: Sequence[float]) -> list[float]:
     """Benjamini-Hochberg FDR correction. Returns q-values same length as input."""
     n = len(p_values)
     if n == 0:

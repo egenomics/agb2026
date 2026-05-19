@@ -11,7 +11,6 @@ from typing import Any
 
 import numpy as np
 
-
 METRIC_LABELS: dict[str, str] = {
     "shannon":  "Shannon H′",
     "simpson":  "Simpson 1−D",

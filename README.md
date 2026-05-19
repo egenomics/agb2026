@@ -1,16 +1,26 @@
 # agb2026
 
-Repository for the AGB 2026 common class project.
+[![CI](https://github.com/agb2026/agb2026/actions/workflows/test.yml/badge.svg)](https://github.com/agb2026/agb2026/actions/workflows/test.yml)
 
+```bash
+pip install -e "modules/groupD/microsee_report"
+microsee-report --feature-table feature-table.tsv --taxonomy taxonomy.tsv \
+    --metadata metadata.tsv --alpha alpha-diversity.tsv --output report.html
+```
+
+---
+
+Repository for the AGB 2026 common class project.  
 **Paper:** [Short-Term Ingestion of Essential Amino Acid Based Nutritional Supplements or Whey Protein Improves the Physical Function of Older Adults Independently of Gut Microbiome](https://pubmed.ncbi.nlm.nih.gov/38426663/)
 
 ---
 
 ## What is MicroSee?
 
-**MicroSee** is Group D's visualisation contribution to this project. The original goal was a **web app** (Flask backend + React frontend, lives in `microsee/`) that would let users upload QIIME2 data and explore an interactive microbiome dashboard in their browser. `MicroSee.html` is the standalone HTML prototype built to validate that concept.
-
-The final deliverable evolves this idea further: instead of requiring a running server, the report generator in `modules/groupD/microsee_report/` produces a **single self-contained HTML file** with 34+ interactive charts embedded — including Plotly.js (4.3 MB) bundled directly inside. Every chart panel has an ℹ button that reveals a plain-language explanation of what the chart shows and what the data actually found. You open it in any browser, on any machine, with no server, no internet, and no installs. This makes it fully compatible with HPC environments where persistent servers and outbound internet are not available.
+**MicroSee** is Group D's visualisation contribution: a **self-contained HTML report generator**
+(`modules/groupD/microsee_report/`). It takes QIIME2 TSV exports and produces a single HTML file
+(~5 MB) with 34+ interactive Plotly charts — Plotly.js bundled inside. Open in any browser with
+no server, no internet, and no installs (HPC-safe).
 
 ```mermaid
 flowchart TD
@@ -18,12 +28,11 @@ flowchart TD
     TX[taxonomy.tsv]                  --> R
     MD[metadata.tsv]                  --> R
     AL[alpha-diversity.tsv\noptional] --> R
+    DM[distance-matrix.tsv\noptional] --> R
     PJ[plotly.min.js\nbundled]        --> R
     R --> HTML[microsee_report.html\n~5 MB · self-contained]
     HTML --> USER[Open in any browser\nno server · no internet · no installs\nHPC compatible]
 ```
-
-The web app and the standalone generator share the same visual language and chart set — the generator is the web app's output crystallised into a portable file.
 
 ---
 
@@ -31,42 +40,22 @@ The web app and the standalone generator share the same visual language and char
 
 ```
 agb2026/
-│
-├── MicroSee.html                   ← Original standalone HTML prototype (proof of concept)
-│
-├── microsee/                       ← MicroSee web app (original goal)
-│   ├── microsee_backend/           ← Flask/Python API backend
-│   │   └── tests/data/             ← QIIME2 TSV test datasets (shared with report generator)
-│   └── microsee_frontend/          ← React/TypeScript frontend
-│
-├── modules/
-│   └── groupD/
-│       ├── README.md               ← Group D module documentation
-│       └── microsee_report/        ← Self-contained HTML report generator (final deliverable)
-│           ├── pyproject.toml      ← Python package definition
-│           ├── main.nf             ← Nextflow process (MICROSEE_REPORT)
-│           ├── tests/              ← pytest unit + smoke tests
-│           └── report_generator/   ← Python report engine
-│               ├── generate_report.py
-│               ├── parsers.py
-│               ├── models.py
-│               └── charts/         ← Chart builders, insights, HTML templates + bundled Plotly.js
-│
-├── workflows/
-│   └── groupD.nf                   ← Nextflow workflow entry point for Group D
-│
-└── nextflow.config                 ← Cluster profiles (conda, SLURM, SGE, Docker, Singularity)
+├── conf/                           ← Nextflow config (base, test, hpc_slurm)
+├── modules/groupD/
+│   ├── README.md                   ← Full module documentation
+│   ├── docs/groupD_inputs.md       ← Upstream QIIME2 → parameter mapping
+│   └── microsee_report/            ← Report generator (deliverable)
+├── workflows/groupD.nf             ← Nextflow entry point
+└── nextflow.config                 ← Profiles: conda, slurm, docker, test, …
 ```
 
 ---
 
-## Quick start — generate a report
+## Quick start — Python
 
 ```bash
-# Install the report generator
 pip install -e "modules/groupD/microsee_report"
 
-# Run with the bundled test data (12 patients × 2 timepoints, includes clinical columns)
 microsee-report \
     --feature-table modules/groupD/microsee_report/tests/data/feature-table.tsv \
     --taxonomy      modules/groupD/microsee_report/tests/data/taxonomy.tsv \
@@ -74,7 +63,71 @@ microsee-report \
     --alpha         modules/groupD/microsee_report/tests/data/alpha-diversity.tsv \
     --output        microsee_report.html
 
-open microsee_report.html   # macOS; use xdg-open on Linux
+open microsee_report.html    # macOS
 ```
 
-See [`modules/groupD/README.md`](modules/groupD/README.md) for full documentation including Nextflow / HPC usage, all charts, and test instructions.
+---
+
+## Quick start — Nextflow
+
+```bash
+# Smoke test with bundled fixtures (recommended first run)
+nextflow run workflows/groupD.nf -profile test,conda
+
+# Your data (conda profile — default until container image is on GHCR)
+nextflow run workflows/groupD.nf -profile conda \
+    --feature_table /path/to/feature-table.tsv \
+    --taxonomy      /path/to/taxonomy.tsv \
+    --metadata      /path/to/metadata.tsv \
+    --alpha         /path/to/alpha-diversity.tsv \
+    --outdir        results/
+```
+
+SLURM: copy [`conf/hpc_slurm.config`](conf/hpc_slurm.config), edit queue/account, then  
+`nextflow run workflows/groupD.nf -profile slurm,conda -c conf/hpc_slurm.config …`
+
+---
+
+## Development
+
+```bash
+pip install -e "modules/groupD/microsee_report[dev]"
+
+# Fast unit tests (default)
+pytest modules/groupD/microsee_report/tests/ -v
+
+# Slow CLI / HTML integration tests
+pytest modules/groupD/microsee_report/tests/ -v -m integration
+
+ruff check modules/groupD/microsee_report/report_generator/
+mypy modules/groupD/microsee_report/report_generator/
+```
+
+---
+
+## Reproducibility
+
+Runtime pins (pip / conda / Docker): **pandas 2.3.3**, **numpy 2.4.1**, **pydantic 2.13.4**
+— see [`pyproject.toml`](modules/groupD/microsee_report/pyproject.toml).
+
+```bash
+docker build -t ghcr.io/agb2026/microsee-report:latest \
+    modules/groupD/microsee_report/report_generator/
+```
+
+`plotly.min.js` (~4.3 MB) must stay in git for offline HPC — see
+[`modules/groupD/README.md`](modules/groupD/README.md) troubleshooting.
+
+---
+
+## CI
+
+[`test.yml`](.github/workflows/test.yml): ruff · mypy · pytest (3.10–3.12) · CLI integration · Nextflow smoke  
+[`docker-report.yml`](.github/workflows/docker-report.yml): build/push `ghcr.io/agb2026/microsee-report:latest` on `main`
+
+---
+
+## Documentation
+
+- [`modules/groupD/README.md`](modules/groupD/README.md) — charts, HPC, troubleshooting  
+- [`modules/groupD/docs/groupD_inputs.md`](modules/groupD/docs/groupD_inputs.md) — input file contract

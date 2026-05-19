@@ -251,8 +251,8 @@ def build_lme_trajectory(
                            "line": {"color": "white", "width": 1.5}},
                 "error_y": {
                     "type": "data", "symmetric": False,
-                    "array":      [u - m for u, m in zip(uppers, means)],
-                    "arrayminus": [m - lo for m, lo in zip(means, lowers)],
+                    "array":      [u - m for u, m in zip(uppers, means, strict=False)],
+                    "arrayminus": [m - lo for m, lo in zip(means, lowers, strict=False)],
                     "color": hex_rgba(c, 0.5), "thickness": 1.5, "width": 6,
                 },
                 "hovertemplate": (

@@ -1,6 +1,7 @@
 """charts/config.py — colour constants and Plotly layout/config defaults."""
 
 from __future__ import annotations
+
 from typing import Any
 
 TAXA_COLORS: dict[str, str] = {

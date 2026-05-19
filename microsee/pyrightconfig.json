@@ -1,6 +1,0 @@
-{
-  "include": ["microsee_backend"],
-  "venvPath": "microsee_backend",
-  "venv": ".venv",
-  "pythonVersion": "3.14"
-}

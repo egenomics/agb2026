@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from report_generator.models import DistanceMatrixResult
+
 from .alpha import build_all_alpha_metrics, build_multimet_alpha, build_rarefaction
 from .beta import build_delta_heatmap, build_dendrogram, build_nmds_plot, build_pcoa_chart
 from .clinical import (
@@ -25,7 +27,7 @@ from .comparative import (
     build_heatmap,
     build_volcano,
 )
-from .distances import bray_curtis_matrix, rows_to_ab
+from .distances import align_distance_matrix, bray_curtis_matrix, rows_to_ab
 from .individual import (
     build_diversity_rank,
     build_faceted_composition,
@@ -36,9 +38,13 @@ from .individual import (
 )
 from .insights import generate_chart_explanations, generate_dynamic_insights
 from .preprocessing import get_base_groups
-from .stats import build_lme_trajectory, build_longitudinal, build_permanova_table, build_stats_table
+from .stats import (
+    build_lme_trajectory,
+    build_longitudinal,
+    build_permanova_table,
+    build_stats_table,
+)
 from .taxonomy import build_donut, build_sunburst, build_taxonomy_views, build_top_taxa
-
 
 # ── Configuration dataclass ───────────────────────────────────────────────────
 
@@ -78,6 +84,7 @@ class ReportConfig:
 def compute_chart_data(
     result: Any,
     config: ReportConfig | None = None,
+    distance_matrix: DistanceMatrixResult | None = None,
 ) -> dict[str, Any]:
     """Compute all chart payloads from an IntegrateResult.
 
@@ -95,6 +102,13 @@ def compute_chart_data(
     groups      = result.groups
     base_groups = get_base_groups(rows)
 
+    extra_warnings: list[str] = list(result.warnings)
+    if distance_matrix is not None:
+        extra_warnings.append(
+            "Using QIIME2 distance matrix for Bray-Curtis ordination "
+            "(PCoA, NMDS, dendrogram, PERMANOVA)."
+        )
+
     data: dict[str, Any] = {
         "meta": {
             "n_samples":    result.n_samples,
@@ -102,13 +116,19 @@ def compute_chart_data(
             "groups":       groups,
             "base_groups":  base_groups,
             "has_clinical": result.has_clinical,
-            "warnings":     result.warnings,
+            "warnings":     extra_warnings,
         },
     }
 
-    # Pre-compute Bray-Curtis matrix once — shared by beta, individual, and stats sections
+    sample_ids = [r["sample_id"] for r in rows]
     _need_bc = taxa and (cfg.includes("beta") or cfg.includes("stats") or cfg.includes("individual"))
-    _bc_mat = bray_curtis_matrix(rows_to_ab(rows, taxa)) if _need_bc else None
+    if _need_bc:
+        if distance_matrix is not None:
+            _bc_mat = align_distance_matrix(distance_matrix, sample_ids)
+        else:
+            _bc_mat = bray_curtis_matrix(rows_to_ab(rows, taxa))
+    else:
+        _bc_mat = None
 
     # ── Taxonomy ──────────────────────────────────────────────────────────────
     if cfg.includes("taxonomy"):

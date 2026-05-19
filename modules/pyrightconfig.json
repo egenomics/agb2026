@@ -1,12 +1,17 @@
 {
-  "pythonVersion": "3.12",
-  "venvPath": "/Users/davitgudadze/Desktop/project/agb2026/microsee/microsee_backend",
-  "venv": "venv",
+  "pythonVersion": "3.11",
+  "venvPath": "groupD/microsee_report",
+  "venv": ".venv",
   "extraPaths": [
     "groupD/microsee_report"
   ],
   "typeCheckingMode": "basic",
   "include": [
     "groupD"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    "**/.mypy_cache",
+    "**/*.egg-info"
   ]
 }

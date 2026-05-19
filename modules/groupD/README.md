@@ -4,7 +4,7 @@
 
 Takes QIIME2 TSV exports from upstream groups and generates a **single self-contained HTML report** (`microsee_report.html`). The report opens in any browser with no server, no installs, and **no internet required** — Plotly.js (4.3 MB) is embedded directly in the file, making it fully offline-compatible on HPC nodes.
 
-> **Context:** MicroSee started as a web app (`microsee/` at the repo root). This report generator is the evolved, portable form of that idea — the same interactive charts, but crystallised into one file you can email, archive, or open anywhere.
+Pipeline input mapping: [`docs/groupD_inputs.md`](docs/groupD_inputs.md).
 
 ---
 
@@ -18,19 +18,26 @@ modules/groupD/
     ├── environment.yml             ← Conda environment definition
     ├── main.nf                     ← Nextflow process (MICROSEE_REPORT)
     ├── tests/
-    │   ├── data/                   ← Fixture TSVs (12 patients × 2 timepoints = 24 samples, all metrics)
+    │   ├── data/                       ← Fixture TSVs (12 patients × 2 timepoints = 24 samples)
     │   │   ├── feature-table.tsv
     │   │   ├── taxonomy.tsv
-    │   │   ├── metadata.tsv        ← includes sixmwt + il18 clinical columns
-    │   │   └── alpha-diversity.tsv ← all 5 metrics: shannon, simpson, observed, pielou, faith_pd
-    │   ├── test_parsers.py         ← Unit tests for all parsers + integrate()
-    │   └── test_charts.py          ← Smoke tests for chart builders + HTML rendering
-    └── report_generator/           ← Python report engine
+    │   │   ├── metadata.tsv            ← includes sixmwt + il18 clinical columns
+    │   │   └── alpha-diversity.tsv     ← 5 metrics: shannon, simpson, observed, pielou, faith_pd
+    │   ├── conftest.py                 ← Shared pytest hooks
+    │   ├── test_parsers.py             ← Unit tests for all parsers + integrate()
+    │   ├── test_charts.py              ← Smoke tests for chart builders + HTML rendering
+    │   ├── test_preprocessing.py       ← Unit tests for row helpers (get_patient_timepoints, …)
+    │   ├── test_distances.py           ← Unit tests for Bray-Curtis, Jaccard, PCoA, clustering
+    │   ├── test_stats_helpers.py       ← Unit tests for Wilcoxon, MW, Welch t, Spearman, BH-FDR
+    │   └── test_cli_integration.py     ← End-to-end CLI smoke tests (marked `integration`)
+    └── report_generator/               ← Python report engine
         ├── __init__.py
-        ├── generate_report.py      ← CLI entry point  (microsee-report command)
-        ├── parsers.py              ← QIIME2 TSV parsers
-        ├── models.py               ← Pydantic v2 data models
-        ├── requirements.txt        ← Pinned dependencies (for reference)
+        ├── py.typed                    ← PEP 561 marker (typed package)
+        ├── generate_report.py          ← CLI entry point (microsee-report command)
+        ├── parsers.py                  ← QIIME2 TSV parsers
+        ├── integrator.py               ← Joins parsed data into SampleRow objects
+        ├── models.py                   ← Pydantic v2 data models
+        ├── requirements.txt            ← Pinned dependencies (for reference)
         ├── Dockerfile              ← Container image definition
         └── charts/
             ├── config.py            ← Colour palette and Plotly layout defaults
@@ -89,6 +96,7 @@ microsee-report \
     --taxonomy      path/to/taxonomy.tsv \
     --metadata      path/to/metadata.tsv \
     --alpha         path/to/alpha-diversity.tsv \
+    [--distance-matrix path/to/distance-matrix.tsv] \
     --output        microsee_report.html
 
 # Generate one HTML per patient (plus the combined report)
@@ -214,14 +222,9 @@ nextflow run workflows/groupD.nf -profile slurm,conda \
 > Without `--alpha`, Shannon and Simpson are estimated from family-level abundances,
 > which underestimates diversity. All other metrics (Faith PD, Pielou, Observed) will be absent.
 
-> **Docker / Singularity** — the container `ghcr.io/agb2026/microsee:latest` must be built
-> and pushed before using `-profile docker` or `-profile singularity`. Build it with:
-> ```bash
-> docker build -t ghcr.io/agb2026/microsee:latest \
->     modules/groupD/microsee_report/report_generator/
-> docker push ghcr.io/agb2026/microsee:latest
-> ```
-> Until then use `-profile conda` instead.
+> **Docker / Singularity** — image `ghcr.io/agb2026/microsee-report:latest` is built by
+> [`.github/workflows/docker-report.yml`](../../.github/workflows/docker-report.yml)
+> on pushes to `main` / `Group_D`. Until the image exists in GHCR, use `-profile conda`.
 
 ---
 
@@ -231,8 +234,11 @@ nextflow run workflows/groupD.nf -profile slurm,conda \
 # Install with test extras
 pip install -e "modules/groupD/microsee_report[dev]"
 
-# Run the full test suite
+# Fast unit tests (default)
 pytest modules/groupD/microsee_report/tests/ -v
+
+# Slow CLI / full HTML generation
+pytest modules/groupD/microsee_report/tests/ -v -m integration
 ```
 
 Tests cover inline string fixtures and the realistic 12-patient (24-sample) fixture TSV files.

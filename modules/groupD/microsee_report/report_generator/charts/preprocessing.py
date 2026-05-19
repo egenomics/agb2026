@@ -6,8 +6,8 @@ and pairing logic across beta, individual, comparative, clinical, stats, and
 renderer — where the T0/T84 patient-pair pattern previously appeared eight times.
 """
 from __future__ import annotations
-from typing import Any
 
+from typing import Any
 
 # ── Timepoint utilities ───────────────────────────────────────────────────────
 

@@ -39,7 +39,9 @@ microsee-report \
 |---|---|
 | `generate_report.py` | CLI entry point (`microsee-report` command) |
 | `parsers.py` | QIIME2 TSV parsing — feature-table, taxonomy, metadata, alpha-diversity |
+| `integrator.py` | Joins all parsed outputs into chart-ready `SampleRow` objects |
 | `models.py` | Pydantic v2 data models |
+| `py.typed` | PEP 561 marker — declares this package as typed |
 | `requirements.txt` | Pinned dependencies (reference; `pyproject.toml` is authoritative) |
 | `charts/config.py` | Colour palette and Plotly layout/config defaults |
 | `charts/utils.py` | Group + taxon colour helpers (cycling 20-colour palette for unknowns) |

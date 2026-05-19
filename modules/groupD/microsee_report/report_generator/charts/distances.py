@@ -7,11 +7,31 @@ from typing import Any
 
 import numpy as np
 
+from report_generator.models import DistanceMatrixResult
+
 _EMPTY_D: dict[int, float] = {}  # typed sentinel for D.get(k, _EMPTY_D) lookups
 
 
 def rows_to_ab(rows: list[dict[str, Any]], taxa: list[str]) -> np.ndarray:
     return np.array([[float(r.get(t) or 0) for t in taxa] for r in rows], dtype=float)
+
+
+def align_distance_matrix(
+    dm: DistanceMatrixResult,
+    sample_ids: list[str],
+) -> np.ndarray:
+    """Reorder a parsed QIIME2 distance matrix to match integrated sample order."""
+    index = {sid: i for i, sid in enumerate(dm.samples)}
+    missing = [sid for sid in sample_ids if sid not in index]
+    if missing:
+        raise ValueError(
+            f"Distance matrix missing {len(missing)} integrated sample(s), e.g. "
+            f"{missing[:5]}{'...' if len(missing) > 5 else ''}. "
+            "Export the matrix from the same feature table used in this run."
+        )
+    idx = [index[sid] for sid in sample_ids]
+    mat = np.asarray(dm.matrix, dtype=float)
+    return mat[np.ix_(idx, idx)]
 
 
 def bray_curtis_matrix(ab: np.ndarray) -> np.ndarray:

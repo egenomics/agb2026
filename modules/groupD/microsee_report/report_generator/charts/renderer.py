@@ -17,37 +17,55 @@ from .config import BASE_CONFIG, BASE_LAYOUT, THEME
 from .individual import build_faceted_composition, build_patient_radar_profiles
 
 _PLOTLY_JS_PATH = Path(__file__).parent / "plotly.min.js"
-_PLOTLY_CDN_URL = "https://cdn.plot.ly/plotly-2.35.2.min.js"
+
+# Loaded on first render call, not at import time.  This avoids downloading
+# files or printing warnings when the module is merely imported (e.g. in tests
+# that only exercise parsers) and prevents unexpected I/O on HPC nodes.
+_PLOTLY_JS_INLINE: str | None = None
+_TEMPLATE: str | None = None
+_PATIENT_TEMPLATE: str | None = None
 
 
 def _load_plotly_js() -> str:
-    """Load Plotly.js inline for offline HPC use; fall back to CDN if unavailable."""
-    if _PLOTLY_JS_PATH.exists():
-        return f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
-    try:
-        import urllib.request
-        print(f"[MicroSee] plotly.min.js not found — downloading from {_PLOTLY_CDN_URL} ...")
-        urllib.request.urlretrieve(_PLOTLY_CDN_URL, _PLOTLY_JS_PATH)
-        print("[MicroSee] plotly.min.js downloaded and cached.")
-        return f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
-    except Exception:
-        import warnings
-        warnings.warn(
-            "\n\ncharts/plotly.min.js not found and download failed.\n"
-            "On HPC nodes without internet, commit the file to git first:\n"
+    """Load Plotly.js inline for offline HPC use. Fail fast if the bundle is missing."""
+    if not _PLOTLY_JS_PATH.exists():
+        raise FileNotFoundError(
+            f"Bundled Plotly.js not found: {_PLOTLY_JS_PATH}\n"
+            "Commit plotly.min.js to git for offline HPC use:\n"
             "  curl -fsSL https://cdn.plot.ly/plotly-2.35.2.min.js \\\n"
-            "       -o report_generator/charts/plotly.min.js\n"
-            "  git add report_generator/charts/plotly.min.js\n"
-            "Falling back to CDN — charts will be BLANK on offline nodes.\n",
-            RuntimeWarning, stacklevel=2,
+            "       -o modules/groupD/microsee_report/report_generator/charts/plotly.min.js\n"
+            "  git add modules/groupD/microsee_report/report_generator/charts/plotly.min.js"
         )
-        return f'<script src="{_PLOTLY_CDN_URL}"></script>'
+    return f"<script>{_PLOTLY_JS_PATH.read_text(encoding='utf-8')}</script>"
 
 
-_PLOTLY_JS_INLINE = _load_plotly_js()
+def _get_plotly_js() -> str:
+    global _PLOTLY_JS_INLINE
+    cached = _PLOTLY_JS_INLINE
+    if cached is None:
+        cached = _load_plotly_js()
+        _PLOTLY_JS_INLINE = cached
+    return cached
 
-_TEMPLATE         = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
-_PATIENT_TEMPLATE = (Path(__file__).parent / "patient_template.html").read_text(encoding="utf-8")
+
+def _get_template() -> str:
+    global _TEMPLATE
+    cached = _TEMPLATE
+    if cached is None:
+        cached = (Path(__file__).parent / "template.html").read_text(encoding="utf-8")
+        _TEMPLATE = cached
+    return cached
+
+
+def _get_patient_template() -> str:
+    global _PATIENT_TEMPLATE
+    cached = _PATIENT_TEMPLATE
+    if cached is None:
+        cached = (
+            Path(__file__).parent / "patient_template.html"
+        ).read_text(encoding="utf-8")
+        _PATIENT_TEMPLATE = cached
+    return cached
 
 
 # ── Per-patient stability helper ──────────────────────────────────────────────
@@ -179,11 +197,19 @@ def _build_patient_insights_html(
 
 # ── Per-patient report ────────────────────────────────────────────────────────
 
-def render_patient_html(patient_id: str, result: Any) -> str:
+def render_patient_html(
+    patient_id: str,
+    result: Any,
+    *,
+    radar_profiles: dict[str, Any] | None = None,
+) -> str:
     """Generate a self-contained per-patient HTML report.
 
     Contains: stability score, radar T0 vs T84 vs group mean, composition bars,
     clinical outcomes (if available), and a plain-language interpretation.
+
+    Pass ``radar_profiles`` from :func:`build_patient_radar_profiles` when rendering
+    many patients in one process (avoids recomputing all profiles per patient).
     """
     rows   = [r.model_dump() for r in result.rows]
     taxa   = result.taxa
@@ -205,8 +231,9 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         "This degree of change is common in dietary intervention studies."
     )
 
-    all_profiles = build_patient_radar_profiles(rows, taxa)
-    pat_profile  = all_profiles["profiles"].get(patient_id, {})
+    if radar_profiles is None:
+        radar_profiles = build_patient_radar_profiles(rows, taxa)
+    pat_profile = radar_profiles["profiles"].get(patient_id, {})
     patient_chart_data: dict[str, Any] = {
         "radar":       pat_profile.get("traces", []),
         "radar_table": pat_profile.get("table", []),
@@ -262,9 +289,9 @@ def render_patient_html(patient_id: str, result: Any) -> str:
         ("__FONT__",              THEME["font"]),
         ("__BG__",                THEME["bg"]),
         ("__TEXT__",              THEME["text"]),
-        ("__PLOTLY_SCRIPT__",     _PLOTLY_JS_INLINE),
+        ("__PLOTLY_SCRIPT__",     _get_plotly_js()),
     ]
-    html = _PATIENT_TEMPLATE
+    html = _get_patient_template()
     for placeholder, value in replacements:
         html = html.replace(placeholder, value)
     return html
@@ -325,7 +352,7 @@ def render_html(chart_data: dict[str, Any]) -> str:
         for bg in base_groups
     )
 
-    html = _TEMPLATE
+    html = _get_template()
     for placeholder, value in [
         ("__FONT__",                 THEME["font"]),
         ("__BG__",                   THEME["bg"]),
@@ -344,7 +371,7 @@ def render_html(chart_data: dict[str, Any]) -> str:
         ("__LAYOUT_JSON__",          json.dumps(BASE_LAYOUT, allow_nan=False)),
         ("__CONFIG_JSON__",          json.dumps(BASE_CONFIG,  allow_nan=False)),
         ("__INSIGHTS_JSON__",        json.dumps(chart_data.get("insights", {}), allow_nan=False)),
-        ("__PLOTLY_SCRIPT__",        _PLOTLY_JS_INLINE),
+        ("__PLOTLY_SCRIPT__",        _get_plotly_js()),
     ]:
         html = html.replace(placeholder, value)
     return html

@@ -2,7 +2,7 @@ process MICROSEE_REPORT {
     tag "microsee_report"
     label 'process_low'
 
-    conda "conda-forge::python>=3.10,<3.13 conda-forge::pandas>=2.2,<3 conda-forge::numpy>=1.26,<3 conda-forge::pydantic>=2.7,<3"
+    conda "conda-forge::python=3.11 conda-forge::pandas=2.3.3 conda-forge::numpy=2.4.1 conda-forge::pydantic=2.13.4"
     container 'ghcr.io/agb2026/microsee:latest'
 
     publishDir params.outdir, mode: 'copy'
@@ -12,8 +12,9 @@ process MICROSEE_REPORT {
     path feature_table
     path taxonomy
     path metadata
-    path alpha   // pass file('NO_FILE') if not available
-    val  mode    // 'cohort' (default) | 'patient' | 'all'
+    path alpha            // pass file('NO_FILE') if not available
+    path distance_matrix  // pass file('NO_FILE') if not available
+    val  mode             // 'cohort' (default) | 'patient' | 'all'
 
     output:
     path "microsee_report.html",  emit: report                        // primary cohort report
@@ -24,6 +25,7 @@ process MICROSEE_REPORT {
     // because the CLI is only available after `pip install -e .`, which is not run inside the
     // Nextflow work directory. python3 on the staged script is equivalent and works in all envs.
     def alpha_arg = alpha.name != 'NO_FILE' ? "--alpha ${alpha}" : ""
+    def dist_arg  = distance_matrix.name != 'NO_FILE' ? "--distance-matrix ${distance_matrix}" : ""
     def mode_arg  = mode ? "--mode ${mode}" : "--mode cohort"
     """
     # Verify that the bundled Plotly.js is present — without it all charts will be blank.
@@ -43,6 +45,7 @@ process MICROSEE_REPORT {
         --taxonomy      ${taxonomy}      \\
         --metadata      ${metadata}      \\
         ${alpha_arg}                     \\
+        ${dist_arg}                      \\
         ${mode_arg}                      \\
         --output        microsee_report.html
     """

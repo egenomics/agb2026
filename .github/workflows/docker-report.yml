@@ -1,0 +1,44 @@
+name: Docker (microsee-report)
+
+on:
+  push:
+    branches: [main, Group_D]
+    paths:
+      - "modules/groupD/microsee_report/report_generator/Dockerfile"
+      - "modules/groupD/microsee_report/pyproject.toml"
+      - ".github/workflows/docker-report.yml"
+  workflow_dispatch:
+
+env:
+  IMAGE: ghcr.io/agb2026/microsee-report:latest
+
+jobs:
+  build:
+    name: Build container image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: |
+          docker build \
+            -t ${{ env.IMAGE }} \
+            modules/groupD/microsee_report/report_generator/
+
+      - name: Smoke-test imports
+        run: docker run --rm ${{ env.IMAGE }} python -c "import pandas, numpy, pydantic; print('deps ok')"
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push image
+        if: github.event_name != 'pull_request'
+        run: docker push ${{ env.IMAGE }}

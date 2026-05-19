@@ -6,15 +6,22 @@ build-backend = "setuptools.build_meta"
 name = "microsee-report"
 version = "0.1.0"
 description = "MicroSee self-contained HTML report generator for microbiome data"
+readme = "report_generator/README.md"
 requires-python = ">=3.10"
+license = { text = "MIT" }
 dependencies = [
-    "pandas>=2.2,<3",
-    "numpy>=1.26,<3",
-    "pydantic>=2.7,<3",
+    "pandas==2.3.3",
+    "numpy==2.4.1",
+    "pydantic==2.13.4",
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = [
+    "pytest>=8",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pandas-stubs>=2.2",
+]
 
 [project.scripts]
 microsee-report = "report_generator.generate_report:main"
@@ -24,7 +31,54 @@ where = ["."]
 include = ["report_generator*"]
 
 [tool.setuptools.package-data]
+"report_generator"        = ["py.typed"]
 "report_generator.charts" = ["template.html", "patient_template.html", "plotly.min.js"]
 
+# ── pytest ────────────────────────────────────────────────────────────────────
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = [
+    "-ra",
+    "-q",
+    "-m", "not integration",
+]
+markers = [
+    "integration: slow end-to-end CLI/HTML tests (~2–3 min; pytest -m integration)",
+]
+
+# ── ruff ─────────────────────────────────────────────────────────────────────
+[tool.ruff]
+line-length    = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "RUF", # ruff-specific
+]
+ignore = [
+    "E501",   # line too long (handled by formatter)
+    "B008",   # do not perform function calls in default arguments
+    "RUF001", # ambiguous unicode — intentional scientific notation (′ × − ρ)
+    "RUF002", # ambiguous unicode in docstrings — intentional (ℹ ρ)
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["report_generator"]
+
+# ── mypy ─────────────────────────────────────────────────────────────────────
+[tool.mypy]
+python_version         = "3.10"
+strict                 = false
+warn_unused_configs    = true
+warn_redundant_casts   = true
+warn_unused_ignores    = true
+no_implicit_reexport   = true
+ignore_missing_imports = true   # numpy/pandas stubs may be absent in CI
+disallow_untyped_defs  = true
+disallow_any_generics  = false  # too noisy for chart builders that use dict[str, Any]

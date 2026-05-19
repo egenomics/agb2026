@@ -1,12 +1,10 @@
 # Runtime dependencies for the MicroSee Nextflow process.
-# The report_generator/ code is staged directly by Nextflow and does NOT need to be
-# installed as a package — only these library dependencies are required in the environment.
+# Versions match pyproject.toml and report_generator/Dockerfile.
 name: microsee
 channels:
   - conda-forge
-  - defaults
 dependencies:
-  - python>=3.10,<3.13
-  - pandas>=2.2,<3
-  - numpy>=1.26,<3
-  - pydantic>=2.7,<3
+  - python=3.11
+  - pandas=2.3.3
+  - numpy=2.4.1
+  - pydantic=2.13.4

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-
 # ── Raw upload payloads ───────────────────────────────────────────────────────
 
 class TSVUpload(BaseModel):
