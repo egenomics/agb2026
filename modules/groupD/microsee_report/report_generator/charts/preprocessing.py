@@ -5,11 +5,13 @@ parsers.integrate().  Centralising these avoids duplicating the same filtering
 and pairing logic across beta, individual, comparative, clinical, stats, and
 renderer — where the T0/T84 patient-pair pattern previously appeared eight times.
 """
+
 from __future__ import annotations
 
 from typing import Any
 
 # ── Timepoint utilities ───────────────────────────────────────────────────────
+
 
 def sorted_timepoints(rows: list[dict[str, Any]]) -> list[str]:
     """Return unique timepoints sorted by their numeric `time` field."""
@@ -23,6 +25,7 @@ def sorted_timepoints(rows: list[dict[str, Any]]) -> list[str]:
 
 # ── Group utilities ───────────────────────────────────────────────────────────
 
+
 def get_base_groups(rows: list[dict[str, Any]]) -> list[str]:
     """Return sorted unique base_group values from a row list."""
     return sorted(set(r.get("base_group", r.get("group", "")) for r in rows))
@@ -34,6 +37,7 @@ def get_unique_patients(rows: list[dict[str, Any]]) -> list[str]:
 
 
 # ── Patient-level time pairing ────────────────────────────────────────────────
+
 
 def get_patient_timepoints(
     rows: list[dict[str, Any]], patient: str
@@ -47,7 +51,7 @@ def get_patient_timepoints(
         if r0 is None or r84 is None:
             continue
     """
-    t0_list  = [r for r in rows if r["patient"] == patient and (r.get("time") or 0) == 0]
+    t0_list = [r for r in rows if r["patient"] == patient and (r.get("time") or 0) == 0]
     t84_list = sorted(
         [r for r in rows if r["patient"] == patient and (r.get("time") or 0) > 0],
         key=lambda r: r.get("time") or 0,
@@ -57,6 +61,7 @@ def get_patient_timepoints(
 
 
 # ── Row filtering ─────────────────────────────────────────────────────────────
+
 
 def filter_rows(
     rows: list[dict[str, Any]],

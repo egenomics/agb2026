@@ -7,6 +7,7 @@ Two public functions:
 generate_chart_explanations lives in insights_charts.py and is re-exported here
 so callers only need to import from this module.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -25,6 +26,7 @@ __all__ = ["generate_chart_explanations", "generate_dynamic_insights"]
 
 
 # ── Section-level one-liners ──────────────────────────────────────────────────
+
 
 def generate_dynamic_insights(
     result: Any,
@@ -49,8 +51,11 @@ def generate_dynamic_insights(
     if len(base_groups) >= 2:
         bg_means: dict[str, float] = {}
         for bg in base_groups:
-            vals = [float(r.get("shannon") or 0) for r in rows
-                    if r.get("base_group", r.get("group")) == bg]
+            vals = [
+                float(r.get("shannon") or 0)
+                for r in rows
+                if r.get("base_group", r.get("group")) == bg
+            ]
             if vals:
                 bg_means[bg] = float(np.mean(vals))
         if len(bg_means) >= 2:
@@ -65,12 +70,13 @@ def generate_dynamic_insights(
     # Beta diversity / PCoA
     # Use `or {}` (not `.get(key, {})`) so the annotated type stays dict[str, Any].
     bray: dict[str, Any] = chart_data.get("pcoa_bray") or {}
-    pm:   dict[str, Any] = chart_data.get("permanova") or {}
+    pm: dict[str, Any] = chart_data.get("permanova") or {}
     if bray.get("pct1") is not None:
         pct1: float = float(bray["pct1"])
         pct2: float = float(bray.get("pct2") or 0)
         cluster_driver: str = (
-            "individual identity" if pm.get("top_is_individual")
+            "individual identity"
+            if pm.get("top_is_individual")
             else str(pm.get("top_name") or "group membership")
         )
         insights["pcoa"] = (
@@ -82,11 +88,11 @@ def generate_dynamic_insights(
     # PERMANOVA
     pm_rows: list[Any] = pm.get("rows") or []
     if pm_rows:
-        top_name: str  = str(pm.get("top_name") or "Unknown")
-        top_R2:   float = float(pm.get("top_R2") or 0.0)
+        top_name: str = str(pm.get("top_name") or "Unknown")
+        top_R2: float = float(pm.get("top_R2") or 0.0)
         top_row = next((r for r in pm_rows if str(r[0]) == top_name), None)
         if top_row is not None:
-            top_p:   float = float(top_row[3])
+            top_p: float = float(top_row[3])
             supp_row = next(
                 (r for r in pm_rows if "Group" in str(r[0]) or "Suppl" in str(r[0])),
                 None,
@@ -106,8 +112,8 @@ def generate_dynamic_insights(
     stab: list[Any] = chart_data.get("stability_bar") or []
     if stab and stab[0].get("x") and stab[0].get("y"):
         bc_vals: list[Any] = stab[0]["x"]
-        pts:     list[Any] = stab[0]["y"]
-        n_stable  = sum(1 for v in bc_vals if float(v) < 0.2)
+        pts: list[Any] = stab[0]["y"]
+        n_stable = sum(1 for v in bc_vals if float(v) < 0.2)
         median_bc = float(sorted(float(v) for v in bc_vals)[len(bc_vals) // 2])
         insights["stability"] = (
             f"Most stable patient: {pts[0]} (BC={float(bc_vals[0]):.3f}). "
@@ -125,7 +131,7 @@ def generate_dynamic_insights(
             r0, r84 = get_patient_timepoints(rows, p)
             if r0 is None or r84 is None:
                 continue
-            tot0  = sum(float(r0.get(t) or 0) for t in taxa) or 1.0
+            tot0 = sum(float(r0.get(t) or 0) for t in taxa) or 1.0
             tot84 = sum(float(r84.get(t) or 0) for t in taxa) or 1.0
             deltas = {
                 t: float(r84.get(t) or 0) / tot84 * 100 - float(r0.get(t) or 0) / tot0 * 100
@@ -147,17 +153,23 @@ def generate_dynamic_insights(
     if len(timepoints) == 2 and base_groups:
         parts: list[str] = []
         for bg in base_groups:
-            t0_vals = [float(r.get("shannon") or 0) for r in rows
-                       if r.get("base_group", r.get("group")) == bg
-                       and r.get("timepoint") == timepoints[0]]
-            t84_vals = [float(r.get("shannon") or 0) for r in rows
-                        if r.get("base_group", r.get("group")) == bg
-                        and r.get("timepoint") == timepoints[1]]
+            t0_vals = [
+                float(r.get("shannon") or 0)
+                for r in rows
+                if r.get("base_group", r.get("group")) == bg and r.get("timepoint") == timepoints[0]
+            ]
+            t84_vals = [
+                float(r.get("shannon") or 0)
+                for r in rows
+                if r.get("base_group", r.get("group")) == bg and r.get("timepoint") == timepoints[1]
+            ]
             if t0_vals and t84_vals:
                 delta = float(np.mean(t84_vals)) - float(np.mean(t0_vals))
                 direction = (
-                    "increased" if delta > 0.05
-                    else "decreased" if delta < -0.05
+                    "increased"
+                    if delta > 0.05
+                    else "decreased"
+                    if delta < -0.05
                     else "remained stable"
                 )
                 parts.append(f"{bg} {direction} by {abs(delta):.2f}")
@@ -166,7 +178,7 @@ def generate_dynamic_insights(
 
     # Clinical
     if result.has_clinical:
-        corr_mwt:  dict[str, Any] = chart_data.get("corr_mwt")  or {}
+        corr_mwt: dict[str, Any] = chart_data.get("corr_mwt") or {}
         corr_il18: dict[str, Any] = chart_data.get("corr_il18") or {}
         parts_c: list[str] = []
         if corr_mwt.get("r") is not None:
@@ -174,16 +186,13 @@ def generate_dynamic_insights(
             p_mwt: float = float(corr_mwt.get("p") or 1.0)
             sig_mwt = "significantly" if p_mwt < 0.05 else "not significantly"
             parts_c.append(
-                f"Shannon H′ {sig_mwt} correlates with 6MWT "
-                f"(r={r_mwt:.2f}, p={p_mwt:.3f})"
+                f"Shannon H′ {sig_mwt} correlates with 6MWT (r={r_mwt:.2f}, p={p_mwt:.3f})"
             )
         if corr_il18.get("r") is not None:
             r_il18: float = float(corr_il18["r"])
             p_il18: float = float(corr_il18.get("p") or 1.0)
             sig_il18 = "significantly" if p_il18 < 0.05 else "not significantly"
-            parts_c.append(
-                f"and IL-18 {sig_il18} (r={r_il18:.2f}, p={p_il18:.3f})"
-            )
+            parts_c.append(f"and IL-18 {sig_il18} (r={r_il18:.2f}, p={p_il18:.3f})")
         if parts_c:
             insights["clinical"] = " ".join(parts_c) + "."
 

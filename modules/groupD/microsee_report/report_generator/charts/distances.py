@@ -46,11 +46,11 @@ def bray_curtis_matrix(ab: np.ndarray) -> np.ndarray:
 def jaccard_matrix(ab: np.ndarray, threshold: float = 5.0) -> np.ndarray:
     totals = ab.sum(axis=1, keepdims=True)
     totals[totals == 0] = 1.0
-    pres     = (ab / totals * 100) >= threshold          # (n, taxa) bool
+    pres = (ab / totals * 100) >= threshold  # (n, taxa) bool
     pres_int = pres.astype(np.int32)
-    both     = pres_int @ pres_int.T                     # (n, n): shared-presence count
-    counts   = pres_int.sum(axis=1)
-    union    = counts[:, None] + counts[None, :] - both  # inclusion-exclusion
+    both = pres_int @ pres_int.T  # (n, n): shared-presence count
+    counts = pres_int.sum(axis=1)
+    union = counts[:, None] + counts[None, :] - both  # inclusion-exclusion
     return np.where(union > 0, 1.0 - both / np.maximum(union, 1), 0.0)
 
 
@@ -58,23 +58,23 @@ def pcoa(dist_mat: np.ndarray) -> tuple[list[float], list[float], float, float]:
     n = dist_mat.shape[0]
     if n < 3:
         return [0.0] * n, [0.0] * n, 0.0, 0.0
-    D2 = dist_mat ** 2
-    row_mean   = D2.mean(axis=1, keepdims=True)
-    col_mean   = D2.mean(axis=0, keepdims=True)
+    D2 = dist_mat**2
+    row_mean = D2.mean(axis=1, keepdims=True)
+    col_mean = D2.mean(axis=0, keepdims=True)
     grand_mean = D2.mean()
     B = -0.5 * (D2 - row_mean - col_mean + grand_mean)
     eigenvalues, eigenvectors = np.linalg.eigh(B)
     idx = np.argsort(eigenvalues)[::-1]
-    eigenvalues  = eigenvalues[idx]
+    eigenvalues = eigenvalues[idx]
     eigenvectors = eigenvectors[:, idx]
-    pos   = eigenvalues > 0
+    pos = eigenvalues > 0
     total = float(eigenvalues[pos].sum()) if pos.any() else 1.0
-    lam1  = max(float(eigenvalues[0]), 0.0)
-    lam2  = max(float(eigenvalues[1]), 0.0) if len(eigenvalues) > 1 else 0.0
-    cx    = (eigenvectors[:, 0] * math.sqrt(lam1)).tolist()
-    cy    = (eigenvectors[:, 1] * math.sqrt(lam2)).tolist() if len(eigenvalues) > 1 else [0.0] * n
-    pct1  = round(lam1 / total * 100, 1) if total else 0.0
-    pct2  = round(lam2 / total * 100, 1) if total else 0.0
+    lam1 = max(float(eigenvalues[0]), 0.0)
+    lam2 = max(float(eigenvalues[1]), 0.0) if len(eigenvalues) > 1 else 0.0
+    cx = (eigenvectors[:, 0] * math.sqrt(lam1)).tolist()
+    cy = (eigenvectors[:, 1] * math.sqrt(lam2)).tolist() if len(eigenvalues) > 1 else [0.0] * n
+    pct1 = round(lam1 / total * 100, 1) if total else 0.0
+    pct2 = round(lam2 / total * 100, 1) if total else 0.0
     return cx, cy, pct1, pct2
 
 
@@ -82,12 +82,11 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list[tuple[list[float], list[
     """Average-linkage clustering. Returns list of (xs, ys) segment tuples."""
     n = mat.shape[0]
     D: dict[int, dict[int, float]] = {
-        i: {j: float(mat[i, j]) for j in range(n) if j != i}
-        for i in range(n)
+        i: {j: float(mat[i, j]) for j in range(n) if j != i} for i in range(n)
     }
-    pos    = {i: float(i) for i in range(n)}
+    pos = {i: float(i) for i in range(n)}
     height = {i: 0.0 for i in range(n)}
-    size   = {i: 1 for i in range(n)}
+    size = {i: 1 for i in range(n)}
     active = set(range(n))
     next_id = n
     segments: list[tuple[list[float], list[float]]] = []
@@ -116,15 +115,15 @@ def average_linkage_dendrogram(mat: np.ndarray) -> list[tuple[list[float], list[
                 continue
             dik = D.get(ci, _EMPTY_D).get(k, D.get(k, _EMPTY_D).get(ci, 0.0))
             djk = D.get(cj, _EMPTY_D).get(k, D.get(k, _EMPTY_D).get(cj, 0.0))
-            d   = (dik * ni + djk * nj) / (ni + nj)
+            d = (dik * ni + djk * nj) / (ni + nj)
             D[next_id][k] = d
             if k not in D:
                 D[k] = {}
             D[k][next_id] = d
 
-        pos[next_id]    = (pi * ni + pj * nj) / (ni + nj)
+        pos[next_id] = (pi * ni + pj * nj) / (ni + nj)
         height[next_id] = min_d
-        size[next_id]   = ni + nj
+        size[next_id] = ni + nj
         active.discard(ci)
         active.discard(cj)
         active.add(next_id)

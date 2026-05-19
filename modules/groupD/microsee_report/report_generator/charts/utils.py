@@ -1,4 +1,5 @@
 """charts/utils.py — shared colour helpers and styling utilities."""
+
 from __future__ import annotations
 
 from .config import EXTRA_TAXA_PALETTE, FALLBACK_COLOR, GROUP_COLORS, TAXA_COLORS

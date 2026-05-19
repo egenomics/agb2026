@@ -6,6 +6,7 @@ the ReportConfig dataclass that controls which sections are built.
 
 The public API is re-exported via charts/__init__.py for backward compatibility.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -48,9 +49,17 @@ from .taxonomy import build_donut, build_sunburst, build_taxonomy_views, build_t
 
 # ── Configuration dataclass ───────────────────────────────────────────────────
 
-_ALL_SECTIONS = frozenset({
-    "taxonomy", "alpha", "beta", "individual", "comparative", "stats",
-})
+_ALL_SECTIONS = frozenset(
+    {
+        "taxonomy",
+        "alpha",
+        "beta",
+        "individual",
+        "comparative",
+        "stats",
+    }
+)
+
 
 @dataclass
 class ReportConfig:
@@ -72,6 +81,7 @@ class ReportConfig:
         max_taxa: Truncate taxa list to this many before chart building.
                   None = use all taxa.  Useful for very large feature tables.
     """
+
     sections: list[str] = field(default_factory=lambda: sorted(_ALL_SECTIONS))
     max_taxa: int | None = None
 
@@ -80,6 +90,7 @@ class ReportConfig:
 
 
 # ── Main orchestrator ─────────────────────────────────────────────────────────
+
 
 def compute_chart_data(
     result: Any,
@@ -96,10 +107,10 @@ def compute_chart_data(
     Returns:
         A dict of chart payloads consumed by render_html().
     """
-    cfg         = config or ReportConfig()
-    rows        = [r.model_dump() for r in result.rows]
-    taxa        = result.taxa[:cfg.max_taxa] if cfg.max_taxa else result.taxa
-    groups      = result.groups
+    cfg = config or ReportConfig()
+    rows = [r.model_dump() for r in result.rows]
+    taxa = result.taxa[: cfg.max_taxa] if cfg.max_taxa else result.taxa
+    groups = result.groups
     base_groups = get_base_groups(rows)
 
     extra_warnings: list[str] = list(result.warnings)
@@ -111,17 +122,19 @@ def compute_chart_data(
 
     data: dict[str, Any] = {
         "meta": {
-            "n_samples":    result.n_samples,
-            "n_taxa":       result.n_taxa,
-            "groups":       groups,
-            "base_groups":  base_groups,
+            "n_samples": result.n_samples,
+            "n_taxa": result.n_taxa,
+            "groups": groups,
+            "base_groups": base_groups,
             "has_clinical": result.has_clinical,
-            "warnings":     extra_warnings,
+            "warnings": extra_warnings,
         },
     }
 
     sample_ids = [r["sample_id"] for r in rows]
-    _need_bc = taxa and (cfg.includes("beta") or cfg.includes("stats") or cfg.includes("individual"))
+    _need_bc = taxa and (
+        cfg.includes("beta") or cfg.includes("stats") or cfg.includes("individual")
+    )
     if _need_bc:
         if distance_matrix is not None:
             _bc_mat = align_distance_matrix(distance_matrix, sample_ids)
@@ -133,14 +146,14 @@ def compute_chart_data(
     # ── Taxonomy ──────────────────────────────────────────────────────────────
     if cfg.includes("taxonomy"):
         data["taxonomy_views"] = build_taxonomy_views(rows, taxa, base_groups)
-        data["top_taxa"]       = build_top_taxa(rows, taxa)
-        data["donut"]          = build_donut(rows, taxa, groups)
-        data["sunburst"]       = build_sunburst(rows, taxa, groups)
+        data["top_taxa"] = build_top_taxa(rows, taxa)
+        data["donut"] = build_donut(rows, taxa, groups)
+        data["sunburst"] = build_sunburst(rows, taxa, groups)
 
     # ── Alpha diversity ───────────────────────────────────────────────────────
     if cfg.includes("alpha"):
-        data["alpha_metrics"]  = build_all_alpha_metrics(rows, groups, taxa, base_groups)
-        data["rarefaction"]    = build_rarefaction(rows, taxa, groups)
+        data["alpha_metrics"] = build_all_alpha_metrics(rows, groups, taxa, base_groups)
+        data["rarefaction"] = build_rarefaction(rows, taxa, groups)
         data["multimet_alpha"] = build_multimet_alpha(rows, taxa, groups)
 
     # ── Beta diversity ────────────────────────────────────────────────────────
@@ -149,49 +162,49 @@ def compute_chart_data(
         jacc_traces, jacc_pct1, jacc_pct2 = build_pcoa_chart(rows, taxa, groups, "jaccard")
         nmds_sa_traces, nmds_sa_pct1, nmds_sa_pct2 = build_nmds_plot(rows, taxa, groups, _bc_mat)
 
-        data["pcoa_bray"]     = {"traces": bray_traces, "pct1": bray_pct1, "pct2": bray_pct2}
-        data["pcoa_jaccard"]  = {"traces": jacc_traces, "pct1": jacc_pct1, "pct2": jacc_pct2}
-        data["nmds"]          = {"traces": nmds_sa_traces, "pct1": nmds_sa_pct1, "pct2": nmds_sa_pct2}
-        data["dendrogram"]    = build_dendrogram(rows, taxa, groups, _bc_mat)
+        data["pcoa_bray"] = {"traces": bray_traces, "pct1": bray_pct1, "pct2": bray_pct2}
+        data["pcoa_jaccard"] = {"traces": jacc_traces, "pct1": jacc_pct1, "pct2": jacc_pct2}
+        data["nmds"] = {"traces": nmds_sa_traces, "pct1": nmds_sa_pct1, "pct2": nmds_sa_pct2}
+        data["dendrogram"] = build_dendrogram(rows, taxa, groups, _bc_mat)
         data["delta_heatmap"] = build_delta_heatmap(rows, taxa)
 
     # ── Individual / per-patient ──────────────────────────────────────────────
     if cfg.includes("individual"):
-        data["paired_slope"]           = build_paired_slope(rows, groups)
-        data["stability_bar"]          = build_stability_bar(rows, taxa)
-        data["diversity_rank"]         = build_diversity_rank(rows)
+        data["paired_slope"] = build_paired_slope(rows, groups)
+        data["stability_bar"] = build_stability_bar(rows, taxa)
+        data["diversity_rank"] = build_diversity_rank(rows)
         data["patient_radar_profiles"] = build_patient_radar_profiles(rows, taxa)
-        data["faceted_composition"]    = build_faceted_composition(rows, taxa)
+        data["faceted_composition"] = build_faceted_composition(rows, taxa)
         _t, _p1, _p2 = build_nmds_trajectories(rows, taxa, _bc_mat)
         data["nmds_trajectories"] = {"traces": _t, "pct1": _p1, "pct2": _p2}
 
     # ── Comparative ───────────────────────────────────────────────────────────
     if cfg.includes("comparative"):
         data["diff_abundance"] = build_diff_abundance(rows, taxa)
-        data["volcano"]        = build_volcano(rows, taxa)
-        data["ancom_style"]    = build_ancom_style(rows, taxa)
-        data["heatmap"]        = build_heatmap(rows, taxa)
-        data["corr_matrix"]    = build_corr_matrix(rows, taxa)
+        data["volcano"] = build_volcano(rows, taxa)
+        data["ancom_style"] = build_ancom_style(rows, taxa)
+        data["heatmap"] = build_heatmap(rows, taxa)
+        data["corr_matrix"] = build_corr_matrix(rows, taxa)
 
     # ── Longitudinal + statistics ─────────────────────────────────────────────
     if cfg.includes("stats"):
-        data["longitudinal"]   = build_longitudinal(rows)
+        data["longitudinal"] = build_longitudinal(rows)
         data["lme_trajectory"] = build_lme_trajectory(rows, base_groups, taxa)
-        data["stats_table"]    = build_stats_table(rows, groups, taxa)
-        data["permanova"]      = build_permanova_table(rows, taxa, _bc_mat)
+        data["stats_table"] = build_stats_table(rows, groups, taxa)
+        data["permanova"] = build_permanova_table(rows, taxa, _bc_mat)
 
     # ── Clinical (auto-enabled when data has clinical fields) ─────────────────
     if result.has_clinical:
-        corr_mwt_traces,  r_mwt,  p_mwt  = build_clinical_correlation(rows, "sixmwt")
-        corr_il18_traces, r_il18, p_il18  = build_clinical_correlation(rows, "il18")
-        data["clinical_sixmwt"]       = build_clinical_slope(rows, "sixmwt")
-        data["clinical_il18"]         = build_clinical_slope(rows, "il18")
-        data["corr_mwt"]              = {"traces": corr_mwt_traces,  "r": r_mwt,  "p": p_mwt}
-        data["corr_il18"]             = {"traces": corr_il18_traces, "r": r_il18, "p": p_il18}
+        corr_mwt_traces, r_mwt, p_mwt = build_clinical_correlation(rows, "sixmwt")
+        corr_il18_traces, r_il18, p_il18 = build_clinical_correlation(rows, "il18")
+        data["clinical_sixmwt"] = build_clinical_slope(rows, "sixmwt")
+        data["clinical_il18"] = build_clinical_slope(rows, "il18")
+        data["corr_mwt"] = {"traces": corr_mwt_traces, "r": r_mwt, "p": p_mwt}
+        data["corr_il18"] = {"traces": corr_il18_traces, "r": r_il18, "p": p_il18}
         data["taxa_clinical_heatmap"] = build_taxa_clinical_heatmap(rows, taxa)
 
     # ── Dynamic insights + per-chart explanations (must run last) ────────────
-    data["insights"]      = generate_dynamic_insights(result, data, rows)
-    data["explanations"]  = generate_chart_explanations(result, data, rows)
+    data["insights"] = generate_dynamic_insights(result, data, rows)
+    data["explanations"] = generate_chart_explanations(result, data, rows)
 
     return data

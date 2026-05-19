@@ -4,6 +4,7 @@ This module is concerned only with presentation: it receives pre-computed chart
 payloads and injects them into templates.  All analytical logic lives upstream
 in orchestrator.py and insights.py.
 """
+
 from __future__ import annotations
 
 import json
@@ -61,28 +62,29 @@ def _get_patient_template() -> str:
     global _PATIENT_TEMPLATE
     cached = _PATIENT_TEMPLATE
     if cached is None:
-        cached = (
-            Path(__file__).parent / "patient_template.html"
-        ).read_text(encoding="utf-8")
+        cached = (Path(__file__).parent / "patient_template.html").read_text(encoding="utf-8")
         _PATIENT_TEMPLATE = cached
     return cached
 
 
 # ── Per-patient stability helper ──────────────────────────────────────────────
 
+
 def _patient_bc(rows: list[dict[str, Any]], taxa: list[str], patient: str) -> float:
     """Bray-Curtis dissimilarity between T0 and T84 for one patient."""
     from .preprocessing import get_patient_timepoints
+
     r0, r84 = get_patient_timepoints(rows, patient)
     if r0 is None or r84 is None or not taxa:
         return 0.0
-    ab0  = np.array([float(r0.get(t) or 0) for t in taxa])
+    ab0 = np.array([float(r0.get(t) or 0) for t in taxa])
     ab84 = np.array([float(r84.get(t) or 0) for t in taxa])
     denom = float(np.sum(ab0 + ab84))
     return round(float(np.sum(np.abs(ab0 - ab84))) / denom, 3) if denom > 0 else 0.0
 
 
 # ── Per-patient personalised insight block ────────────────────────────────────
+
 
 def _build_patient_insights_html(
     patient_id: str,
@@ -93,21 +95,21 @@ def _build_patient_insights_html(
     pat_profile: dict[str, Any],
     has_clinical: bool,
 ) -> str:
-    group   = str(p_rows[0].get("base_group") or p_rows[0].get("group") or "")
-    t0_row  = next((r for r in p_rows if (r.get("time") or 0) == 0), None)
+    group = str(p_rows[0].get("base_group") or p_rows[0].get("group") or "")
+    t0_row = next((r for r in p_rows if (r.get("time") or 0) == 0), None)
     t84_row = next((r for r in p_rows if (r.get("time") or 0) > 0), None)
     items: list[str] = []
 
     # 1 — Shannon diversity change
     if t0_row and t84_row:
-        sh0  = float(t0_row.get("shannon") or 0)
+        sh0 = float(t0_row.get("shannon") or 0)
         sh84 = float(t84_row.get("shannon") or 0)
         if sh0 > 0:
             delta_sh = sh84 - sh0
-            pct_sh   = abs(delta_sh / sh0) * 100
-            arrow    = "↑" if delta_sh > 0 else "↓"
-            color    = "#D97A3A" if delta_sh > 0 else "#4A7ED4"
-            verb     = "increased" if delta_sh > 0 else "decreased"
+            pct_sh = abs(delta_sh / sh0) * 100
+            arrow = "↑" if delta_sh > 0 else "↓"
+            color = "#D97A3A" if delta_sh > 0 else "#4A7ED4"
+            verb = "increased" if delta_sh > 0 else "decreased"
             items.append(
                 f"<li><strong>Shannon diversity</strong> {verb} from "
                 f"<strong>{sh0:.2f}</strong> → "
@@ -123,32 +125,33 @@ def _build_patient_insights_html(
         reverse=True,
     )
     for entry in ranked[:2]:
-        d   = float(entry["delta"])
+        d = float(entry["delta"])
         if abs(d) < 0.5:
             break
-        fam   = entry["family"]
-        dstr  = f"+{d:.1f}%" if d > 0 else f"{d:.1f}%"
+        fam = entry["family"]
+        dstr = f"+{d:.1f}%" if d > 0 else f"{d:.1f}%"
         color = "#D97A3A" if d > 0 else "#4A7ED4"
-        verb  = "increased" if d > 0 else "decreased"
+        verb = "increased" if d > 0 else "decreased"
         items.append(
             f"<li><strong>{fam}</strong> "
             f'<span style="color:{color}">{verb} by {dstr}</span> between visits.</li>'
         )
 
     # 3 — Stability rank within the same group
-    group_patients = sorted(set(
-        r["patient"] for r in rows
-        if str(r.get("base_group") or r.get("group") or "") == group
-    ))
+    group_patients = sorted(
+        set(r["patient"] for r in rows if str(r.get("base_group") or r.get("group") or "") == group)
+    )
     if len(group_patients) > 1:
         bc_scores = sorted(_patient_bc(rows, taxa, p) for p in group_patients)
         n_more_stable = sum(1 for v in bc_scores if v < bc)
-        n_total       = len(bc_scores)
-        group_mean    = round(float(np.mean(bc_scores)), 3)
-        comparison    = (
-            "more stable than" if bc < group_mean else
-            "less stable than" if bc > group_mean else
-            "as stable as"
+        n_total = len(bc_scores)
+        group_mean = round(float(np.mean(bc_scores)), 3)
+        comparison = (
+            "more stable than"
+            if bc < group_mean
+            else "less stable than"
+            if bc > group_mean
+            else "as stable as"
         )
         items.append(
             f"<li>Microbiome stability score <strong>{bc:.3f}</strong> — "
@@ -158,25 +161,31 @@ def _build_patient_insights_html(
 
     # 4 — Clinical outcomes
     if has_clinical and t0_row and t84_row:
-        mwt0  = float(t0_row.get("sixmwt") or 0)
+        mwt0 = float(t0_row.get("sixmwt") or 0)
         mwt84 = float(t84_row.get("sixmwt") or 0)
         if mwt0 > 0 and mwt84 > 0:
-            dmwt  = mwt84 - mwt0
+            dmwt = mwt84 - mwt0
             color = "#D97A3A" if dmwt > 0 else "#4A7ED4"
             arrow = "↑" if dmwt > 0 else "↓"
-            note  = " — physical function improved." if dmwt > 0 else " — physical function declined."
+            note = (
+                " — physical function improved." if dmwt > 0 else " — physical function declined."
+            )
             items.append(
                 f"<li><strong>6-Minute Walk Test</strong>: {mwt0:.0f} m → "
                 f'<strong style="color:{color}">{mwt84:.0f} m</strong> '
                 f'<span style="color:{color}">({arrow}{abs(dmwt):.0f} m)</span>{note}</li>'
             )
-        il0  = float(t0_row.get("il18") or 0)
+        il0 = float(t0_row.get("il18") or 0)
         il84 = float(t84_row.get("il18") or 0)
         if il0 > 0 and il84 > 0:
-            dil   = il84 - il0
+            dil = il84 - il0
             color = "#4A7ED4" if dil < 0 else "#D97A3A"
             arrow = "↓" if dil < 0 else "↑"
-            note  = " — inflammation marker reduced." if dil < 0 else " — inflammation marker increased."
+            note = (
+                " — inflammation marker reduced."
+                if dil < 0
+                else " — inflammation marker increased."
+            )
             items.append(
                 f"<li><strong>IL-18</strong>: {il0:.1f} → "
                 f'<strong style="color:{color}">{il84:.1f} pg/mL</strong> '
@@ -197,6 +206,7 @@ def _build_patient_insights_html(
 
 # ── Per-patient report ────────────────────────────────────────────────────────
 
+
 def render_patient_html(
     patient_id: str,
     result: Any,
@@ -211,34 +221,37 @@ def render_patient_html(
     Pass ``radar_profiles`` from :func:`build_patient_radar_profiles` when rendering
     many patients in one process (avoids recomputing all profiles per patient).
     """
-    rows   = [r.model_dump() for r in result.rows]
-    taxa   = result.taxa
+    rows = [r.model_dump() for r in result.rows]
+    taxa = result.taxa
     p_rows = [r for r in rows if r["patient"] == patient_id]
     if not p_rows:
         raise ValueError(f"Patient {patient_id!r} not found in result")
 
-    bc    = _patient_bc(rows, taxa, patient_id)
+    bc = _patient_bc(rows, taxa, patient_id)
     group: str = str(p_rows[0].get("base_group") or p_rows[0].get("group") or "")
     stab_label = (
-        "very stable"         if bc < 0.10 else
-        "stable"              if bc < 0.20 else
-        "moderately variable" if bc < 0.35 else
-        "highly variable"
+        "very stable"
+        if bc < 0.10
+        else "stable"
+        if bc < 0.20
+        else "moderately variable"
+        if bc < 0.35
+        else "highly variable"
     )
     bc_stability_text = (
         "A low score indicates consistent microbial community structure."
-        if bc < 0.2 else
-        "This degree of change is common in dietary intervention studies."
+        if bc < 0.2
+        else "This degree of change is common in dietary intervention studies."
     )
 
     if radar_profiles is None:
         radar_profiles = build_patient_radar_profiles(rows, taxa)
     pat_profile = radar_profiles["profiles"].get(patient_id, {})
     patient_chart_data: dict[str, Any] = {
-        "radar":       pat_profile.get("traces", []),
+        "radar": pat_profile.get("traces", []),
         "radar_table": pat_profile.get("table", []),
-        "comp":        build_faceted_composition(p_rows, taxa),
-        "bc":          bc,
+        "comp": build_faceted_composition(p_rows, taxa),
+        "bc": bc,
     }
     if result.has_clinical:
         patient_chart_data["sixmwt"] = build_clinical_slope(
@@ -271,25 +284,31 @@ def render_patient_html(
       Plotly.newPlot('pt-il18', D.il18, merge(L,{height:320,yaxis:{title:{text:'IL-18 (pg/mL)'}}}), C);"""
 
     insights_html = _build_patient_insights_html(
-        patient_id, p_rows, rows, taxa, bc, pat_profile, result.has_clinical,
+        patient_id,
+        p_rows,
+        rows,
+        taxa,
+        bc,
+        pat_profile,
+        result.has_clinical,
     )
 
     replacements: list[tuple[str, str]] = [
-        ("__PATIENT_ID__",        patient_id),
-        ("__GROUP__",             group),
-        ("__BC__",                f"{bc:.3f}"),
-        ("__STAB_LABEL__",        stab_label),
+        ("__PATIENT_ID__", patient_id),
+        ("__GROUP__", group),
+        ("__BC__", f"{bc:.3f}"),
+        ("__STAB_LABEL__", stab_label),
         ("__BC_STABILITY_TEXT__", bc_stability_text),
-        ("__CLINICAL_BLOCK__",    clinical_block),
-        ("__CLINICAL_JS__",       clinical_js),
-        ("__INSIGHTS_HTML__",     insights_html),
-        ("__DATA_JSON__",         json.dumps(patient_chart_data, allow_nan=False)),
-        ("__LAYOUT_JSON__",       json.dumps(BASE_LAYOUT, allow_nan=False)),
-        ("__CONFIG_JSON__",       json.dumps(BASE_CONFIG,  allow_nan=False)),
-        ("__FONT__",              THEME["font"]),
-        ("__BG__",                THEME["bg"]),
-        ("__TEXT__",              THEME["text"]),
-        ("__PLOTLY_SCRIPT__",     _get_plotly_js()),
+        ("__CLINICAL_BLOCK__", clinical_block),
+        ("__CLINICAL_JS__", clinical_js),
+        ("__INSIGHTS_HTML__", insights_html),
+        ("__DATA_JSON__", json.dumps(patient_chart_data, allow_nan=False)),
+        ("__LAYOUT_JSON__", json.dumps(BASE_LAYOUT, allow_nan=False)),
+        ("__CONFIG_JSON__", json.dumps(BASE_CONFIG, allow_nan=False)),
+        ("__FONT__", THEME["font"]),
+        ("__BG__", THEME["bg"]),
+        ("__TEXT__", THEME["text"]),
+        ("__PLOTLY_SCRIPT__", _get_plotly_js()),
     ]
     html = _get_patient_template()
     for placeholder, value in replacements:
@@ -299,11 +318,12 @@ def render_patient_html(
 
 # ── Cohort report ─────────────────────────────────────────────────────────────
 
+
 def render_html(chart_data: dict[str, Any]) -> str:
     """Render the main cohort HTML report by filling placeholders in template.html."""
     has_clinical = chart_data["meta"]["has_clinical"]
-    meta         = chart_data["meta"]
-    base_groups  = meta.get("base_groups", [])
+    meta = chart_data["meta"]
+    base_groups = meta.get("base_groups", [])
 
     clinical_nav = '<a href="#sec-clinical">Clinical</a>' if has_clinical else ""
 
@@ -348,30 +368,29 @@ def render_html(chart_data: dict[str, Any]) -> str:
     warnings_html = "".join(f'<div class="warning">{w}</div>' for w in meta["warnings"])
 
     group_filter_buttons = "\n".join(
-        f'<button class="ctrl-btn grp-btn" data-grp="{bg}">{bg}</button>'
-        for bg in base_groups
+        f'<button class="ctrl-btn grp-btn" data-grp="{bg}">{bg}</button>' for bg in base_groups
     )
 
     html = _get_template()
     for placeholder, value in [
-        ("__FONT__",                 THEME["font"]),
-        ("__BG__",                   THEME["bg"]),
-        ("__PAPER__",                THEME["paper"]),
-        ("__TEXT__",                 THEME["text"]),
-        ("__TEXT2__",                THEME["text2"]),
-        ("__N_SAMPLES__",            str(meta["n_samples"])),
-        ("__N_TAXA__",               str(meta["n_taxa"])),
-        ("__N_GROUPS__",             str(len(meta["groups"]))),
-        ("__GROUPS_STR__",           ", ".join(meta["groups"])),
-        ("__WARNINGS__",             warnings_html),
-        ("__CLINICAL_NAV__",         clinical_nav),
-        ("__CLINICAL_SECTION__",     clinical_section),
+        ("__FONT__", THEME["font"]),
+        ("__BG__", THEME["bg"]),
+        ("__PAPER__", THEME["paper"]),
+        ("__TEXT__", THEME["text"]),
+        ("__TEXT2__", THEME["text2"]),
+        ("__N_SAMPLES__", str(meta["n_samples"])),
+        ("__N_TAXA__", str(meta["n_taxa"])),
+        ("__N_GROUPS__", str(len(meta["groups"]))),
+        ("__GROUPS_STR__", ", ".join(meta["groups"])),
+        ("__WARNINGS__", warnings_html),
+        ("__CLINICAL_NAV__", clinical_nav),
+        ("__CLINICAL_SECTION__", clinical_section),
         ("__GROUP_FILTER_BUTTONS__", group_filter_buttons),
-        ("__DATA_JSON__",            json.dumps(chart_data,  allow_nan=False)),
-        ("__LAYOUT_JSON__",          json.dumps(BASE_LAYOUT, allow_nan=False)),
-        ("__CONFIG_JSON__",          json.dumps(BASE_CONFIG,  allow_nan=False)),
-        ("__INSIGHTS_JSON__",        json.dumps(chart_data.get("insights", {}), allow_nan=False)),
-        ("__PLOTLY_SCRIPT__",        _get_plotly_js()),
+        ("__DATA_JSON__", json.dumps(chart_data, allow_nan=False)),
+        ("__LAYOUT_JSON__", json.dumps(BASE_LAYOUT, allow_nan=False)),
+        ("__CONFIG_JSON__", json.dumps(BASE_CONFIG, allow_nan=False)),
+        ("__INSIGHTS_JSON__", json.dumps(chart_data.get("insights", {}), allow_nan=False)),
+        ("__PLOTLY_SCRIPT__", _get_plotly_js()),
     ]:
         html = html.replace(placeholder, value)
     return html

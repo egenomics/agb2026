@@ -26,9 +26,9 @@ logger = logging.getLogger(__name__)
 
 def integrate(
     feature_table: FeatureTableResult,
-    taxonomy:      TaxonomyResult,
-    metadata:      MetadataResult,
-    alpha:         AlphaDiversityResult | None = None,
+    taxonomy: TaxonomyResult,
+    metadata: MetadataResult,
+    alpha: AlphaDiversityResult | None = None,
 ) -> IntegrateResult:
     """
     Combine parsed QIIME2 outputs into chart-ready SampleRow objects.
@@ -71,7 +71,7 @@ def integrate(
 
     for sample_id in feature_table.samples:
         totals = {fam: family_counts[fam].get(sample_id, 0.0) for fam in families}
-        total  = sum(totals.values()) or 1.0
+        total = sum(totals.values()) or 1.0
         rel_ab[sample_id] = {fam: round(cnt / total * 100, 3) for fam, cnt in totals.items()}
 
     # ── Step 3: build lookups ──
@@ -97,7 +97,7 @@ def integrate(
             missing_meta.append(sample_id)
             continue
 
-        ab   = rel_ab.get(sample_id, {})
+        ab = rel_ab.get(sample_id, {})
         alph = alpha_lookup.get(sample_id)
 
         # Compute Shannon/Simpson if not in alpha file.
@@ -108,26 +108,26 @@ def integrate(
             shannon = alph.shannon
             simpson = alph.simpson
         else:
-            props   = np.array([ab.get(fam, 0.0) for fam in families], dtype=float)
-            tot     = props.sum() or 1.0
-            p       = props / tot
+            props = np.array([ab.get(fam, 0.0) for fam in families], dtype=float)
+            tot = props.sum() or 1.0
+            p = props / tot
             shannon = float(-np.sum(p[p > 0] * np.log(p[p > 0])))
-            simpson = float(1 - np.sum(p ** 2))
+            simpson = float(1 - np.sum(p**2))
 
         row = SampleRow(
-            sample_id  = sample_id,
-            patient    = meta.patient,
-            group      = meta.group,
-            base_group = meta.base_group,
-            timepoint  = meta.timepoint,
-            time       = meta.time,
-            shannon    = round(shannon, 4),
-            simpson    = round(simpson, 4),
-            pielou     = round(alph.pielou,   4) if alph else 0.0,
-            observed   = round(alph.observed, 4) if alph else 0.0,
-            faith_pd   = round(alph.faith_pd, 4) if alph else 0.0,
-            sixmwt     = meta.sixmwt,
-            il18       = meta.il18,
+            sample_id=sample_id,
+            patient=meta.patient,
+            group=meta.group,
+            base_group=meta.base_group,
+            timepoint=meta.timepoint,
+            time=meta.time,
+            shannon=round(shannon, 4),
+            simpson=round(simpson, 4),
+            pielou=round(alph.pielou, 4) if alph else 0.0,
+            observed=round(alph.observed, 4) if alph else 0.0,
+            faith_pd=round(alph.faith_pd, 4) if alph else 0.0,
+            sixmwt=meta.sixmwt,
+            il18=meta.il18,
             **ab,
         )
         rows.append(row)
@@ -148,23 +148,25 @@ def integrate(
         )
 
     # ── Step 5: sort taxa by mean abundance descending ──
-    mean_ab     = {fam: np.mean([rel_ab[s].get(fam, 0.0) for s in rel_ab]) for fam in families}
+    mean_ab = {fam: np.mean([rel_ab[s].get(fam, 0.0) for s in rel_ab]) for fam in families}
     taxa_sorted = sorted(families, key=lambda f: mean_ab[f], reverse=True)
 
     has_clinical = any(r.sixmwt > 0 or r.il18 > 0 for r in rows)
-    groups       = sorted(set(r.group for r in rows))
+    groups = sorted(set(r.group for r in rows))
 
     logger.info(
         "Integration complete: %d samples, %d families, groups=%s",
-        len(rows), len(taxa_sorted), groups,
+        len(rows),
+        len(taxa_sorted),
+        groups,
     )
 
     return IntegrateResult(
-        rows         = rows,
-        taxa         = taxa_sorted,
-        n_samples    = len(rows),
-        n_taxa       = len(taxa_sorted),
-        groups       = groups,
-        has_clinical = has_clinical,
-        warnings     = warnings,
+        rows=rows,
+        taxa=taxa_sorted,
+        n_samples=len(rows),
+        n_taxa=len(taxa_sorted),
+        groups=groups,
+        has_clinical=has_clinical,
+        warnings=warnings,
     )

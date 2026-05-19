@@ -6,6 +6,7 @@ auto-injects an ℹ button + collapsible panel for every chart that has an entry
 Kept separate from insights.py (section-level one-liners) because this module is
 ~700 lines and the two concerns are independent.
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -30,18 +31,18 @@ def generate_chart_explanations(
     Keys correspond to chart element IDs in the template (minus the "chart-" prefix
     where applicable).  The template JS auto-injects info buttons and panels.
     """
-    taxa        = result.taxa
+    taxa = result.taxa
     base_groups = get_base_groups(rows)
-    patients    = get_unique_patients(rows)
-    timepoints  = sorted_timepoints(rows)
+    patients = get_unique_patients(rows)
+    timepoints = sorted_timepoints(rows)
     ex: dict[str, dict[str, Any]] = {}
 
     # ── Taxonomy ──────────────────────────────────────────────────────────────
 
     if taxa:
-        means    = {t: float(np.mean([float(r.get(t) or 0) for r in rows])) for t in taxa}
+        means = {t: float(np.mean([float(r.get(t) or 0) for r in rows])) for t in taxa}
         sorted_t = sorted(means, key=lambda t: means[t], reverse=True)
-        top3     = sorted_t[:3]
+        top3 = sorted_t[:3]
         top3_str = ", ".join(f"{t} ({means[t]:.1f}%)" for t in top3)
         top3_sum = sum(means[t] for t in top3)
 
@@ -114,8 +115,7 @@ def generate_chart_explanations(
 
     bg_shan: dict[str, float] = {}
     for bg in base_groups:
-        vals = [float(r.get("shannon") or 0) for r in rows
-                if r.get("base_group", r["group"]) == bg]
+        vals = [float(r.get("shannon") or 0) for r in rows if r.get("base_group", r["group"]) == bg]
         if vals:
             bg_shan[bg] = round(float(np.mean(vals)), 3)
 
@@ -135,7 +135,7 @@ def generate_chart_explanations(
             "and Faith PD — consistent patterns across metrics are more reliable than any single measure."
         ),
         "pills": [f"{bg} mean {v:.2f}" for bg, v in list(bg_shan.items())[:3]]
-                 + ["Shannon H′ shown"],
+        + ["Shannon H′ shown"],
     }
 
     ex["alpha_box"] = {
@@ -205,11 +205,11 @@ def generate_chart_explanations(
     bray: dict[str, Any] = chart_data.get("pcoa_bray") or {}
     jacc: dict[str, Any] = chart_data.get("pcoa_jaccard") or {}
     nmds: dict[str, Any] = chart_data.get("nmds") or {}
-    pm:   dict[str, Any] = chart_data.get("permanova") or {}
+    pm: dict[str, Any] = chart_data.get("permanova") or {}
 
     if bray.get("pct1") is not None:
-        top_driver: str   = str(pm.get("top_name") or "individual identity")
-        top_R2:     float = float(pm.get("top_R2") or 0.0)
+        top_driver: str = str(pm.get("top_name") or "individual identity")
+        top_R2: float = float(pm.get("top_R2") or 0.0)
 
         ex["pcoa_bray"] = {
             "what": (
@@ -260,7 +260,11 @@ def generate_chart_explanations(
                 "If NMDS and PCoA show similar groupings, the community structure is robust. "
                 "Discrepancies suggest non-linear variation that PCoA misses."
             ),
-            "pills": [f"NMDS1 {nmds['pct1']:.1f}%", f"NMDS2 {nmds.get('pct2', 0):.1f}%", "Rank-order"],
+            "pills": [
+                f"NMDS1 {nmds['pct1']:.1f}%",
+                f"NMDS2 {nmds.get('pct2', 0):.1f}%",
+                "Rank-order",
+            ],
         }
 
     ex["dendrogram"] = {
@@ -285,7 +289,7 @@ def generate_chart_explanations(
             r0, r84 = get_patient_timepoints(rows, p)
             if r0 is None or r84 is None:
                 continue
-            tot0  = sum(float(r0.get(t) or 0) for t in taxa) or 1.0
+            tot0 = sum(float(r0.get(t) or 0) for t in taxa) or 1.0
             tot84 = sum(float(r84.get(t) or 0) for t in taxa) or 1.0
             for t in taxa:
                 d = float(r84.get(t) or 0) / tot84 * 100 - float(r0.get(t) or 0) / tot0 * 100
@@ -344,10 +348,10 @@ def generate_chart_explanations(
 
     stab = chart_data.get("stability_bar", [])
     if stab and stab[0].get("x") and stab[0].get("y"):
-        bc_vals   = [float(v) for v in stab[0]["x"]]
-        pts       = stab[0]["y"]
+        bc_vals = [float(v) for v in stab[0]["x"]]
+        pts = stab[0]["y"]
         median_bc = float(np.median(bc_vals))
-        n_stable  = sum(1 for v in bc_vals if v < 0.2)
+        n_stable = sum(1 for v in bc_vals if v < 0.2)
 
         ex["stability"] = {
             "what": (
@@ -461,14 +465,17 @@ def generate_chart_explanations(
             f"largest decrease: {_lfc_dn[0]} (Log2FC={_lfc_dn[1]:+.2f} in {_lfc_dn[2]}). "
             "A large difference between EAA and Whey bars for the same family indicates "
             "a group-specific response — cross-check in the ANCOM and Volcano charts."
-        ) if _lfc_up[0] else (
+        )
+        if _lfc_up[0]
+        else (
             "Families on the right of zero increased during the study; those on the left decreased. "
             "A large difference in bar height between EAA and Whey for the same family indicates "
             "a group-specific response worth further investigation."
         ),
         "pills": (
             [f"Top +: {_lfc_up[0]}", f"Log2FC={_lfc_up[1]:+.2f}", "EAA vs Whey grouped"]
-            if _lfc_up[0] else ["Log2 scale", "T84 vs T0", "EAA vs Whey grouped"]
+            if _lfc_up[0]
+            else ["Log2 scale", "T84 vs T0", "EAA vs Whey grouped"]
         ),
     }
 
@@ -477,12 +484,12 @@ def generate_chart_explanations(
     _sig_names_vol: list[str] = []
     for _tr in _vol_traces:
         _colors = (_tr.get("marker") or {}).get("color", [])
-        _texts  = _tr.get("text", [])
+        _texts = _tr.get("text", [])
         for _color, _text in zip(_colors, _texts, strict=False):
             if _color == "#D84E6A":
                 _sig_names_vol.append(f"{_text} ({_tr.get('name', '')})")
     _n_sig_vol = len(_sig_names_vol)
-    _vol_top   = ", ".join(_sig_names_vol[:3]) + (" …" if _n_sig_vol > 3 else "")
+    _vol_top = ", ".join(_sig_names_vol[:3]) + (" …" if _n_sig_vol > 3 else "")
 
     ex["volcano"] = {
         "what": (
@@ -497,7 +504,9 @@ def generate_chart_explanations(
             f"(|LFC| > 0.5 and FDR q < 0.1): {_vol_top}. "
             "These are the most biologically meaningful hits — large fold-change AND statistically robust. "
             "Cross-check against the ANCOM chart for CLR-corrected confirmation."
-        ) if _n_sig_vol > 0 else (
+        )
+        if _n_sig_vol > 0
+        else (
             "No family passed both thresholds — changes were either small or high-variance. "
             "Broaden the LFC or FDR cut-offs, or inspect the ANCOM chart for CLR-corrected results."
         ),
@@ -511,7 +520,8 @@ def generate_chart_explanations(
     # Count significant ANCOM hits (red = "#D84E6A" up, blue = "#4A7ED4" down)
     _ancom_traces = chart_data.get("ancom_style") or []
     _n_sig_ancom = sum(
-        1 for _tr in _ancom_traces
+        1
+        for _tr in _ancom_traces
         for _c in (_tr.get("marker") or {}).get("color", [])
         if _c in ("#D84E6A", "#4A7ED4")
     )
@@ -549,7 +559,11 @@ def generate_chart_explanations(
             "row-wise patterns (patients with similar overall composition). "
             "A column that is dark only in T0 or only in T84 rows suggests a temporal shift."
         ),
-        "pills": ["Sample × taxon matrix", "Colour = relative abundance (%)", "Hover for exact value"],
+        "pills": [
+            "Sample × taxon matrix",
+            "Colour = relative abundance (%)",
+            "Hover for exact value",
+        ],
     }
 
     ex["corr_matrix"] = {
@@ -566,36 +580,43 @@ def generate_chart_explanations(
             "Negatively correlated families compete. "
             "NOTE: correlations in compositional data can be spurious; interpret with caution."
         ),
-        "pills": ["Pearson r", "Red = co-occurring", "Blue = competing", "⚠ Compositional artefacts possible"],
+        "pills": [
+            "Pearson r",
+            "Red = co-occurring",
+            "Blue = competing",
+            "⚠ Compositional artefacts possible",
+        ],
     }
 
     # ── Clinical ──────────────────────────────────────────────────────────────
 
     if result.has_clinical:
-        corr_mwt:  dict[str, Any] = chart_data.get("corr_mwt")  or {}
+        corr_mwt: dict[str, Any] = chart_data.get("corr_mwt") or {}
         corr_il18: dict[str, Any] = chart_data.get("corr_il18") or {}
 
         # Count patients who improved on each clinical measure (T84 vs T0)
-        _mwt_per_p:  dict[str, dict[str, float]] = {}
+        _mwt_per_p: dict[str, dict[str, float]] = {}
         _il18_per_p: dict[str, dict[str, float]] = {}
         for _r in rows:
-            _p  = _r["patient"]
+            _p = _r["patient"]
             _tp = _r.get("timepoint", "")
-            _mwt_v  = float(_r.get("sixmwt") or 0)
-            _il18_v = float(_r.get("il18")   or 0)
-            if _mwt_v  > 0:
-                _mwt_per_p.setdefault(_p,  {})[_tp] = _mwt_v
+            _mwt_v = float(_r.get("sixmwt") or 0)
+            _il18_v = float(_r.get("il18") or 0)
+            if _mwt_v > 0:
+                _mwt_per_p.setdefault(_p, {})[_tp] = _mwt_v
             if _il18_v > 0:
                 _il18_per_p.setdefault(_p, {})[_tp] = _il18_v
 
-        _n_mwt_tot  = sum(1 for _pd in _mwt_per_p.values()  if "T0" in _pd and "T84" in _pd)
-        _n_mwt_imp  = sum(
-            1 for _pd in _mwt_per_p.values()
+        _n_mwt_tot = sum(1 for _pd in _mwt_per_p.values() if "T0" in _pd and "T84" in _pd)
+        _n_mwt_imp = sum(
+            1
+            for _pd in _mwt_per_p.values()
             if "T0" in _pd and "T84" in _pd and _pd["T84"] > _pd["T0"]
         )
         _n_il18_tot = sum(1 for _pd in _il18_per_p.values() if "T0" in _pd and "T84" in _pd)
         _n_il18_imp = sum(
-            1 for _pd in _il18_per_p.values()
+            1
+            for _pd in _il18_per_p.values()
             if "T0" in _pd and "T84" in _pd and _pd["T84"] < _pd["T0"]
         )
 
@@ -610,7 +631,9 @@ def generate_chart_explanations(
                 f"{_n_mwt_imp} of {_n_mwt_tot} patients improved their 6MWT distance by T84. "
                 "Compare EAA vs Whey mean lines (dashed) — a larger upward shift in one group "
                 "suggests that supplement may better support physical function."
-            ) if _n_mwt_tot > 0 else (
+            )
+            if _n_mwt_tot > 0
+            else (
                 "Upward-sloping lines indicate patients who improved their walking capacity during the study. "
                 "Compare EAA vs Whey mean lines — a larger upward shift in one group suggests "
                 "that supplement may better support physical function."
@@ -633,7 +656,9 @@ def generate_chart_explanations(
                 f"{_n_il18_imp} of {_n_il18_tot} patients reduced their IL-18 level by T84. "
                 "Compare EAA vs Whey mean lines (dashed) — a greater downward shift in one group "
                 "suggests that supplement had a larger anti-inflammatory effect."
-            ) if _n_il18_tot > 0 else (
+            )
+            if _n_il18_tot > 0
+            else (
                 "Downward-sloping lines indicate patients who reduced systemic inflammation during the study. "
                 "Compare EAA vs Whey to see which supplement had a larger anti-inflammatory effect. "
                 "IL-18 reductions may reflect changes in gut permeability or microbiome composition."
@@ -703,13 +728,18 @@ def generate_chart_explanations(
                 "Families with starred blue cells in the IL-18 column associate with reduced inflammation. "
                 "These are the most actionable findings for future mechanistic studies."
             ),
-            "pills": ["Spearman ρ", "BH-FDR corrected", "* p<0.05 · ** p<0.01", "Δ taxon × Δ clinical"],
+            "pills": [
+                "Spearman ρ",
+                "BH-FDR corrected",
+                "* p<0.05 · ** p<0.01",
+                "Δ taxon × Δ clinical",
+            ],
         }
 
     # ── Longitudinal ──────────────────────────────────────────────────────────
 
     # Extract per-group Shannon change (T84 - T0) from longitudinal traces
-    _long_traces  = chart_data.get("longitudinal") or []
+    _long_traces = chart_data.get("longitudinal") or []
     _long_changes: list[tuple[str, float]] = []
     for _tr in _long_traces:
         _xs = _tr.get("x", [])
@@ -731,14 +761,16 @@ def generate_chart_explanations(
             f"Shannon H′ change T0→T84: {_long_str}. "
             "A positive value means average diversity increased; a diverging pattern between groups "
             "suggests a supplement-specific effect on the gut microbiome."
-        ) if _long_changes else (
+        )
+        if _long_changes
+        else (
             "Compare the slope and endpoint height of EAA vs Whey lines. "
             "A diverging pattern (one group increasing while the other stays flat) would suggest "
             "the supplements have different effects on gut microbiome diversity."
         ),
-        "pills": (
-            [f"{_g}: {_d:+.3f}" for _g, _d in _long_changes[:2]] + ["Shannon H′"]
-        ) if _long_changes else ["Group mean per timepoint", "Shannon H′", "Summary view"],
+        "pills": ([f"{_g}: {_d:+.3f}" for _g, _d in _long_changes[:2]] + ["Shannon H′"])
+        if _long_changes
+        else ["Group mean per timepoint", "Shannon H′", "Summary view"],
     }
 
     ex["lme"] = {
@@ -759,14 +791,14 @@ def generate_chart_explanations(
     # ── Statistics ────────────────────────────────────────────────────────────
 
     if pm.get("rows"):
-        top_name: str   = str(pm.get("top_name") or "Unknown")
-        top_R2:   float = float(pm.get("top_R2") or 0.0)
+        top_name: str = str(pm.get("top_name") or "Unknown")
+        _perm_r2: float = float(pm.get("top_R2") or 0.0)
         pm_rows: list[Any] = pm.get("rows") or []
         supp_row: list[Any] | None = next(
             (r for r in pm_rows if "Group" in str(r[0]) or "Suppl" in str(r[0])),
             None,
         )
-        supp_p:  float = float(supp_row[3]) if supp_row is not None else 1.0
+        supp_p: float = float(supp_row[3]) if supp_row is not None else 1.0
         supp_R2: float = float(supp_row[1]) if supp_row is not None else 0.0
 
         ex["permanova"] = {
@@ -778,13 +810,13 @@ def generate_chart_explanations(
                 "Three factors are tested: supplementation group, timepoint, and individual patient identity."
             ),
             "finding": (
-                f"{top_name} explains the most variance (R²={top_R2:.3f}). "
+                f"{top_name} explains the most variance (R²={_perm_r2:.3f}). "
                 f"Supplementation group accounts for R²={supp_R2:.3f} "
                 f"(p={supp_p:.3f} — {'significant ✓' if supp_p < 0.05 else 'not significant'}). "
                 "Individual identity dominating over group is expected and does not mean the intervention failed."
             ),
             "pills": [
-                f"{top_name} R²={top_R2:.3f}",
+                f"{top_name} R²={_perm_r2:.3f}",
                 f"Group R²={supp_R2:.3f}",
                 f"Group p={supp_p:.3f}",
                 "99 permutations",

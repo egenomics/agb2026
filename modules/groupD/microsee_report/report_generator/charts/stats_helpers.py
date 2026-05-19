@@ -7,6 +7,7 @@ Previously these functions were scattered across stats.py, comparative.py, and
 clinical.py — centralising them eliminates duplication and makes each test
 independently testable.
 """
+
 from __future__ import annotations
 
 import math
@@ -16,18 +17,22 @@ import numpy as np
 
 # ── Shared normal-distribution helper ────────────────────────────────────────
 
+
 def _phi_complement(z: float) -> float:
     """Upper-tail probability of the standard normal: P(Z > |z|).
 
     Uses the Abramowitz & Stegun rational approximation 26.2.17 (max err 7.5e-8).
     """
     az = abs(z)
-    t  = 1.0 / (1.0 + 0.2316419 * az)
-    pd = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))))
+    t = 1.0 / (1.0 + 0.2316419 * az)
+    pd = t * (
+        0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429)))
+    )
     return pd * math.exp(-0.5 * az * az) / math.sqrt(2.0 * math.pi)
 
 
 # ── Wilcoxon signed-rank test ─────────────────────────────────────────────────
+
 
 def wilcoxon_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Wilcoxon signed-rank p-value.
@@ -40,9 +45,9 @@ def wilcoxon_p(a: Sequence[float], b: Sequence[float]) -> float:
     if n < 2:
         return 1.0
 
-    abs_d      = [abs(d) for d in diffs]
+    abs_d = [abs(d) for d in diffs]
     sorted_idx = sorted(range(n), key=lambda i: abs_d[i])
-    ranks      = [0.0] * n
+    ranks = [0.0] * n
     i = 0
     while i < n:
         j = i
@@ -53,9 +58,9 @@ def wilcoxon_p(a: Sequence[float], b: Sequence[float]) -> float:
             ranks[sorted_idx[k]] = avg
         i = j + 1
 
-    w_plus  = sum(r for r, d in zip(ranks, diffs, strict=False) if d > 0)
+    w_plus = sum(r for r, d in zip(ranks, diffs, strict=False) if d > 0)
     total_w = n * (n + 1) / 2.0
-    w_obs   = min(w_plus, total_w - w_plus)
+    w_obs = min(w_plus, total_w - w_plus)
 
     if n <= 20:
         cnt = 0
@@ -65,13 +70,14 @@ def wilcoxon_p(a: Sequence[float], b: Sequence[float]) -> float:
                 cnt += 1
         return round(cnt / (1 << n), 4)
 
-    mu    = total_w / 2.0
+    mu = total_w / 2.0
     sigma = math.sqrt(n * (n + 1) * (2 * n + 1) / 24.0)
-    z     = (w_obs - mu + 0.5) / sigma
+    z = (w_obs - mu + 0.5) / sigma
     return round(min(1.0, 2.0 * _phi_complement(z)), 4)
 
 
 # ── Mann-Whitney U test ───────────────────────────────────────────────────────
+
 
 def mannwhitney_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Mann-Whitney U p-value (normal approximation)."""
@@ -80,8 +86,8 @@ def mannwhitney_p(a: Sequence[float], b: Sequence[float]) -> float:
         return 1.0
 
     combined = sorted([(v, 0) for v in a] + [(v, 1) for v in b])
-    n        = len(combined)
-    ranks    = [0.0] * n
+    n = len(combined)
+    ranks = [0.0] * n
     i = 0
     while i < n:
         j = i
@@ -92,10 +98,10 @@ def mannwhitney_p(a: Sequence[float], b: Sequence[float]) -> float:
             ranks[k] = avg
         i = j + 1
 
-    r_a   = sum(r for r, (_, g) in zip(ranks, combined, strict=False) if g == 0)
-    u_a   = r_a - na * (na + 1) / 2.0
-    u     = min(u_a, na * nb - u_a)
-    mu    = na * nb / 2.0
+    r_a = sum(r for r, (_, g) in zip(ranks, combined, strict=False) if g == 0)
+    u_a = r_a - na * (na + 1) / 2.0
+    u = min(u_a, na * nb - u_a)
+    mu = na * nb / 2.0
     sigma = math.sqrt(na * nb * (na + nb + 1) / 12.0)
     if sigma == 0:
         return 1.0
@@ -105,6 +111,7 @@ def mannwhitney_p(a: Sequence[float], b: Sequence[float]) -> float:
 
 
 # ── Significance label ────────────────────────────────────────────────────────
+
 
 def sig_label(p: float) -> str:
     """Human-readable significance annotation for a p-value."""
@@ -119,6 +126,7 @@ def sig_label(p: float) -> str:
 
 # ── Welch's t-test (incomplete beta via continued fraction) ───────────────────
 
+
 def welch_ttest_p(a: Sequence[float], b: Sequence[float]) -> float:
     """Two-tailed Welch's t-test p-value (unequal variances, numpy only)."""
     ar, br = np.array(a, dtype=float), np.array(b, dtype=float)
@@ -131,10 +139,8 @@ def welch_ttest_p(a: Sequence[float], b: Sequence[float]) -> float:
     if se == 0:
         return 1.0
 
-    t  = abs(float(np.mean(ar)) - float(np.mean(br))) / se
-    df = (va / na + vb / nb) ** 2 / (
-        (va / na) ** 2 / (na - 1) + (vb / nb) ** 2 / (nb - 1)
-    )
+    t = abs(float(np.mean(ar)) - float(np.mean(br))) / se
+    df = (va / na + vb / nb) ** 2 / ((va / na) ** 2 / (na - 1) + (vb / nb) ** 2 / (nb - 1))
     x = df / (df + t * t)
     if x <= 0:
         return 0.0
@@ -146,32 +152,37 @@ def welch_ttest_p(a: Sequence[float], b: Sequence[float]) -> float:
             return 0.0
         if xv >= 1:
             return 1.0
-        lbt = (av * math.log(xv) + bv * math.log(1 - xv)
-               - math.lgamma(av) - math.lgamma(bv) + math.lgamma(av + bv))
+        lbt = (
+            av * math.log(xv)
+            + bv * math.log(1 - xv)
+            - math.lgamma(av)
+            - math.lgamma(bv)
+            + math.lgamma(av + bv)
+        )
 
         def _cf(xx: float, aa: float, bb: float) -> float:
             fpmin, eps = 1e-30, 3e-7
             c2, d2 = 1.0, 1.0 - (aa + bb) * xx / (aa + 1.0)
             d2 = fpmin if abs(d2) < fpmin else d2
             d2 = 1.0 / d2
-            h  = d2
+            h = d2
             for m in range(1, 201):
-                m2  = 2 * m
+                m2 = 2 * m
                 aa2 = m * (bb - m) * xx / ((aa + m2 - 1) * (aa + m2))
-                d2  = 1.0 + aa2 * d2
-                d2  = fpmin if abs(d2) < fpmin else d2
-                c2  = 1.0 + aa2 / c2
-                c2  = fpmin if abs(c2) < fpmin else c2
-                d2  = 1.0 / d2
-                h  *= d2 * c2
+                d2 = 1.0 + aa2 * d2
+                d2 = fpmin if abs(d2) < fpmin else d2
+                c2 = 1.0 + aa2 / c2
+                c2 = fpmin if abs(c2) < fpmin else c2
+                d2 = 1.0 / d2
+                h *= d2 * c2
                 aa2 = -(aa + m) * (aa + bb + m) * xx / ((aa + m2) * (aa + m2 + 1))
-                d2  = 1.0 + aa2 * d2
-                d2  = fpmin if abs(d2) < fpmin else d2
-                c2  = 1.0 + aa2 / c2
-                c2  = fpmin if abs(c2) < fpmin else c2
-                d2  = 1.0 / d2
+                d2 = 1.0 + aa2 * d2
+                d2 = fpmin if abs(d2) < fpmin else d2
+                c2 = 1.0 + aa2 / c2
+                c2 = fpmin if abs(c2) < fpmin else c2
+                d2 = 1.0 / d2
                 delta = d2 * c2
-                h  *= delta
+                h *= delta
                 if abs(delta - 1.0) < eps:
                     break
             return h
@@ -185,6 +196,7 @@ def welch_ttest_p(a: Sequence[float], b: Sequence[float]) -> float:
 
 # ── Pearson correlation p-value ───────────────────────────────────────────────
 
+
 def pearson_p(r_val: float, n: int) -> float:
     """Two-tailed p-value for Pearson r (Fisher z-transformation)."""
     if n < 4:
@@ -195,6 +207,7 @@ def pearson_p(r_val: float, n: int) -> float:
 
 # ── Spearman rank correlation ─────────────────────────────────────────────────
 
+
 def spearman_r(a: Sequence[float], b: Sequence[float]) -> tuple[float, float]:
     """Spearman ρ and two-tailed p-value."""
     n = len(a)
@@ -203,8 +216,8 @@ def spearman_r(a: Sequence[float], b: Sequence[float]) -> tuple[float, float]:
 
     def _ranks(v: Sequence[float]) -> list[float]:
         sv = sorted(enumerate(v), key=lambda x: x[1])
-        r  = [0.0] * n
-        i  = 0
+        r = [0.0] * n
+        i = 0
         while i < n:
             j = i
             while j < n - 1 and sv[j][1] == sv[j + 1][1]:
@@ -217,14 +230,15 @@ def spearman_r(a: Sequence[float], b: Sequence[float]) -> tuple[float, float]:
 
     ra, rb = _ranks(a), _ranks(b)
     ma, mb = sum(ra) / n, sum(rb) / n
-    num    = sum((x - ma) * (y - mb) for x, y in zip(ra, rb, strict=False))
-    da     = math.sqrt(sum((x - ma) ** 2 for x in ra))
-    db     = math.sqrt(sum((y - mb) ** 2 for y in rb))
-    rho    = round(num / (da * db), 3) if da and db else 0.0
+    num = sum((x - ma) * (y - mb) for x, y in zip(ra, rb, strict=False))
+    da = math.sqrt(sum((x - ma) ** 2 for x in ra))
+    db = math.sqrt(sum((y - mb) ** 2 for y in rb))
+    rho = round(num / (da * db), 3) if da and db else 0.0
     return rho, pearson_p(rho, n)
 
 
 # ── Benjamini-Hochberg FDR ────────────────────────────────────────────────────
+
 
 def bh_fdr(p_values: Sequence[float]) -> list[float]:
     """Benjamini-Hochberg FDR correction. Returns q-values same length as input."""
@@ -241,6 +255,6 @@ def bh_fdr(p_values: Sequence[float]) -> list[float]:
     min_q = 1.0
     for i in sorted(range(n), key=lambda i: p_values[i], reverse=True):
         min_q = min(min_q, q[i])
-        q[i]  = min_q
+        q[i] = min_q
 
     return [round(v, 3) for v in q]

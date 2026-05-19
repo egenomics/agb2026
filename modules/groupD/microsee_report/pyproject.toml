@@ -7,7 +7,7 @@ name = "microsee-report"
 version = "0.1.0"
 description = "MicroSee self-contained HTML report generator for microbiome data"
 readme = "report_generator/README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 license = { text = "MIT" }
 dependencies = [
     "pandas==2.3.3",

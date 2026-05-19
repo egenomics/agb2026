@@ -53,26 +53,40 @@ def _configure_logging() -> None:
 
 def parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(description="Generate MicroSee self-contained HTML report")
-    p.add_argument("--feature-table", required=True, metavar="TSV",
-                   help="QIIME2 feature-table.tsv export")
-    p.add_argument("--taxonomy", required=True, metavar="TSV",
-                   help="QIIME2 taxonomy.tsv export")
-    p.add_argument("--metadata", required=True, metavar="TSV",
-                   help="QIIME2 metadata.tsv export")
-    p.add_argument("--alpha", metavar="TSV", default=None,
-                   help="QIIME2 alpha-diversity.tsv export (strongly recommended)")
-    p.add_argument("--distance-matrix", metavar="TSV", default=None,
-                   help="QIIME2 distance-matrix.tsv (e.g. Bray-Curtis); optional")
-    p.add_argument("--output", "-o", metavar="HTML",
-                   default="microsee_report.html",
-                   help="Output HTML file (default: microsee_report.html)")
-    p.add_argument("--mode", choices=["cohort", "patient", "all"],
-                   default="cohort",
-                   help=(
-                       "cohort  — one combined report (default); "
-                       "patient — one HTML per patient; "
-                       "all     — cohort report + one per patient"
-                   ))
+    p.add_argument(
+        "--feature-table", required=True, metavar="TSV", help="QIIME2 feature-table.tsv export"
+    )
+    p.add_argument("--taxonomy", required=True, metavar="TSV", help="QIIME2 taxonomy.tsv export")
+    p.add_argument("--metadata", required=True, metavar="TSV", help="QIIME2 metadata.tsv export")
+    p.add_argument(
+        "--alpha",
+        metavar="TSV",
+        default=None,
+        help="QIIME2 alpha-diversity.tsv export (strongly recommended)",
+    )
+    p.add_argument(
+        "--distance-matrix",
+        metavar="TSV",
+        default=None,
+        help="QIIME2 distance-matrix.tsv (e.g. Bray-Curtis); optional",
+    )
+    p.add_argument(
+        "--output",
+        "-o",
+        metavar="HTML",
+        default="microsee_report.html",
+        help="Output HTML file (default: microsee_report.html)",
+    )
+    p.add_argument(
+        "--mode",
+        choices=["cohort", "patient", "all"],
+        default="cohort",
+        help=(
+            "cohort  — one combined report (default); "
+            "patient — one HTML per patient; "
+            "all     — cohort report + one per patient"
+        ),
+    )
     return p.parse_args()
 
 
@@ -157,7 +171,9 @@ def main() -> None:
         for patient_id in patients:
             try:
                 patient_html = render_patient_html(
-                    patient_id, result, radar_profiles=radar_profiles,
+                    patient_id,
+                    result,
+                    radar_profiles=radar_profiles,
                 )
             except FileNotFoundError as exc:
                 log.error("[MicroSee] %s", exc)
