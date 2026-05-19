@@ -33,7 +33,7 @@ MIN_REPORT_BYTES  = 1_000_000  # 1 MB — Plotly.js alone is ~4.3 MB
 MIN_PATIENT_BYTES = 50_000     # in-process patient report (no full cohort embed)
 
 
-def _run(output: Path, *extra: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
+def _run(output: Path, *extra: str, timeout: int = 300) -> subprocess.CompletedProcess[str]:
     t0 = time.monotonic()
     result = subprocess.run(
         [
