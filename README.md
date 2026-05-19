@@ -1,6 +1,6 @@
 # agb2026
 
-[![CI](https://github.com/agb2026/agb2026/actions/workflows/test.yml/badge.svg)](https://github.com/agb2026/agb2026/actions/workflows/test.yml)
+[![CI](https://github.com/egenomics/agb2026/actions/workflows/test.yml/badge.svg)](https://github.com/egenomics/agb2026/actions/workflows/test.yml)
 
 ```bash
 pip install -e "modules/groupD/microsee_report"
