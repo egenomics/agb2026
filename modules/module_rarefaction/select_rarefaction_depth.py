@@ -1,39 +1,55 @@
 #!/usr/bin/env python3
 """
-select_rarefaction_depth.py
+Picks a rarefaction depth automatically from QIIME2 rarefaction curves.
 
-Script to automatically pick a rarefaction depth for microbiome ASV tables.
-Has 3 methods: percentile, knee, coverage
-
+Steps:
+  1. Unzip the .qzv and grab the per-sample curve CSV/TSVs
+  2. Find where each sample's curve flattens
+  3. Pick a global depth that covers enough samples
+  4. Save plots + output files
+  
+Methods:
+  coverage
+      Chooses the depth at which X% of samples have reached a plateau. Recommended.
+  percentile
+      Uses the Nth percentile of the per-sample plateau depths.
+  knee
+      Detects the knee point from each individual sample curve (not from the overall distribution).
+      The global threshold is then set to the median plateau depth across samples that pass QC.
+      
 Usage:
-    python select_rarefaction_depth.py --input asv_table.tsv --output rarefaction_report/ --method knee
-
-Input should be a TSV where rows = samples, columns = taxa.
-If it's the other way around it gets transposed automatically.
-
+    python select_rarefaction_depth.py
+        --curves      rarefaction_curves.qzv
+        --shannon     diversity_table/shannon/alpha-diversity.tsv
+        --observed    diversity_table/observed/alpha-diversity.tsv
+        --faith       diversity_table/faith/alpha-diversity.tsv
+        --simpson     diversity_table/simpson/alpha-diversity.tsv
+        --output      rarefaction_output/
+        --method      coverage
+        --coverage-pct 90
+        --metric      observed_features
+        --dropout-max 0.10
 """
 
 import argparse
 import json
-import os
-import sys
+import logging
 import warnings
+import zipfile
 from datetime import datetime
 from pathlib import Path
-import logging
 
 import numpy as np
 import pandas as pd
 
-# setup logging
 logging.basicConfig(level=logging.INFO, format="[%(levelname)s] %(message)s")
 log = logging.getLogger(__name__)
 
-# try to import matplotlib, plots are optional
 try:
     import matplotlib
-    matplotlib.use("Agg")
+    matplotlib.use("Agg")  # no display needed
     import matplotlib.pyplot as plt
+    import matplotlib.ticker as mticker
     from matplotlib.lines import Line2D
     HAS_PLOT = True
 except ImportError:
@@ -41,401 +57,396 @@ except ImportError:
     log.warning("matplotlib not found, skipping plots")
 
 
-def load_asv_table(path, sep="\t"):
-    # load the table
-    df = pd.read_csv(path, sep=sep, index_col=0)
-    
-    # if there are more columns than rows it's probably taxa-as-rows, so transpose
-    if df.shape[1] > df.shape[0]:
-        log.info("looks like taxa are rows, transposing...")
-        df = df.T
-    
-    df = df.fillna(0).astype(int)
-    return df
+# step 1: get the curves out of the .qzv (it's just a zip file)
+
+def extract_curves_from_qzv(qzv_path, metric):
+    log.info("Extracting curves from %s (metric: %s)", qzv_path, metric)
+
+    with zipfile.ZipFile(qzv_path, "r") as zf:
+        candidates = [n for n in zf.namelist()
+                      if n.endswith(f"{metric}.csv") and "/data/" in n]
+        if not candidates:
+            candidates = [n for n in zf.namelist()
+                          if metric in n and n.endswith(".csv")]
+        if not candidates:
+            available = [n for n in zf.namelist() if n.endswith(".csv")]
+            raise FileNotFoundError(
+                f"Can't find '{metric}.csv' in {qzv_path}.\n"
+                f"CSVs in archive: {available}")
+                
+        with zf.open(candidates[0]) as f:
+            raw = pd.read_csv(f, index_col=0)
+
+    # columns are like "depth-500_iter-1" parse depth and average over iterations
+    depth_cols = {}
+    for col in raw.columns:
+        col_clean = col.lower().replace("depth-", "").replace("depth_", "")
+        for sep in ["_iter-", "_iter_"]:
+            if sep in col_clean:
+                try:
+                    depth = int(col_clean.split(sep)[0])
+                    depth_cols.setdefault(depth, []).append(col)
+                except ValueError:
+                    pass
+                break
+
+    if not depth_cols:
+        raise ValueError(f"Couldn't parse depth columns. First few: {list(raw.columns[:5])}")
+
+    curves = {d: raw[cols].mean(axis=1) for d, cols in sorted(depth_cols.items())}
+    curve_df = pd.DataFrame(curves)
+    curve_df.index.name = "sample-id"
+
+    log.info("%d samples x %d depths (%d to %d reads)", *curve_df.shape, curve_df.columns.min(), curve_df.columns.max())
+    return curve_df
 
 
-def goods_coverage(counts):
-    """
-    Calculates Good's coverage for a sample.
-    Formula: 1 - (number of singletons / total reads)
-    """
-    counts = counts[counts > 0]
-    total = counts.sum()
-    
-    if total == 0:
-        return np.nan
-    
-    singletons = (counts == 1).sum()
-    coverage = 1.0 - (singletons / total)
-    return coverage
+# step 2: find where each sample's curve levels off
+
+def find_knee_on_curve(depths, diversity):
+    # knee method: find the point furthest from the line connecting start and end
+    valid = ~np.isnan(diversity)
+    x = depths[valid].astype(float)
+    y = diversity[valid].astype(float)
+
+    if len(x) < 3:
+        return float(x[-1]) if len(x) > 0 else np.nan
+
+    # normalize to [0,1] so x and y are on the same scale
+    x_n = (x - x[0]) / (x[-1] - x[0] + 1e-12)
+    y_n = (y - y.min()) / (y.max() - y.min() + 1e-12)
+
+    dx, dy = x_n[-1] - x_n[0], y_n[-1] - y_n[0]
+    dists = np.abs(dy * x_n - dx * y_n + x_n[-1] * y_n[0] - y_n[-1] * x_n[0]) / (np.sqrt(dx**2 + dy**2) + 1e-12)
+
+    return float(x[int(np.argmax(dists))])
 
 
-def rarefy_once(counts, depth, rng):
-    """subsample reads down to 'depth' without replacement"""
-    # expand counts into individual reads, then sample
-    reads = np.repeat(np.arange(len(counts)), counts)
-    chosen = rng.choice(reads, size=depth, replace=False)
-    result = np.bincount(chosen, minlength=len(counts))
-    return result
-
-
-def observed_richness(counts, depth, iterations, rng):
-    """
-    rarefies the sample multiple times and returns mean richness
-    (number of ASVs observed)
-    """
-    all_richness = []
-    for i in range(iterations):
-        rarefied = rarefy_once(counts, depth, rng)
-        n_asvs = (rarefied > 0).sum()
-        all_richness.append(n_asvs)
-    
-    return float(np.mean(all_richness))
-
-
-def find_knee(values):
-    """
-    Find the knee point in a sorted array using the chord/distance method.
-    Basically finds the point furthest from the line connecting the first and last points.
-    """
-    sorted_vals = np.sort(values)
-    n = len(sorted_vals)
-    
-    if n < 3:
-        # not enough points
-        return float(np.percentile(values, 10))
-    
-    # normalize to 0-1 range
-    xs = np.linspace(0, 1, n)
-    y_min = sorted_vals.min()
-    y_max = sorted_vals.max()
-    
-    if y_max == y_min:
-        return float(y_min)
-    
-    ys = (sorted_vals - y_min) / (y_max - y_min)
-    
-    # direction vector of chord from first to last point
-    dx = xs[-1] - xs[0]
-    dy = ys[-1] - ys[0]
-    
-    # perpendicular distance from each point to the chord line
-    # formula from analytical geometry
-    distances = np.abs(dy * xs - dx * ys + xs[-1] * ys[0] - ys[-1] * xs[0]) / (np.sqrt(dx**2 + dy**2) + 1e-12)
-    
-    knee_idx = int(np.argmax(distances))
-    return float(sorted_vals[knee_idx])
-
-
-# threshold selection methods
-
-def select_percentile(lib_sizes, percentile):
-    threshold = int(np.percentile(lib_sizes, percentile))
-    log.info("percentile threshold (%.0f%%): %d", percentile, threshold)
-    return threshold
-
-
-def select_knee(lib_sizes):
-    threshold = int(find_knee(lib_sizes))
-    log.info("knee threshold: %d", threshold)
-    return threshold
-
-
-def select_coverage(asv_table, lib_sizes, coverage_target, dropout_max, step):
-    """
-    Find the lowest depth where enough samples still hit the coverage target.
-    Steps through possible depths and checks what fraction pass.
-    """
-    rng = np.random.seed(18)
-    max_depth = lib_sizes.max()
-    depths = np.arange(step, max_depth + step, step)
-    
-    passing_fracs = []
-    
-    for d in depths:
-        # only consider samples that have enough reads for this depth
-        eligible_mask = lib_sizes >= d
-        eligible = asv_table[eligible_mask]
-        
-        if len(eligible) == 0:
-            passing_fracs.append(0.0)
-            continue
-        
-        coverages = []
-        for _, row in eligible.iterrows():
-            counts = row.values
-            rarefied = rarefy_once(counts, int(d), rng)
-            cov = goods_coverage(rarefied)
-            coverages.append(cov)
-        
-        # fraction of samples that pass the coverage target
-        valid_covs = [c for c in coverages if not np.isnan(c)]
-        frac = np.mean([c >= coverage_target for c in valid_covs])
-        passing_fracs.append(frac)
-    
-    passing_fracs = np.array(passing_fracs)
-    good_depths = depths[passing_fracs >= (1 - dropout_max)]
-    
-    if len(good_depths) == 0:
-        log.warning("coverage target never met, falling back to 10th percentile")
-        return select_percentile(lib_sizes, 10)
-    
-    threshold = int(good_depths.min())
-    log.info("coverage threshold: %d", threshold)
-    return threshold
-
-
-def compute_curves(asv_table, lib_sizes, pass_mask, step, iterations):
-    """
-    Compute rarefaction curves for all samples.
-    Returns a dataframe with columns: sample, depth, richness, passes
-    """
-    rng = np.random.seed(18)
-    records = []
-    
-    for i, (sample_name, row) in enumerate(asv_table.iterrows()):
-        counts = row.values
-        N = lib_sizes[i]
-        
-        # build list of depths to evaluate for this sample
-        depths = list(range(step, int(N), step)) + [int(N)]
-        
-        for d in depths:
-            # cap iterations for speed
-            richness = observed_richness(counts, d, min(iterations, 20), rng)
-            records.append({
-                "sample": sample_name,
-                "depth": d,
-                "richness": richness,
-                "passes": bool(pass_mask[i])
-            })
-    
-    return pd.DataFrame(records)
-
-
-# plotting functions
-
-def plot_curves(curve_df, threshold, out_dir):
-    fig, ax = plt.subplots(figsize=(10, 5))
-    
-    for sample_name, grp in curve_df.groupby("sample"):
-        if grp["passes"].iloc[0]:
-            colour = "#2980B9"
-            alpha = 0.6
+def per_sample_plateau_depths(curve_df):
+    depths = curve_df.columns.values.astype(float)
+    result = {}
+    for sample_id, row in curve_df.iterrows():
+        y = row.values.astype(float)
+        if np.sum(~np.isnan(y)) < 3:
+            result[sample_id] = np.nan
         else:
-            colour = "#BDC3C7"
-            alpha = 0.25
-        ax.plot(grp["depth"], grp["richness"], color=colour, alpha=alpha, linewidth=0.7)
+            result[sample_id] = find_knee_on_curve(depths, y)
+
+    series = pd.Series(result, name="plateau_depth")
+    log.info("Plateaus: min=%.0f  median=%.0f  max=%.0f  NaN=%d",
+             series.dropna().min(), series.dropna().median(), series.dropna().max(), series.isna().sum())
+    return series
+
+
+# step 3: pick one global threshold from the per-sample plateaus
+
+def select_global_threshold(plateau_depths, method, percentile, coverage_pct, dropout_max):
     
-    ax.axvline(threshold, color="#E74C3C", linestyle="--", linewidth=1.2)
-    ax.set_xlabel("Sequencing depth")
-    ax.set_ylabel("Observed ASVs")
-    ax.set_title("Rarefaction curves per sample")
+    # a sample "passes" if its curve already flattened at or before the threshold
+    valid = plateau_depths.dropna()
+    n_total = len(plateau_depths)
+    n_nan = int(plateau_depths.isna().sum())
+
+    log.info("Step 3/5 Selecting threshold (method=%s)...", method)
+
+    if method == "coverage":
+        # depth where coverage_pct% of samples have already plateaued
+        threshold = int(np.round(np.percentile(valid.values, coverage_pct)))
+    elif method == "percentile":
+        threshold = int(np.round(np.percentile(valid.values, percentile)))
+    elif method == "knee":
+        threshold = int(np.round(np.median(valid.values)))
+    else:
+        raise ValueError(f"Unknown method: {method!r}")
+
+    log.info("threshold = %d reads", threshold)
+
+    pass_mask = plateau_depths <= threshold
+    pass_mask[plateau_depths.isna()] = False  # too shallow = always excluded
+
+    n_pass = int(pass_mask.sum())
+    n_fail = n_total - n_pass
+    dropout_frac = n_fail / n_total
+
+    log.info("Retained %d / %d (dropped %.1f%%)", n_pass, n_total, dropout_frac * 100)
+
+    if n_pass == 0:
+        warnings.warn(
+            f"No samples retained at threshold={threshold}. "
+            "Try --method coverage --coverage-pct 90 or increase --percentile."
+        )
+    if dropout_frac > dropout_max:
+        warnings.warn(f"Dropout {dropout_frac:.1%} exceeds --dropout-max {dropout_max:.1%}.")
+
+    return {
+        "threshold":      threshold,
+        "method":         method,
+        "pass_mask":      pass_mask,
+        "plateau_depths": plateau_depths,
+        "n_pass":         n_pass,
+        "n_fail":         n_fail,
+        "n_nan":          n_nan,
+        "dropout_frac":   dropout_frac,
+    }
+
+
+# step 4: load the alpha diversity tables from module 1
+
+def load_alpha_tsv(path):
+    df = pd.read_csv(path, sep="\t", index_col=0)
+    return df.iloc[:, 0].rename(df.columns[0])
+
+
+def load_module1_metrics(shannon, observed, faith, simpson):
+    series = {}
+    for name, path in [("shannon", shannon), ("observed_features", observed), ("faith_pd", faith), ("simpson", simpson)]:
+        if path and Path(path).exists():
+            try:
+                series[name] = load_alpha_tsv(path)
+                log.info("Loaded %s (%d samples)", name, len(series[name]))
+            except Exception as e:
+                log.warning("Could not load %s: %s", name, e)
     
-    legend_handles = [
-        Line2D([0], [0], color="#2980B9", linewidth=1.5, label="Retained"),
-        Line2D([0], [0], color="#BDC3C7", linewidth=1.5, label="Excluded"),
-        Line2D([0], [0], color="#E74C3C", linestyle="--", linewidth=1.5, label=f"threshold = {threshold:,}"),
+    return pd.DataFrame(series) if series else pd.DataFrame()
+
+
+# step 5: plots
+
+def plot_rarefaction_curves(curve_df, pass_mask, plateau_depths, threshold, out_dir):
+    fig, ax = plt.subplots(figsize=(13, 6))
+    depths = curve_df.columns.values.astype(float)
+
+    for sample_id, row in curve_df.iterrows():
+        retained = bool(pass_mask.get(sample_id, False))
+        colour = "#2980B9" if retained else "#E74C3C"
+        alpha  = 0.65      if retained else 0.20
+        ax.plot(depths, row.values, color=colour, alpha=alpha, linewidth=0.8)
+
+        # dot at the detected plateau point
+        pd_val = plateau_depths.get(sample_id, np.nan)
+        if not np.isnan(pd_val):
+            closest = depths[np.argmin(np.abs(depths - pd_val))]
+            ax.scatter(closest, row[closest], color=colour, s=20, alpha=0.6, zorder=3)
+
+    ax.axvline(threshold, color="#2C3E50", linestyle="--", linewidth=2)
+    
+    n_ret = int(pass_mask.sum())
+    n_exc = len(pass_mask) - n_ret
+    handles = [
+        Line2D([0], [0], color="#2980B9", lw=2, label=f"Retained (n={n_ret})"),
+        Line2D([0], [0], color="#E74C3C", lw=2, label=f"Excluded (n={n_exc})"),
+        Line2D([0], [0], color="#2C3E50", lw=2, linestyle="--",
+               label=f"Threshold = {threshold:,} reads"),
     ]
-    ax.legend(handles=legend_handles, frameon=False)
+    ax.legend(handles=handles, frameon=False, fontsize=9)
+    ax.set_xlabel("Sequencing depth (reads)", fontsize=11)
+    ax.set_ylabel("Alpha diversity", fontsize=11)
+    ax.set_title("Rarefaction curves (dot = per-sample plateau, dashed = global threshold)", fontsize=11)
+    ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
     fig.tight_layout()
     fig.savefig(out_dir / "rarefaction_curves.pdf", dpi=150)
     plt.close(fig)
+    log.info("Saved rarefaction_curves.pdf")
 
 
-def plot_libsize(lib_sizes, pass_mask, threshold, out_dir):
-    fig, ax = plt.subplots(figsize=(7, 4))
-    
-    ax.hist(lib_sizes[pass_mask],  bins=40, color="#2980B9", alpha=0.7, label="Retained")
-    ax.hist(lib_sizes[~pass_mask], bins=40, color="#BDC3C7", alpha=0.7, label="Excluded")
-    ax.axvline(threshold, color="#E74C3C", linestyle="--", linewidth=1.2)
-    
-    ax.set_xlabel("Read count")
-    ax.set_ylabel("Number of samples")
-    ax.set_title("Library size distribution")
+def plot_plateau_distribution(result, out_dir):
+    plateau_depths = result["plateau_depths"].dropna()
+    threshold = result["threshold"]
+    pass_mask = result["pass_mask"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5))
+
+    # left: one bar per sample sorted by plateau depth
+    ax = axes[0]
+    sorted_pd = np.sort(plateau_depths.values)
+    colours = ["#2980B9" if v <= threshold else "#E74C3C" for v in sorted_pd]
+    ax.bar(range(len(sorted_pd)), sorted_pd, color=colours, alpha=0.85, width=1.0)
+    ax.axhline(threshold, color="#2C3E50", linestyle="--", linewidth=2,
+               label=f"Threshold = {threshold:,} reads")
+    ax.set_xlabel("Samples (sorted)")
+    ax.set_ylabel("Plateau depth (reads)")
+    ax.set_title("Per-sample plateau depths (blue = retained)")
+    ax.yaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
     ax.legend(frameon=False)
+
+    # right: histogram
+    ax2 = axes[1]
+    pm_aligned = pass_mask.reindex(plateau_depths.index).fillna(False)
+    retained_pd = plateau_depths[pm_aligned]
+    excluded_pd = plateau_depths[~pm_aligned]
+    bins = np.linspace(plateau_depths.min(), plateau_depths.max(), 25)
     
-    # format x axis with commas
-    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
-    
+    if len(retained_pd):
+        ax2.hist(retained_pd.values, bins=bins, color="#2980B9", alpha=0.75,
+                 label=f"Retained (n={len(retained_pd)})")
+                 
+    if len(excluded_pd):
+        ax2.hist(excluded_pd.values, bins=bins, color="#E74C3C", alpha=0.75,
+                 label=f"Excluded (n={len(excluded_pd)})")
+    ax2.axvline(threshold, color="#2C3E50", linestyle="--", linewidth=2,
+                label=f"Threshold = {threshold:,} reads")
+    ax2.set_xlabel("Plateau depth (reads)")
+    ax2.set_ylabel("Number of samples")
+    ax2.set_title("Distribution of plateau depths")
+    ax2.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
+    ax2.legend(frameon=False)
+
+    fig.suptitle(
+        f"{result['method']} method -> threshold = {threshold:,} reads  "
+        f"(retained: {result['n_pass']}, excluded: {result['n_fail']})",
+        fontsize=11
+    )
     fig.tight_layout()
-    fig.savefig(out_dir / "library_size_distribution.pdf", dpi=150)
+    fig.savefig(out_dir / "plateau_depth_distribution.pdf", dpi=150)
     plt.close(fig)
+    log.info("Saved plateau_depth_distribution.pdf")
 
 
-def plot_coverage(qc_df, threshold, out_dir):
-    # only look at samples that passed
-    cov_vals = qc_df.loc[qc_df["passes_threshold"], "coverage"].dropna()
-    
-    if len(cov_vals) == 0:
+def plot_module1_diversity(diversity_df, pass_mask, threshold, out_dir):
+    metrics = [c for c in ["observed_features", "shannon", "faith_pd", "simpson"]
+               if c in diversity_df.columns]
+    if not metrics:
         return
-    
-    fig, ax = plt.subplots(figsize=(6, 4))
-    ax.hist(cov_vals, bins=30, color="#27AE60", alpha=0.8)
-    ax.axvline(0.99, color="#E74C3C", linestyle="--", linewidth=1.2, label="99% target")
-    
-    ax.set_xlabel("Good's coverage")
-    ax.set_ylabel("Number of samples")
-    ax.set_title(f"Good's coverage at depth = {threshold:,}")
-    ax.legend(frameon=False)
-    ax.xaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda x, _: f"{x:.0%}"))
-    
-    fig.tight_layout()
-    fig.savefig(out_dir / "coverage_at_threshold.pdf", dpi=150)
-    plt.close(fig)
 
+    fig, axes = plt.subplots(1, len(metrics), figsize=(4.5 * len(metrics), 5), squeeze=False)
+    for i, metric in enumerate(metrics):
+        ax = axes[0][i]
+        vals = diversity_df[metric].dropna()
+        common = vals.index.intersection(pass_mask.index)
+        ret = vals.loc[common][pass_mask.loc[common]]
+        exc = vals.loc[common][~pass_mask.loc[common]]
+
+        parts, labels, colours = [], [], []
+        if len(ret):
+            parts.append(ret.values)
+            labels.append(f"Retained\n(n={len(ret)})")
+            colours.append("#2980B9")
+        if len(exc):
+            parts.append(exc.values)
+            labels.append(f"Excluded\n(n={len(exc)})")
+            colours.append("#E74C3C")
+
+        if parts:
+            vp = ax.violinplot(parts, positions=range(len(parts)), showmedians=True, showextrema=True)
+            for pc, col in zip(vp["bodies"], colours):
+                pc.set_facecolor(col)
+                pc.set_alpha(0.7)
+            for part in ["cmedians", "cmaxes", "cmins", "cbars"]:
+                if part in vp:
+                    vp[part].set_color("#2C3E50")
+
+        ax.set_xticks(range(len(labels)))
+        ax.set_xticklabels(labels, fontsize=9)
+        ax.set_ylabel(metric.replace("_", " ").title())
+        ax.set_title(metric.replace("_", " ").title())
+
+    fig.suptitle(f"Module 1 alpha diversity split by retention (threshold = {threshold:,} reads)", fontsize=11)
+    fig.tight_layout()
+    fig.savefig(out_dir / "module1_diversity_by_retention.pdf", dpi=150)
+    plt.close(fig)
+    log.info("Saved module1_diversity_by_retention.pdf")
+
+
+# main
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Pick a rarefaction depth automatically from an ASV table.",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-    )
-    parser.add_argument("--input", required=True,  help="ASV table (.tsv or .csv)")
-    parser.add_argument("--output", default="rarefaction_report", help="Output folder")
-    parser.add_argument("--method", default="knee", choices=["percentile", "knee", "coverage"])
-    parser.add_argument("--percentile", type=float, default=10,   help="Which percentile to use (for percentile method)")
-    parser.add_argument("--coverage-target", type=float, default=0.99, dest="coverage_target", help="Minimum Good's coverage (for coverage method)")
-    parser.add_argument("--dropout-max", type=float, default=0.10, dest="dropout_max",     help="Max fraction of samples to drop")
-    parser.add_argument("--step", type=int, default=500, help="Step size when building rarefaction curves")
-    parser.add_argument("--iterations", type=int, default=100, help="How many times to rarefy per depth (for curve smoothing)")
-    parser.add_argument("--sep", default="\t", help="Separator character (tab or comma)")
+        description="Pick rarefaction depth from QIIME2 curves.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        
+    parser.add_argument("--curves", required=True)
+    parser.add_argument("--shannon", default=None)
+    parser.add_argument("--observed", default=None)
+    parser.add_argument("--faith", default=None)
+    parser.add_argument("--simpson", default=None)
+    parser.add_argument("--output", default="rarefaction_output")
+    parser.add_argument("--method", default="coverage", choices=["coverage", "percentile", "knee"])
+    parser.add_argument("--metric", default="observed_features")
+    parser.add_argument("--coverage-pct", type=float, default=90, dest="coverage_pct", help="keep the %% of samples with lowest plateau depths")
+    parser.add_argument("--percentile", type=float, default=75)
+    parser.add_argument("--dropout-max", type=float, default=0.10, dest="dropout_max")
+    parser.add_argument("--sampling-depth", type=int,   default=1103, dest="sampling_depth", help="module 1 depth, only used for plot labels")
     
     args = parser.parse_args()
 
-    # make output dir
     out_dir = Path(args.output)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    # step 1: load table
-    log.info("Step 1/5: loading table: %s", args.input)
-    asv = load_asv_table(args.input, sep=args.sep)
+    log.info("Step 1/5 Extracting rarefaction curves...")
+    curve_df = extract_curves_from_qzv(args.curves, args.metric)
+
+    log.info("Step 2/5 Finding plateau depth for each sample...")
     
-    lib_sizes = asv.sum(axis=1).values
-    n_samples = len(asv)
+    plateau_depths = per_sample_plateau_depths(curve_df)
+
+    result = select_global_threshold(plateau_depths, args.method, args.percentile, args.coverage_pct, args.dropout_max)
+
+    log.info("Step 4/5 Loading alpha diversity tables...")
+    diversity_df = load_module1_metrics(args.shannon, args.observed, args.faith, args.simpson)
+
+    log.info("Step 5/5 Saving outputs...")
     
-    log.info("  samples : %d", n_samples)
-    log.info("  min lib : %d", lib_sizes.min())
-    log.info("  max lib : %d", lib_sizes.max())
-    log.info("  median  : %d", int(np.median(lib_sizes)))
-
-    # step 2: pick threshold
-    log.info("Step 2/5: selecting threshold (method=%s)", args.method)
-    
-    if args.method == "percentile":
-        threshold = select_percentile(lib_sizes, args.percentile)
-    elif args.method == "knee":
-        threshold = select_knee(lib_sizes)
-    else:
-        threshold = select_coverage(asv, lib_sizes, args.coverage_target, args.dropout_max, args.step)
-
-    pass_mask = lib_sizes >= threshold
-    n_pass = int(pass_mask.sum())
-    n_fail = n_samples - n_pass
-    dropout_frac = n_fail / n_samples
-
-    log.info("  kept %d / %d samples (dropped %.1f%%)", n_pass, n_samples, dropout_frac * 100)
-
-    if dropout_frac > args.dropout_max:
-        warnings.warn(
-            f"dropout rate ({dropout_frac:.1%}) is higher than --dropout-max ({args.dropout_max:.1%}). "
-            "You might want to lower the threshold or remove low-depth samples manually."
-        )
-
-    # step 3: rarefaction curves
-    log.info("Step 3/5: computing rarefaction curves...")
-    curve_df = compute_curves(asv, lib_sizes, pass_mask, args.step, args.iterations)
-
-    # step 4: plots
     if HAS_PLOT:
-        log.info("Step 4/5: generating plots...")
-        plot_curves(curve_df, threshold, out_dir)
-        plot_libsize(lib_sizes, pass_mask, threshold, out_dir)
-    else:
-        log.info("Step 4/5: skipping plots (matplotlib not available)")
+        plot_rarefaction_curves(curve_df, result["pass_mask"], plateau_depths, result["threshold"], out_dir)
+        plot_plateau_distribution(result, out_dir)
+        if not diversity_df.empty:
+            plot_module1_diversity(diversity_df, result["pass_mask"], result["threshold"], out_dir)
 
-    # compute per-sample coverage at the chosen threshold
-    rng = np.random.seed(18)
-    coverages = []
-    
-    for i, (_, row) in enumerate(asv.iterrows()):
-        counts = row.values
-        if lib_sizes[i] >= threshold:
-            rarefied = rarefy_once(counts, threshold, rng)
-            cov = goods_coverage(rarefied)
-            coverages.append(cov)
-        else:
-            coverages.append(float("nan"))  # can't rarefy below threshold
+    (out_dir / "rarefaction_threshold.txt").write_text(str(result["threshold"]) + "\n")
+
+    keep = result["pass_mask"].index[result["pass_mask"]].tolist()
+    pd.DataFrame({"sample-id": keep}).to_csv(out_dir / "samples_to_keep.tsv", sep="\t", index=False)
 
     qc_df = pd.DataFrame({
-        "sample":           asv.index,
-        "lib_size":         lib_sizes,
-        "passes_threshold": pass_mask,
-        "coverage":         coverages,
+        "sample_id":     plateau_depths.index,
+        "plateau_depth": plateau_depths.values,
+        "passes":        result["pass_mask"].values,
     })
-
-    if HAS_PLOT:
-        plot_coverage(qc_df, threshold, out_dir)
-
-    # step 5: save outputs
-    log.info("Step 5/5: writing outputs to %s", out_dir)
     
-    (out_dir / "rarefaction_threshold.txt").write_text(str(threshold) + "\n")
+    if not diversity_df.empty:
+        for col in ["observed_features", "shannon", "faith_pd", "simpson"]:
+            if col in diversity_df.columns:
+                qc_df = qc_df.merge(diversity_df[[col]].rename_axis("sample_id").reset_index(),on="sample_id", how="left")
     qc_df.to_csv(out_dir / "sample_qc.tsv", sep="\t", index=False)
-    curve_df.to_csv(out_dir / "rarefaction_curves.tsv", sep="\t", index=False)
 
-    # summary json for downstream tools
     summary = {
-        "date":            datetime.now().isoformat(),
-        "input":           args.input,
-        "method":          args.method,
-        "n_samples":       n_samples,
-        "lib_size_min":    int(lib_sizes.min()),
-        "lib_size_max":    int(lib_sizes.max()),
-        "lib_size_median": int(np.median(lib_sizes)),
-        "threshold":       threshold,
-        "n_retained":      n_pass,
-        "n_dropped":       n_fail,
-        "dropout_frac":    round(dropout_frac, 4),
+        "date": datetime.now().isoformat(),
+        "method": args.method,
+        "curve_metric": args.metric,
+        "threshold": result["threshold"],
+        "n_total": len(plateau_depths),
+        "n_retained": result["n_pass"],
+        "n_dropped": result["n_fail"],
+        "n_too_shallow": result["n_nan"],
+        "dropout_frac": round(result["dropout_frac"], 4),
     }
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n")
 
-    # print a text report
-    report_lines = [
-        "=== Rarefaction threshold selection report ===",
-        f"Date        : {summary['date']}",
-        f"Input file  : {args.input}",
-        f"Method      : {args.method}",
+    report = [
+        "=== Rarefaction threshold selection ===",
+        f"Date      : {summary['date']}",
+        f"Method    : {args.method}",
+        f"Metric    : {args.metric}",
+        f"Threshold : {result['threshold']:,} reads",
+        f"Total     : {len(plateau_depths)} samples",
+        f"Retained  : {result['n_pass']}",
+        f"Excluded  : {result['n_fail']} ({result['dropout_frac']:.1%})",
+        f"  too shallow: {result['n_nan']}",
         "",
-        "--- Library size summary ---",
-        f"  Samples   : {n_samples}",
-        f"  Min       : {lib_sizes.min():,}",
-        f"  Max       : {lib_sizes.max():,}",
-        f"  Mean      : {int(lib_sizes.mean()):,}",
-        f"  Median    : {int(np.median(lib_sizes)):,}",
-        f"  10th pct  : {int(np.percentile(lib_sizes, 10)):,}",
-        "",
-        "--- Selected threshold ---",
-        f"  Threshold : {threshold:,} reads",
-        f"  Retained  : {n_pass} / {n_samples} samples",
-        f"  Dropped   : {n_fail} samples ({dropout_frac:.1%})",
-        "",
-        "--- Output files ---",
-        "  rarefaction_threshold.txt",
-        "  sample_qc.tsv",
+        "Output files:",
+        "  rarefaction_threshold.txt          -- use this in qiime feature-table rarefy",
+        "  samples_to_keep.tsv                -- sample list for qiime filter-samples",
+        "  sample_qc.tsv                      -- per-sample plateau depth + pass/fail",
         "  summary.json",
-        "  rarefaction_curves.tsv",
-        "  rarefaction_curves.pdf          (if matplotlib available)",
-        "  library_size_distribution.pdf",
-        "  coverage_at_threshold.pdf",
+        "  rarefaction_curves.pdf",
+        "  plateau_depth_distribution.pdf",
+        "  module1_diversity_by_retention.pdf",
     ]
-    report_text = "\n".join(report_lines)
-    (out_dir / "report.txt").write_text(report_text + "\n")
-    print(report_text)
+    (out_dir / "report.txt").write_text("\n".join(report) + "\n")
+    print("\n".join(report))
 
-    log.info("done!")
+    log.info("Done. Output in: %s", out_dir)
 
 
 if __name__ == "__main__":
     main()
-    # qiime2 filter for 3rd part
-    # use alpha diversity from module to make curves 
