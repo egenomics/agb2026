@@ -63,6 +63,8 @@ Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communi
 > used in this study. A result of 0% for this species is expected and does not indicate
 > pipeline failure (confirmed in the original paper).
 
+For download instructions see the [project wiki](https://github.com/egenomics/agb2026/wiki/Group-C-Datasets).
+
 ---
 ### Validation Workflow
 
