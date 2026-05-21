@@ -122,7 +122,7 @@ docker build -t ghcr.io/egenomics/microsee-report:latest \
 
 ## CI
 
-[`test.yml`](.github/workflows/test.yml): ruff · mypy · pytest (3.10–3.12) · CLI integration · Nextflow smoke  
+[`test.yml`](.github/workflows/test.yml): ruff · mypy · pytest (3.11–3.12) · CLI integration · Nextflow smoke  
 [`docker-report.yml`](.github/workflows/docker-report.yml): build/push `ghcr.io/egenomics/microsee-report:latest` on `main`
 
 ---
