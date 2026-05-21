@@ -319,6 +319,14 @@ def render_patient_html(
 # ── Cohort report ─────────────────────────────────────────────────────────────
 
 
+def _build_patient_nav_html(patient_nav: list[dict[str, str]]) -> str:
+    """Build sidebar patient navigation links for --mode all."""
+    if not patient_nav:
+        return ""
+    links = "\n".join(f'  <a href="{p["href"]}">{p["label"]}</a>' for p in patient_nav)
+    return f'<div class="nav-group-label">Patients</div>\n{links}\n'
+
+
 def render_html(chart_data: dict[str, Any]) -> str:
     """Render the main cohort HTML report by filling placeholders in template.html."""
     has_clinical = chart_data["meta"]["has_clinical"]
@@ -371,6 +379,10 @@ def render_html(chart_data: dict[str, Any]) -> str:
         f'<button class="ctrl-btn grp-btn" data-grp="{bg}">{bg}</button>' for bg in base_groups
     )
 
+    patient_nav_html = ""
+    if meta.get("mode") == "all":
+        patient_nav_html = _build_patient_nav_html(meta.get("patient_nav", []))
+
     html = _get_template()
     for placeholder, value in [
         ("__FONT__", THEME["font"]),
@@ -390,6 +402,7 @@ def render_html(chart_data: dict[str, Any]) -> str:
         ("__LAYOUT_JSON__", json.dumps(BASE_LAYOUT, allow_nan=False)),
         ("__CONFIG_JSON__", json.dumps(BASE_CONFIG, allow_nan=False)),
         ("__INSIGHTS_JSON__", json.dumps(chart_data.get("insights", {}), allow_nan=False)),
+        ("__PATIENT_NAV__", patient_nav_html),
         ("__PLOTLY_SCRIPT__", _get_plotly_js()),
     ]:
         html = html.replace(placeholder, value)

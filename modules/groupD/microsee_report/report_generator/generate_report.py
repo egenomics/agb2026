@@ -153,6 +153,17 @@ def main() -> None:
     if args.mode in ("cohort", "all"):
         log.info("Computing chart data...")
         chart_data = compute_chart_data(result, distance_matrix=distance_matrix)
+        chart_data["meta"]["mode"] = args.mode
+        if args.mode == "all":
+            stem = out.stem
+            suffix = out.suffix or ".html"
+            chart_data["meta"]["patient_nav"] = [
+                {
+                    "label": pid,
+                    "href": f"{stem}_{pid.replace('/', '_').replace(' ', '_')}{suffix}",
+                }
+                for pid in sorted({r.patient for r in result.rows})
+            ]
 
         log.info("Rendering HTML...")
         try:
