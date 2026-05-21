@@ -29,6 +29,12 @@ table{width:100%;border-collapse:collapse;font-size:12px}
 th{text-align:left;padding:4px 8px;font-size:10px;color:#8B5860;text-transform:uppercase;
    letter-spacing:.04em;border-bottom:2px solid rgba(196,160,140,.2)}
 td{padding:4px 8px;border-bottom:1px solid rgba(196,160,140,.08)}
+.report-footer{margin-top:40px;padding:16px 0;border-top:1px solid rgba(196,160,140,.2);
+  font-size:11px;color:#8B5860;line-height:1.7}
+.footer-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+.footer-brand{font-weight:700;color:#3E1A0E}
+.footer-sep{color:rgba(196,160,140,.5)}
+.footer-deps{color:#8B5860;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -118,5 +124,6 @@ __INSIGHTS_HTML__
   __CLINICAL_JS__
 })();
 </script>
+__PROVENANCE_FOOTER__
 </body>
 </html>

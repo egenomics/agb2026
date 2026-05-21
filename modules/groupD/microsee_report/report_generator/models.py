@@ -4,15 +4,6 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
-# ── Raw upload payloads ───────────────────────────────────────────────────────
-
-
-class TSVUpload(BaseModel):
-    """A raw TSV file sent from the browser as a string."""
-
-    content: str = Field(..., description="Full TSV file content as UTF-8 string")
-
-
 # ── Parsed data shapes ────────────────────────────────────────────────────────
 
 
@@ -128,15 +119,3 @@ class IntegrateResult(BaseModel):
     groups: list[str]
     has_clinical: bool
     warnings: list[str] = Field(default_factory=list)
-
-
-# ── Validation errors ─────────────────────────────────────────────────────────
-
-
-class ParseError(BaseModel):
-    """Structured error returned when a parse fails."""
-
-    file_type: str
-    message: str
-    line: int | None = None
-    hint: str | None = None

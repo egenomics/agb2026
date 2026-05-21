@@ -6,13 +6,17 @@ The report_generator/ code is NOT baked in — it is staged from the Nextflow wo
       org.opencontainers.image.source="https://github.com/agb2026/agb2026"
 
 # Pin exact versions for reproducible builds.
+# Keep in sync with pyproject.toml dependencies and environment.yml.
 # Regenerate: docker run --rm <this-image> pip freeze
 RUN pip install --no-cache-dir \
     "pandas==2.3.3" \
-    "numpy==2.4.1" \
+    "numpy==2.4.6" \
     "pydantic==2.13.4"
 
 # Smoke-test that all imports work before pushing the image.
 RUN python -c "import pandas, numpy, pydantic; print('deps ok')"
 
 WORKDIR /work
+
+# Run as non-root for HPC/Kubernetes compatibility.
+USER nobody

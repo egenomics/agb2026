@@ -132,13 +132,21 @@ section{margin-bottom:40px;scroll-margin-top:16px}
 }
 /* Misc */
 .warning{background:#fff3cd;border:1px solid #ffc107;border-radius:6px;
-  padding:8px 12px;margin-bottom:8px;font-size:12px}
+  padding:8px 12px;margin-bottom:8px;font-size:12px;display:flex;gap:8px;align-items:flex-start}
+.warning::before{content:"⚠";flex-shrink:0;font-size:14px;line-height:1.3}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th{text-align:left;padding:8px 12px;background:__BG__;color:__TEXT2__;
   font-size:11px;text-transform:uppercase;letter-spacing:.05em;
   border-bottom:2px solid rgba(196,160,140,.2)}
 td{padding:8px 12px;border-bottom:1px solid rgba(196,160,140,.1)}
 tr:last-child td{border-bottom:none}
+/* Provenance footer */
+.report-footer{margin-top:40px;padding:16px 24px;border-top:1px solid rgba(196,160,140,.2);
+  font-size:11px;color:#8B5860;line-height:1.7}
+.footer-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:4px}
+.footer-brand{font-weight:700;color:__TEXT__}
+.footer-sep{color:rgba(196,160,140,.5)}
+.footer-deps{color:#8B5860;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -467,6 +475,7 @@ __CLINICAL_SECTION__
   </div>
 </section>
 
+__PROVENANCE_FOOTER__
 </main>
 </div>
 

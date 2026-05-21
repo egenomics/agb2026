@@ -68,11 +68,25 @@ def integrate(
     # ── Step 2: relative abundance per sample ──
     families = list(family_counts.keys())
     rel_ab: dict[str, dict[str, float]] = {}
+    zero_count_samples: list[str] = []
 
     for sample_id in feature_table.samples:
         totals = {fam: family_counts[fam].get(sample_id, 0.0) for fam in families}
-        total = sum(totals.values()) or 1.0
-        rel_ab[sample_id] = {fam: round(cnt / total * 100, 3) for fam, cnt in totals.items()}
+        total = sum(totals.values())
+        if total == 0:
+            zero_count_samples.append(sample_id)
+        rel_ab[sample_id] = {
+            fam: round(cnt / (total or 1.0) * 100, 3) for fam, cnt in totals.items()
+        }
+
+    if zero_count_samples:
+        warnings.append(
+            f"{len(zero_count_samples)} sample(s) have zero classified reads "
+            f"(all features unclassified or empty): "
+            f"{zero_count_samples[:5]}{'...' if len(zero_count_samples) > 5 else ''}. "
+            "Relative abundances for these samples are set to uniform (1/n_taxa) "
+            "and their diversity metrics will be unreliable."
+        )
 
     # ── Step 3: build lookups ──
     alpha_lookup: dict[str, AlphaDiversityEntry] = (
@@ -100,11 +114,10 @@ def integrate(
         ab = rel_ab.get(sample_id, {})
         alph = alpha_lookup.get(sample_id)
 
-        # Compute Shannon/Simpson if not in alpha file.
-        # WARNING: fallback computes from family-level relative abundances, which
-        # collapses ASV-level variation and systematically underestimates diversity.
-        # Pass --alpha with the QIIME2 alpha-diversity export to get accurate values.
-        if alph and alph.shannon > 0:
+        # Use provided alpha values when available — even genuine zeros are valid data.
+        # Fallback computes from family-level relative abundances, which collapses
+        # ASV-level variation and systematically underestimates diversity.
+        if alph is not None:
             shannon = alph.shannon
             simpson = alph.simpson
         else:

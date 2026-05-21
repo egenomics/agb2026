@@ -21,15 +21,19 @@ pip install -e "modules/groupD/microsee_report[dev]"
 ## Usage
 
 ```bash
+microsee-report --version
+
 microsee-report \
     --feature-table feature-table.tsv \
     --taxonomy      taxonomy.tsv      \
     --metadata      metadata.tsv      \
     [--alpha        alpha-diversity.tsv] \
+    [--distance-matrix distance-matrix.tsv] \
+    [--mode         cohort|patient|all] \
     [--output       microsee_report.html]
 ```
 
-`--alpha` is optional but unlocks Faith PD and more precise Pielou J′. Open the output file in any browser.
+`--alpha` is optional but unlocks Faith PD and more precise Pielou J′. `--mode all` generates the cohort report plus one HTML per patient. Open the output file in any browser.
 
 ---
 
@@ -57,7 +61,8 @@ microsee-report \
 | `charts/preprocessing.py` | Shared row helpers: `get_patient_timepoints`, `sorted_timepoints`, `get_base_groups`, `filter_rows` |
 | `charts/metrics.py` | `METRIC_LABELS` dict, `metric_value()`, `pielou_evenness()` — extracted to break circular import |
 | `charts/stats_helpers.py` | Pure stat functions: Wilcoxon, Mann-Whitney, Welch t, Pearson r, Spearman ρ, BH-FDR |
-| `charts/insights.py` | Dynamic text summaries generated from chart payloads (extracted from renderer) |
+| `charts/insights.py` | Dynamic text summaries generated from chart payloads (section banners) |
+| `charts/insights_charts.py` | Per-chart ℹ explanations (what/finding/pills) shown in the info panels |
 | `charts/renderer.py` | Fills HTML templates — cohort report (`template.html`) and per-patient report (`patient_template.html`) |
 | `charts/template.html` | HTML/CSS/JS report shell — all controls, Plotly rendering, smooth scroll |
 | `charts/patient_template.html` | Per-patient HTML report shell — stability score, radar, composition, clinical charts |

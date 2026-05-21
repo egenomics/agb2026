@@ -212,6 +212,7 @@ def render_patient_html(
     result: Any,
     *,
     radar_profiles: dict[str, Any] | None = None,
+    provenance: dict[str, Any] | None = None,
 ) -> str:
     """Generate a self-contained per-patient HTML report.
 
@@ -308,6 +309,7 @@ def render_patient_html(
         ("__FONT__", THEME["font"]),
         ("__BG__", THEME["bg"]),
         ("__TEXT__", THEME["text"]),
+        ("__PROVENANCE_FOOTER__", _build_provenance_footer_html(provenance)),
         ("__PLOTLY_SCRIPT__", _get_plotly_js()),
     ]
     html = _get_patient_template()
@@ -325,6 +327,57 @@ def _build_patient_nav_html(patient_nav: list[dict[str, str]]) -> str:
         return ""
     links = "\n".join(f'  <a href="{p["href"]}">{p["label"]}</a>' for p in patient_nav)
     return f'<div class="nav-group-label">Patients</div>\n{links}\n'
+
+
+def _build_provenance_footer_html(provenance: dict[str, Any] | None) -> str:
+    """Build a compact provenance footer block from the metadata dict."""
+    if not provenance:
+        return ""
+    ts = provenance.get("generated_at", "")
+    ver = provenance.get("version", "")
+    git = provenance.get("git_commit", "")
+    py = provenance.get("python_version", "")
+    plat = provenance.get("platform", "")
+    deps = provenance.get("dependencies", {})
+    dep_str = " · ".join(f"{k} {v}" for k, v in deps.items()) if deps else ""
+    files = provenance.get("input_files", {})
+    file_rows = ""
+    for label, info in files.items():
+        if not info:
+            continue
+        sha = info.get("sha256", "")[:12]
+        path = info.get("path", "")
+        file_rows += (
+            f'<tr><td style="color:#8B5860;white-space:nowrap">{label.replace("_"," ")}</td>'
+            f'<td style="font-family:monospace;font-size:10px;color:#6B3A2A">{sha}…</td>'
+            f'<td style="color:#8B5860;word-break:break-all;font-size:10px">{path}</td></tr>'
+        )
+    files_html = (
+        f'<table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px">'
+        f"<thead><tr>"
+        f'<th style="text-align:left;color:#8B5860;padding:2px 8px 2px 0;font-weight:600">Input</th>'
+        f'<th style="text-align:left;color:#8B5860;padding:2px 8px;font-weight:600">SHA-256 (12 chars)</th>'
+        f'<th style="text-align:left;color:#8B5860;padding:2px 0;font-weight:600">Path</th>'
+        f"</tr></thead><tbody>{file_rows}</tbody></table>"
+        if file_rows
+        else ""
+    )
+    git_str = f" · git {git}" if git and git != "unknown" else ""
+    return (
+        f'<footer class="report-footer">'
+        f'<div class="footer-row">'
+        f'<span class="footer-brand">MicroSee {ver}</span>'
+        f'<span class="footer-sep">·</span>'
+        f'<span>Generated {ts}</span>'
+        f'<span class="footer-sep">·</span>'
+        f'<span>Python {py}{git_str}</span>'
+        f'<span class="footer-sep">·</span>'
+        f'<span>{plat}</span>'
+        f"</div>"
+        f'<div class="footer-deps">{dep_str}</div>'
+        f"{files_html}"
+        f"</footer>"
+    )
 
 
 def render_html(chart_data: dict[str, Any]) -> str:
@@ -383,6 +436,8 @@ def render_html(chart_data: dict[str, Any]) -> str:
     if meta.get("mode") == "all":
         patient_nav_html = _build_patient_nav_html(meta.get("patient_nav", []))
 
+    provenance_footer = _build_provenance_footer_html(meta.get("provenance"))
+
     html = _get_template()
     for placeholder, value in [
         ("__FONT__", THEME["font"]),
@@ -403,6 +458,7 @@ def render_html(chart_data: dict[str, Any]) -> str:
         ("__CONFIG_JSON__", json.dumps(BASE_CONFIG, allow_nan=False)),
         ("__INSIGHTS_JSON__", json.dumps(chart_data.get("insights", {}), allow_nan=False)),
         ("__PATIENT_NAV__", patient_nav_html),
+        ("__PROVENANCE_FOOTER__", provenance_footer),
         ("__PLOTLY_SCRIPT__", _get_plotly_js()),
     ]:
         html = html.replace(placeholder, value)

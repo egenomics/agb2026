@@ -8,6 +8,7 @@ from typing import Any
 import numpy as np
 
 from .distances import rows_to_ab
+from .preprocessing import get_base_groups
 from .stats_helpers import bh_fdr, welch_ttest_p, wilcoxon_p
 from .utils import base_group_color, hex_rgba
 
@@ -16,10 +17,6 @@ _FDR_THRESH = 0.1
 _PSEUDO = 0.1
 _CLR_PSEUDO = 0.01
 _MIN_SAMPLES = 2
-
-
-def _base_groups(rows: list[dict[str, Any]]) -> list[str]:
-    return sorted({r.get("base_group", r["group"]) for r in rows})
 
 
 def _clr(row: dict[str, Any], taxa: list[str]) -> dict[str, float]:
@@ -41,7 +38,7 @@ def _ancom_color(diff: float, q: float, c: str) -> str:
 def build_diff_abundance(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Log2 fold change per taxon: T84 vs T0 within each base group."""
     traces: list[dict[str, Any]] = []
-    for bg in _base_groups(rows):
+    for bg in get_base_groups(rows):
         t0_rows = [
             r for r in rows if r.get("base_group", r["group"]) == bg and r.get("timepoint") == "T0"
         ]
@@ -79,7 +76,7 @@ def build_diff_abundance(rows: list[dict[str, Any]], taxa: list[str]) -> list[di
 
 def build_volcano(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[str, Any]]:
     """Volcano: log2FC vs -log10(p); points coloured by BH-FDR q < 0.1."""
-    bgs = _base_groups(rows)
+    bgs = get_base_groups(rows)
     traces: list[dict[str, Any]] = []
     for bg in bgs:
         t0_rows = [
@@ -140,7 +137,7 @@ def build_ancom_style(rows: list[dict[str, Any]], taxa: list[str]) -> list[dict[
     abundance - equivalent in spirit to ANCOM/ANCOM-BC without the bias correction
     step.  Results displayed as an effect-size bar (CLR mean diff) coloured by FDR.
     """
-    bgs = _base_groups(rows)
+    bgs = get_base_groups(rows)
     traces: list[dict[str, Any]] = []
 
     for bg in bgs:

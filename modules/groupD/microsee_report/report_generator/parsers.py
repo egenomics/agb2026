@@ -107,6 +107,19 @@ def parse_feature_table(content: str) -> FeatureTableResult:
         raise ValueError("Feature table is empty.")
 
     content_clean = "\n".join(lines)
+
+    # Check for duplicate sample IDs in the raw header *before* pandas sees it,
+    # because pandas silently renames duplicates (S1 → S1, S1.1) which would
+    # mask the problem and produce incorrect abundance calculations.
+    raw_header_cols = lines[0].split("\t")[1:]  # skip the #OTU-ID / feature-id column
+    seen_raw: set[str] = set()
+    dups_raw = [c for c in raw_header_cols if c in seen_raw or seen_raw.add(c)]  # type: ignore[func-returns-value]
+    if dups_raw:
+        raise ValueError(
+            f"Feature table contains duplicate sample IDs: {dups_raw[:5]}"
+            f"{'...' if len(dups_raw) > 5 else ''}"
+        )
+
     try:
         df = pd.read_csv(io.StringIO(content_clean), sep="\t", index_col=0)
     except Exception as exc:
@@ -126,6 +139,7 @@ def parse_feature_table(content: str) -> FeatureTableResult:
 
     features: list[str] = [str(f) for f in df.index]
     samples: list[str] = [str(s) for s in df.columns]
+
     counts: dict[str, dict[str, float]] = {
         feat: {samp: float(str(df.at[feat, samp])) for samp in samples} for feat in features
     }
@@ -261,6 +275,15 @@ def parse_metadata(content: str) -> MetadataResult:
     mwt_col = _find_column(df, [r"6mwt", r"sixmwt", r"walk"])
     il18_col = _find_column(df, [r"il.?18", r"interleukin"])
 
+    raw_sids = [str(row[sid_col]).strip() for _, row in df.iterrows() if str(row[sid_col]).strip()]
+    seen_sids: set[str] = set()
+    dup_sids = [s for s in raw_sids if s in seen_sids or seen_sids.add(s)]  # type: ignore[func-returns-value]
+    if dup_sids:
+        raise ValueError(
+            f"Metadata file contains duplicate sample IDs: {dup_sids[:5]}"
+            f"{'...' if len(dup_sids) > 5 else ''}"
+        )
+
     samples: list[SampleMetadata] = []
 
     for _, row in df.iterrows():
@@ -304,6 +327,18 @@ def parse_metadata(content: str) -> MetadataResult:
 
     if not samples:
         raise ValueError("Metadata file has no valid sample rows.")
+
+    # Warn when timepoints are present in the file but none can be parsed to days.
+    # This causes all longitudinal charts to produce no data silently.
+    samples_with_tp = [s for s in samples if s.timepoint]
+    if samples_with_tp and all(s.time is None for s in samples_with_tp):
+        unique_tps = sorted({s.timepoint for s in samples_with_tp})[:5]
+        logger.warning(
+            "No timepoints could be parsed as numeric days — longitudinal charts "
+            "will be empty. Found timepoint values: %s. "
+            "Supported formats: T0, T84, Week12, baseline, 0, 84.",
+            unique_tps,
+        )
 
     has_clinical = any(s.sixmwt > 0 or s.il18 > 0 for s in samples)
     groups = sorted(set(s.group for s in samples))

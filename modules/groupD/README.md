@@ -16,6 +16,7 @@ modules/groupD/
 └── microsee_report/
     ├── pyproject.toml              ← Python package (pip install -e .)
     ├── environment.yml             ← Conda environment definition
+    ├── CHANGELOG.md                ← Version history
     ├── main.nf                     ← Nextflow process (MICROSEE_REPORT)
     ├── tests/
     │   ├── data/                       ← Fixture TSVs (12 patients × 2 timepoints = 24 samples)
@@ -29,7 +30,8 @@ modules/groupD/
     │   ├── test_preprocessing.py       ← Unit tests for row helpers (get_patient_timepoints, …)
     │   ├── test_distances.py           ← Unit tests for Bray-Curtis, Jaccard, PCoA, clustering
     │   ├── test_stats_helpers.py       ← Unit tests for Wilcoxon, MW, Welch t, Spearman, BH-FDR
-    │   └── test_cli_integration.py     ← End-to-end CLI smoke tests (marked `integration`)
+    │   ├── test_end_to_end.py          ← End-to-end pipeline, reproducibility, and scientific invariant tests
+    │   └── test_cli_integration.py     ← Full CLI smoke tests (marked `integration`)
     └── report_generator/               ← Python report engine
         ├── __init__.py
         ├── py.typed                    ← PEP 561 marker (typed package)
@@ -69,6 +71,9 @@ modules/groupD/
 ```bash
 # 1. Install once (from repo root)
 pip install -e "modules/groupD/microsee_report"
+
+# Check version
+microsee-report --version
 
 # 2. Generate a report using the bundled fixture data
 #    Note: the fixture metadata includes sixmwt and il18 columns, so the
@@ -234,14 +239,29 @@ nextflow run workflows/groupD.nf -profile slurm,conda \
 # Install with test extras
 pip install -e "modules/groupD/microsee_report[dev]"
 
-# Fast unit tests (default)
+# Fast unit tests — 140 tests, ~1 s (default)
 pytest modules/groupD/microsee_report/tests/ -v
 
-# Slow CLI / full HTML generation
+# Include slow CLI / full HTML generation tests
 pytest modules/groupD/microsee_report/tests/ -v -m integration
 ```
 
-Tests cover inline string fixtures and the realistic 12-patient (24-sample) fixture TSV files.
+140 tests across 7 files: parsers, chart builders, distance metrics, statistical helpers, preprocessing, end-to-end pipeline (reproducibility + scientific invariants), and full CLI smoke tests.
+
+---
+
+## Reproducibility
+
+Every generated report embeds a provenance footer at the bottom of the page with:
+
+- **Timestamp** — exact UTC date/time the report was generated
+- **Software version** — `microsee-report` version number
+- **Git commit hash** — which exact code was used
+- **Python version and platform** — full OS/architecture string
+- **Dependency versions** — pandas, numpy, pydantic
+- **Input file SHA-256 hashes** — 12-character prefix of each input file's hash, so you can always verify which data produced a report
+
+This means any figure taken from a MicroSee report is fully traceable back to the exact inputs, code, and environment that produced it.
 
 ---
 
@@ -270,7 +290,7 @@ git add modules/groupD/microsee_report/report_generator/charts/plotly.min.js
 git commit -m "Bundle Plotly.js v2.35.2 for offline HPC use"
 ```
 
-The generator will attempt a one-time auto-download if the file is missing, but this fails on most HPC nodes. If you see `RuntimeWarning: charts/plotly.min.js not found`, run the commands above.
+The generator will **not** attempt to download it — it immediately exits with a `FileNotFoundError` and prints the exact `curl` command to use. This is intentional: HPC nodes usually have no internet access, so a silent download attempt would hang or fail without a clear error message.
 
 ---
 

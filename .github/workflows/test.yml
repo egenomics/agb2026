@@ -73,7 +73,15 @@ jobs:
         run: pip install -e ".[dev]"
 
       - name: Run unit tests (integration excluded)
-        run: pytest tests/ -v --tb=short
+        run: pytest tests/ -v --tb=short --cov=report_generator --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: modules/groupD/microsee_report/coverage.xml
+          retention-days: 7
 
   integration:
     name: Integration (HTML + CLI smoke)
@@ -103,8 +111,18 @@ jobs:
   nextflow:
     name: Nextflow smoke (test,conda)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}   # conda-incubator/setup-miniconda requires login shell
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          auto-activate-base: true
+          activate-environment: ""
 
       - uses: actions/setup-java@v4
         with:
