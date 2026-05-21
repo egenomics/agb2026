@@ -23,14 +23,47 @@ analytical conditions.
 
 ### Validation Datasets
 
-We use one or more of the following:
+#### Primary Dataset — BEI Mock Communities (PRJEB10949)
 
-- Synthetic/mock microbial community datasets
-- Benchmark datasets from published studies
-- Real datasets with known expected taxonomic composition
+**Source:** Lluch et al. 2015, *PLoS ONE*  
+**DOI:** https://doi.org/10.1371/journal.pone.0142334  
+**ENA accession:** [PRJEB10949](https://www.ebi.ac.uk/ena/browser/view/PRJEB10949)
 
-These datasets provide a ground truth reference for validation.
+Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communities
+(even and staggered) and water-only negative controls. Selected on instructor recommendation.
 
+**Why this dataset:**
+- Known ground truth composition (20 bacterial species, concentrations documented in
+  Supplementary Table S1 of the paper)
+- Even community tests baseline detection accuracy (all species at 5%)
+- Staggered community tests performance under realistic abundance imbalance (0.03%–27.3%)
+- Negative controls (H2O blanks) enable contamination filtering validation
+
+**Runs selected:**
+
+| Run accession | Sample type | Read count | Purpose |
+|---|---|---|---|
+| ERR1049996 | BEI even mock — rep 1 | ~145,000 | Benchmarking |
+| ERR1049997 | BEI even mock — rep 2 | ~151,000 | Benchmarking |
+| ERR1049998 | BEI even mock — rep 3 | ~167,000 | Benchmarking |
+| ERR1049999 | BEI staggered mock — rep 1 | ~163,000 | Adversarial test |
+| ERR1050000 | BEI staggered mock — rep 2 | ~157,000 | Adversarial test |
+| ERR1050001 | BEI staggered mock — rep 3 | ~146,000 | Adversarial test |
+| ERR1049992 | H2O negative control 1 | ~156,000 | Contamination filtering |
+| ERR1049993 | H2O negative control 2 | ~169,000 | Contamination filtering |
+| ERR1049994 | H2O negative control 3 | ~153,000 | Contamination filtering |
+| ERR1049995 | H2O negative control 4 | ~127,000 | Contamination filtering |
+| ERR1049938 | H2O negative control 5 | ~8,500 | Contamination + low-depth stress test |
+| ERR1049939 | H2O negative control 6 | ~17,000 | Contamination + low-depth stress test |
+| ERR1049940 | H2O negative control 7 | ~17,000 | Contamination + low-depth stress test |
+
+**Ground truth file:** `data/ground_truth/ground_truth_PRJEB10949.tsv`
+
+> **Known limitation:** *Deinococcus radiodurans* cannot be amplified by the primers
+> used in this study. A result of 0% for this species is expected and does not indicate
+> pipeline failure (confirmed in the original paper).
+
+---
 ### Validation Workflow
 
 #### Step 1 — Pipeline Execution
