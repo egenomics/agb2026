@@ -462,14 +462,15 @@ class TestHTMLOutput:
             {"label": "Pat2", "href": "report_Pat2.html"},
         ]
         html = render_html(cd)
-        assert "nav-group-label" in html, "Patient nav group label not injected"
+        # CSS always has `.nav-group-label{...}`; check the injected HTML element instead
+        assert '<div class="nav-group-label">' in html, "Patient nav element not injected"
         assert "Pat1" in html
         assert "Pat2" in html
 
     def test_patient_nav_absent_when_mode_cohort(self, e2e_chart_data):
         html = render_html(e2e_chart_data)
-        assert "nav-group-label" not in html, (
-            "Patient nav should not appear in cohort-mode HTML"
+        assert '<div class="nav-group-label">' not in html, (
+            "Patient nav element should not appear in cohort-mode HTML"
         )
 
     def test_cohort_html_data_json_is_valid(self, e2e_chart_data):
