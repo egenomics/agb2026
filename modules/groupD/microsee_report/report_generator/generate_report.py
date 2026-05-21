@@ -48,6 +48,7 @@ def _get_version() -> str:
     if _VERSION is None:
         try:
             from importlib.metadata import version
+
             _VERSION = version("microsee-report")
         except Exception:
             _VERSION = "unknown"
@@ -97,9 +98,7 @@ def parse_args() -> argparse.Namespace:
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=_EPILOG,
     )
-    p.add_argument(
-        "--version", action="version", version=f"microsee-report {_get_version()}"
-    )
+    p.add_argument("--version", action="version", version=f"microsee-report {_get_version()}")
     p.add_argument(
         "--feature-table",
         required=True,
@@ -184,8 +183,7 @@ def _read_file(path: str, label: str) -> str:
     p = Path(path)
     if not p.exists():
         raise InputError(
-            f"{label} file not found: {path}\n"
-            f"  Tip: check the path is correct and the file exists."
+            f"{label} file not found: {path}\n  Tip: check the path is correct and the file exists."
         )
     try:
         # utf-8-sig strips the UTF-8 BOM that Excel and some Windows tools prepend.
@@ -348,8 +346,7 @@ def main() -> None:
         )
     elif result.n_samples > 200:
         log.warning(
-            "Large cohort: %d samples detected. "
-            "Output HTML may exceed 10 MB.",
+            "Large cohort: %d samples detected. Output HTML may exceed 10 MB.",
             result.n_samples,
         )
 

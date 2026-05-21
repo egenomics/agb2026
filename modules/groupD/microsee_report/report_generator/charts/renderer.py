@@ -348,7 +348,7 @@ def _build_provenance_footer_html(provenance: dict[str, Any] | None) -> str:
         sha = info.get("sha256", "")[:12]
         path = info.get("path", "")
         file_rows += (
-            f'<tr><td style="color:#8B5860;white-space:nowrap">{label.replace("_"," ")}</td>'
+            f'<tr><td style="color:#8B5860;white-space:nowrap">{label.replace("_", " ")}</td>'
             f'<td style="font-family:monospace;font-size:10px;color:#6B3A2A">{sha}…</td>'
             f'<td style="color:#8B5860;word-break:break-all;font-size:10px">{path}</td></tr>'
         )
@@ -368,11 +368,11 @@ def _build_provenance_footer_html(provenance: dict[str, Any] | None) -> str:
         f'<div class="footer-row">'
         f'<span class="footer-brand">MicroSee {ver}</span>'
         f'<span class="footer-sep">·</span>'
-        f'<span>Generated {ts}</span>'
+        f"<span>Generated {ts}</span>"
         f'<span class="footer-sep">·</span>'
-        f'<span>Python {py}{git_str}</span>'
+        f"<span>Python {py}{git_str}</span>"
         f'<span class="footer-sep">·</span>'
-        f'<span>{plat}</span>'
+        f"<span>{plat}</span>"
         f"</div>"
         f'<div class="footer-deps">{dep_str}</div>'
         f"{files_html}"

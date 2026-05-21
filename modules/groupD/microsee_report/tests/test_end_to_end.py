@@ -475,12 +475,14 @@ class TestHTMLOutput:
     def test_cohort_html_data_json_is_valid(self, e2e_chart_data):
         """The embedded __DATA_JSON__ must be valid JSON the browser can parse."""
         html = render_html(e2e_chart_data)
-        # Extract the inline data JSON from the rendered template
-        marker = "const D="
+        # Extract the inline data JSON: template injects `var D = <json>;` on its own line.
+        # Use newline as end delimiter — semicolons can appear inside JSON string values
+        # (file paths, platform strings) and would break semicolon-based extraction.
+        marker = "var D = "
         start = html.find(marker)
-        assert start != -1, "Could not find 'const D=' in rendered HTML"
-        end = html.find(";", start + len(marker))
-        data_str = html[start + len(marker) : end]
+        assert start != -1, f"Could not find '{marker}' in rendered HTML"
+        end = html.find("\n", start + len(marker))
+        data_str = html[start + len(marker) : end if end != -1 else None].rstrip(";").strip()
         try:
             json.loads(data_str)
         except json.JSONDecodeError as exc:
