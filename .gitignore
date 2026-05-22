@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # ── Python ────────────────────────────────────────────────────────────────────
 __pycache__/
 *.pyc
@@ -64,3 +65,8 @@ requirements-dev.txt
 # Run: curl -fsSL https://cdn.plot.ly/plotly-2.35.2.min.js \
 #      -o modules/groupD/microsee_report/report_generator/charts/plotly.min.js
 !report_generator/charts/plotly.min.js
+=======
+.DS_Store
+how_to_work*
+docs/images/*
+>>>>>>> Group_A/main
