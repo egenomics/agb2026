@@ -1,0 +1,11 @@
+{
+  "date": "2026-05-20T11:29:56.161159",
+  "method": "knee",
+  "curve_metric": "observed_features",
+  "threshold": 263,
+  "n_total": 31,
+  "n_retained": 20,
+  "n_dropped": 11,
+  "n_too_shallow": 0,
+  "dropout_frac": 0.3548
+}
