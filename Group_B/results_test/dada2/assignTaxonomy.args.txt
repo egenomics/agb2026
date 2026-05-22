@@ -1,0 +1,3 @@
+assignTaxonomy	
+taxlevels	c("Kingdom","Phylum","Class","Order","Family","Genus","Species")
+seed	100

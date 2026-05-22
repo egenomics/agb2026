@@ -1,0 +1,4 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	a6/4786ad	172031	GROUPB:FASTQC (test_sample)	COMPLETED	0	2026-05-19 14:00:55.105	11.3s	11s	22.7%	265.7 MB	6.1 GB	11.8 MB	3.4 MB
+2	31/95fa64	173058	GROUPB:DADA2_FILTNTRIM (test_sample)	FAILED	1	2026-05-19 14:01:21.040	10.4s	10.3s	-	-	-	-	-
+3	38/1ee813	173560	GROUPB:MULTIQC (alphaflow_qc)	COMPLETED	0	2026-05-19 14:01:29.317	10.6s	6.5s	60.5%	137 MB	2 GB	64 MB	5.1 MB

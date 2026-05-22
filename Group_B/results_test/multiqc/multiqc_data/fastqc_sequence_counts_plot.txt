@@ -1,0 +1,2 @@
+Sample	Unique Reads	Duplicate Reads
+test_sample	13299.0	289282.0

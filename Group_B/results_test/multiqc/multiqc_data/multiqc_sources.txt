@@ -1,0 +1,2 @@
+Module	Section	Sample Name	Source
+FastQC	all_sections	test_sample	/data/upfagb/u269315/agb2026/Group_B/work/f1/9c790939f8a5ae5e6f72421726b738/1/test_sample_fastqc.zip

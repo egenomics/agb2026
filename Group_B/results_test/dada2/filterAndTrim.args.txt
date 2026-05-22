@@ -1,0 +1,1 @@
+filterAndTrim	truncLen = 140,
