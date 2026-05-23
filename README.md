@@ -104,14 +104,36 @@ Quantitative metrics are computed to evaluate pipeline performance across two ca
 ### Contamination Filtering
 
 To reduce false-positive detections caused by laboratory or reagent contamination
-("kit-ome"), filtering procedures are applied using:
+("kit-ome"), filtering procedures are applied in two steps:
 
-- Negative controls
-- Blank samples
-- Known contaminant databases
+1. **Statistical filtering (decontam):** ASVs are flagged as contaminants if they are
+   significantly more prevalent in negative controls than in real samples, using the
+   prevalence method with a threshold of 0.1.
 
-This step improves the biological reliability of all downstream analyses.
+2. **Taxonomic filtering (Kraken2):** ASVs are flagged if they are classified as known
+   biological contaminants, currently *Homo sapiens* and *Thermus aquaticus*, based on
+   the available Kraken2 database.
 
+ASVs are not removed but annotated with a `Contamination_Flag` column:
+
+| Flag | Meaning |
+|---|---|
+| `Passed` | Not flagged by either method |
+| `Flagged_Kitome` | Flagged by decontam only |
+| `Flagged_Alien` | Flagged by Kraken2 only |
+| `Flagged_Both` | Flagged by both methods |
+
+#### Outputs
+
+| File | Description |
+|---|---|
+| `annotated_table_counts.tsv` | ASV count table with contamination flags |
+| `annotated_taxonomy.tsv` | Taxonomy table with contamination flags |
+| `contamination_summary.tsv` | Per-sample summary of flagged ASV counts and percentages |
+
+#### Module
+
+See `modules/module_contamination_filter/` for the Nextflow module and R script.
 ### Stress Testing
 
 Pipeline robustness is evaluated under varying conditions, including:
