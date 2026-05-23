@@ -244,9 +244,9 @@ def plot_rarefaction_curves(curve_df, pass_mask, plateau_depths, threshold, out_
     ax.set_title("Rarefaction curves (dot = per-sample plateau, dashed = global threshold)", fontsize=11)
     ax.xaxis.set_major_formatter(mticker.FuncFormatter(lambda x, _: f"{int(x):,}"))
     fig.tight_layout()
-    fig.savefig(out_dir / "rarefaction_curves.pdf", dpi=150)
+    fig.savefig(out_dir / "rarefaction_curves.png", dpi=150)
     plt.close(fig)
-    log.info("Saved rarefaction_curves.pdf")
+    log.info("Saved rarefaction_curves.png")
 
 
 def plot_plateau_distribution(result, out_dir):
@@ -297,9 +297,9 @@ def plot_plateau_distribution(result, out_dir):
         fontsize=11
     )
     fig.tight_layout()
-    fig.savefig(out_dir / "plateau_depth_distribution.pdf", dpi=150)
+    fig.savefig(out_dir / "plateau_depth_distribution.png", dpi=150)
     plt.close(fig)
-    log.info("Saved plateau_depth_distribution.pdf")
+    log.info("Saved plateau_depth_distribution.png")
 
 
 def plot_module1_diversity(diversity_df, pass_mask, threshold, out_dir):
@@ -342,9 +342,9 @@ def plot_module1_diversity(diversity_df, pass_mask, threshold, out_dir):
 
     fig.suptitle(f"Module 1 alpha diversity split by retention (threshold = {threshold:,} reads)", fontsize=11)
     fig.tight_layout()
-    fig.savefig(out_dir / "module1_diversity_by_retention.pdf", dpi=150)
+    fig.savefig(out_dir / "module1_diversity_by_retention.png", dpi=150)
     plt.close(fig)
-    log.info("Saved module1_diversity_by_retention.pdf")
+    log.info("Saved module1_diversity_by_retention.png")
 
 
 # main
@@ -438,9 +438,9 @@ def main():
         "  samples_to_keep.tsv                -- sample list for qiime filter-samples",
         "  sample_qc.tsv                      -- per-sample plateau depth + pass/fail",
         "  summary.json",
-        "  rarefaction_curves.pdf",
-        "  plateau_depth_distribution.pdf",
-        "  module1_diversity_by_retention.pdf",
+        "  rarefaction_curves.png",
+        "  plateau_depth_distribution.png",
+        "  module1_diversity_by_retention.png",
     ]
     (out_dir / "report.txt").write_text("\n".join(report) + "\n")
     print("\n".join(report))
