@@ -63,9 +63,14 @@ Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communi
 > used in this study. A result of 0% for this species is expected and does not indicate
 > pipeline failure (confirmed in the original paper).
 
+> **Known limitation:** Group B's pipeline classifies ASVs to genus level only. Species-level
+> metrics are therefore not computed. Genus names containing hyphens (e.g. `Escherichia-Shigella`)
+> are truncated to the first component before matching against the ground truth.
+
 For download instructions see the [project wiki](https://github.com/egenomics/agb2026/wiki/Group-C-Datasets).
 
 ---
+
 ### Validation Workflow
 
 #### Step 1 — Pipeline Execution
@@ -77,8 +82,8 @@ by Group B.
 
 Pipeline outputs are compared against the expected microbial composition. Validation includes:
 
-- Presence/absence of taxa
-- Relative abundance estimation (optionally)
+- Presence/absence of taxa at genus level
+- Relative abundance estimation at genus level
 - Taxonomic classification accuracy
 
 #### Step 3 — Performance Metrics
@@ -94,12 +99,27 @@ Quantitative metrics are computed to evaluate pipeline performance across two ca
 | Recall | True positive rate among actual positives |
 | F1-score | Harmonic mean of precision and recall |
 
+Metrics are computed per replicate and averaged per community type (even and staggered).
+
 **Abundance Estimation**
 
 | Metric | Description |
 |---|---|
-| Bray-Curtis dissimilarity | Compositional distance between profiles |
+| Bray-Curtis dissimilarity | Compositional distance between observed and expected profiles |
 | RMSE | Root Mean Square Error of abundance estimates |
+
+#### Outputs
+
+| File | Description |
+|---|---|
+| `detection_metrics.tsv` | Precision, recall, F1, accuracy per replicate and averaged per community type |
+| `abundance_metrics.tsv` | RMSE and Bray-Curtis per replicate and averaged per community type |
+
+#### Script
+
+See `modules/groupC/phase1_system_validation/dataset_validation/validation_metrics.py`.
+
+---
 
 ### Contamination Filtering
 
@@ -112,7 +132,11 @@ To reduce false-positive detections caused by laboratory or reagent contaminatio
 
 2. **Taxonomic filtering (Kraken2):** ASVs are flagged if they are classified as known
    biological contaminants, currently *Homo sapiens* and *Thermus aquaticus*, based on
-   the available Kraken2 database.
+   the Kraken2 database at `/data/upfagb/u269238/kraken2_db`.
+
+> **Known limitation:** The Kraken2 database does not include Chloroplast, Mitochondria,
+> or Halomonas sequences. Detection of these contaminants is therefore not possible with
+> the current database.
 
 ASVs are not removed but annotated with a `Contamination_Flag` column:
 
@@ -129,11 +153,16 @@ ASVs are not removed but annotated with a `Contamination_Flag` column:
 |---|---|
 | `annotated_table_counts.tsv` | ASV count table with contamination flags |
 | `annotated_taxonomy.tsv` | Taxonomy table with contamination flags |
-| `contamination_summary.tsv` | Per-sample summary of flagged ASV counts and percentages |
+| `contamination_summary.tsv` | Per-sample summary of flagged ASV counts and percentages, classified by sample type (Blank / Healthy / Non-healthy) |
 
-#### Module
+#### Modules
 
-See `modules/module_contamination_filter/` for the Nextflow module and R script.
+See `modules/groupC/phase1_system_validation/module_kraken2/` for the Kraken2 Nextflow module
+and `modules/groupC/phase1_system_validation/module_contamination_filter/` for the
+contamination filtering Nextflow module and R script.
+
+---
+
 ### Stress Testing
 
 Pipeline robustness is evaluated under varying conditions, including:
@@ -162,7 +191,7 @@ The pipeline is considered validated only when predefined quality thresholds are
 
 ### Objective
 
-Once the pipeline has been validated, Group C performs downstream  diversity analyses
+Once the pipeline has been validated, Group C performs downstream diversity analyses
 on the processed outputs from Group B. This stage focuses on ensuring statistically fair and
 biologically meaningful comparisons between samples.
 
