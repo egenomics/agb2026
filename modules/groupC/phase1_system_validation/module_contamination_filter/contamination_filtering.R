@@ -32,7 +32,8 @@ alien_taxa <- c(
 # LOAD INPUT DATA
 # ===============
 
-counts_df         <- read_tsv(counts_file,   comment = "#", show_col_types = FALSE)
+counts_df <- read_tsv(counts_file, show_col_types = FALSE) %>%
+  rename(ASV_ID = `#OTU ID`)
 taxonomy_df       <- read_tsv(taxonomy_file, show_col_types = FALSE)
 kraken_df         <- read_tsv(kraken_file,
                                col_names = c("Status", "ASV_ID", "Taxonomy", "Length", "LCA"),
@@ -40,14 +41,16 @@ kraken_df         <- read_tsv(kraken_file,
 blanks_metadata   <- read_tsv(blanks_file,   show_col_types = FALSE)
 patients_metadata <- read_tsv(patients_file, show_col_types = FALSE)
 
-counts_df   <- counts_df   %>% rename(ASV_ID = 1)
 taxonomy_df <- taxonomy_df %>% rename(ASV_ID = 1)
 
 # ========================
 # BUILD SAMPLE METADATA
 # ========================
 
-sample_metadata <- bind_rows(blanks_metadata, patients_metadata) %>%
+sample_metadata <- bind_rows(
+  blanks_metadata   %>% mutate(across(everything(), as.character)),
+  patients_metadata %>% mutate(across(everything(), as.character))
+) %>%
   select(sra_id, healthy) %>%
   mutate(sample_type = case_when(
     healthy == "blank" ~ "Blank",
