@@ -57,7 +57,7 @@ Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communi
 | ERR1049939 | H2O negative control 6 | ~17,000 | Contamination + low-depth stress test |
 | ERR1049940 | H2O negative control 7 | ~17,000 | Contamination + low-depth stress test |
 
-**Ground truth file:** `data/ground_truth/ground_truth_PRJEB10949.tsv`
+**Ground truth file:** `data/ground_truth_PRJEB10949.tsv`
 
 > **Known limitation:** *Deinococcus radiodurans* cannot be amplified by the primers
 > used in this study. A result of 0% for this species is expected and does not indicate
@@ -67,7 +67,7 @@ Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communi
 > metrics are therefore not computed. Genus names containing hyphens (e.g. `Escherichia-Shigella`)
 > are truncated to the first component before matching against the ground truth.
 
-For download instructions see the [project wiki](https://github.com/egenomics/agb2026/wiki/Group-C-Datasets).
+For download instructions see the [project wiki](https://github.com/egenomics/agb2026/wiki/Pipeline-Validation-Datasets).
 
 ---
 
