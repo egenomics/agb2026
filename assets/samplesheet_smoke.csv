@@ -1,0 +1,6 @@
+sample,fastq_1,fastq_2,strandedness
+ERR1074192,/data/upfagb/u267872/paquete_cluster/seqs/trimmed/ERR1074192_trim.fastq.gz,,forward
+ERR1074194,/data/upfagb/u267872/paquete_cluster/seqs/trimmed/ERR1074194_trim.fastq.gz,,forward
+ERR1074354,/data/upfagb/u267872/paquete_cluster/seqs/trimmed/ERR1074354_trim.fastq.gz,,forward
+ERR1074391,/data/upfagb/u267872/paquete_cluster/seqs/trimmed/ERR1074391_trim.fastq.gz,,forward
+ERR1074452,/data/upfagb/u267872/paquete_cluster/seqs/trimmed/ERR1074452_trim.fastq.gz,,forward

@@ -1,1 +1,30 @@
+# Reference databases (large, rebuild from SILVA upstream)
+biodb/
+*.fa
+*.fa.gz
+
+# Raw / intermediate data deliveries from Group A
+paquete_cluster/
+*.fastq
+*.fastq.gz
+*.sra
+*.zip
+
+# Allow small test reads under assets/ to be tracked
+!assets/test_R*.fastq.gz
+
+# Pipeline outputs
+results/
+results_*/
+
+# Nextflow runtime
+.nextflow/
+.nextflow.log*
+work/
+nextflow_master_*.log
+nextflow_master_*.err
+
+# Editor / OS
+.vscode/
+.idea/
 .DS_Store
