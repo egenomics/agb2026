@@ -165,16 +165,50 @@ contamination filtering Nextflow module and R script.
 
 ### Stress Testing
 
-Pipeline robustness is evaluated under varying conditions, including:
+Pipeline robustness is evaluated using targeted stress scenarios designed to test how the
+system behaves under abnormal, adverse, or extreme input conditions. The goal is not only
+to determine whether the pipeline completes successfully, but also whether it fails safely,
+reports clear errors, and avoids generating misleading downstream results.
 
-- Reduced sequencing depth
-- Increased noise levels
-- Read subsampling
-- Variable read quality
-- Artificial contamination scenarios
+This first stress-testing stage uses the current Group B outputs as input:
 
-The goal is to assess the stability and reproducibility of taxonomic and abundance outputs
-across adverse conditions.
+- `asv_table.tsv`
+- `ASV_taxonomy.tsv`
+- `rep_seqs.fasta`
+
+These files are used to prepare small derived test inputs at the ASV table, taxonomy, and
+metadata level. This allows Group C modules to be tested before full end-to-end FASTQ-level
+stress tests are run on the cluster.
+
+The initial stress-test scenarios include:
+
+| Test ID | Scenario | Purpose | Expected behaviour |
+|---|---|---|---|
+| `ST00` | Valid subset control | Confirm that a small valid input runs correctly | The module completes and generates expected outputs |
+| `ST01` | Zero-count sample | Test behaviour when one sample has no reads | The sample is excluded or clearly flagged |
+| `ST02` | Very low sequencing depth | Test robustness with samples downsampled to very few reads | Low-depth samples are flagged or removed during rarefaction/depth filtering |
+| `ST03` | Invalid count table | Test behaviour when the ASV table contains a non-numeric count | The module fails early with a clear parsing error |
+| `ST04` | Single-taxon dominance | Test biologically extreme but valid input | The module completes and reports very low diversity |
+| `ST05` | Metadata mismatch | Test sample identifier inconsistencies between metadata and ASV table | The mismatch is detected before downstream analysis |
+| `ST06` | Artificial contamination spike | Test whether control-enriched ASVs can be detected as potential contaminants | Spiked ASVs are flagged or reported as suspicious |
+
+For each stress test, the following information will be recorded:
+
+- input files used
+- expected behaviour
+- executed command or module
+- exit status
+- whether outputs were generated
+- whether the error or warning message was clear
+- whether any silent failure occurred
+- final status: `PASS`, `FAIL`, or `WARNING`
+
+A stress test can be considered successful even if the pipeline fails, as long as the failure
+is expected, occurs early, and produces an interpretable error message. The main failure mode
+to avoid is silent execution that produces apparently valid but biologically misleading outputs.
+
+This section includes a documented stress-test folder with scenario definitions, small 
+derived input files, scripts to regenerate the test inputs, and a results template.
 
 ### Validation Thresholds
 
