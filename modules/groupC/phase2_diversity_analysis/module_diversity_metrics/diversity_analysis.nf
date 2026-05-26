@@ -4,10 +4,11 @@ process prepare_inputs {
     input:
     path asv_table
     path rep_seqs_fasta
+    path metadata    
 
     output:
-    path "table.qza",       emit: table
-    path "rooted-tree.qza", emit: rooted_tree
+    path "table_filtered.qza", emit: table
+    path "rooted-tree.qza",    emit: rooted_tree
 
     script:
     """
@@ -34,6 +35,11 @@ process prepare_inputs {
         --o-masked-alignment masked-aligned-rep-seqs.qza \\
         --o-tree unrooted-tree.qza \\
         --o-rooted-tree rooted-tree.qza
+
+    qiime feature-table filter-samples \\
+        --i-table table.qza \\
+	--m-metadata-file ${metadata} \\
+	--o-filtered-table table_filtered.qza
     """
 }
 
@@ -121,6 +127,7 @@ process diversity_analysis {
 
     script:
     """
+    
     rm -rf core_metrics_output
     mkdir -p core_metrics_output \\
              diversity_table/shannon \\
@@ -135,7 +142,6 @@ process diversity_analysis {
         --i-table ${table} \\
         --p-sampling-depth ${sampling_depth} \\
         --m-metadata-file ${metadata} \\
-	--p-ignore-missing-samples \\
         --o-rarefied-table                     core_metrics_output/rarefied_table.qza \\
         --o-faith-pd-vector                    core_metrics_output/faith_pd_vector.qza \\
         --o-observed-features-vector           core_metrics_output/observed_features_vector.qza \\
@@ -193,7 +199,7 @@ workflow {
     asv_table      = file("${params.data_dir}/asv_table.tsv")
     rep_seqs_fasta = file("${params.data_dir}/rep-seqs.fasta")
 
-    prepare_inputs(asv_table, rep_seqs_fasta)
+    prepare_inputs(asv_table, rep_seqs_fasta, metadata)
 
     get_sampling_depth(prepare_inputs.out.table)
 

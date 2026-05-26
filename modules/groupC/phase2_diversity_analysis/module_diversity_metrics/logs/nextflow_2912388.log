@@ -1,0 +1,47 @@
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `diversity_analysis.nf` [lethal_noyce] DSL2 - revision: 94c0f6c69d
+
+[-        ] prepare_inputs -
+
+executor >  local (1)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 0 of 1
+[-        ] get_sampling_depth             -
+[-        ] diversity_analysis             -
+
+executor >  local (1)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 0 of 1
+[-        ] get_sampling_depth             -
+[-        ] diversity_analysis             -
+
+executor >  local (2)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 1 of 1 ✔
+[b3/187ee2] get_sampling_depth             | 0 of 1
+[-        ] diversity_analysis             -
+
+executor >  local (3)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 1 of 1 ✔
+[b3/187ee2] get_sampling_depth             | 1 of 1 ✔
+[88/45b50e] div…sis (alpha_beta_diversity) | 0 of 1
+
+executor >  local (3)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 1 of 1 ✔
+[b3/187ee2] get_sampling_depth             | 1 of 1 ✔
+[88/45b50e] div…sis (alpha_beta_diversity) | 0 of 1
+
+executor >  local (3)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 1 of 1 ✔
+[b3/187ee2] get_sampling_depth             | 1 of 1 ✔
+[88/45b50e] div…sis (alpha_beta_diversity) | 1 of 1 ✔
+
+executor >  local (3)
+[b6/f96e11] pre…re_inputs (prepare_inputs) | 1 of 1 ✔
+[b3/187ee2] get_sampling_depth             | 1 of 1 ✔
+[88/45b50e] div…sis (alpha_beta_diversity) | 1 of 1 ✔
+Completed at: 26-May-2026 14:10:10
+Duration    : 12m 36s
+CPU hours   : 0.8
+Succeeded   : 3
+
+
