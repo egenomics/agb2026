@@ -1,3 +1,42 @@
+process prepare_inputs {
+    tag "prepare_inputs"
+
+    input:
+    path asv_table
+    path rep_seqs_fasta
+
+    output:
+    path "table.qza",       emit: table
+    path "rooted-tree.qza", emit: rooted_tree
+
+    script:
+    """
+    biom convert \\
+        -i ${asv_table} \\
+        -o table.biom \\
+        --table-type="OTU table" \\
+        --to-hdf5
+
+    qiime tools import \\
+        --type 'FeatureTable[Frequency]' \\
+        --input-path table.biom \\
+        --input-format BIOMV210Format \\
+        --output-path table.qza
+
+    qiime tools import \\
+        --type 'FeatureData[Sequence]' \\
+        --input-path ${rep_seqs_fasta} \\
+        --output-path rep-seqs.qza
+
+    qiime phylogeny align-to-tree-mafft-fasttree \\
+        --i-sequences rep-seqs.qza \\
+        --o-alignment aligned-rep-seqs.qza \\
+        --o-masked-alignment masked-aligned-rep-seqs.qza \\
+        --o-tree unrooted-tree.qza \\
+        --o-rooted-tree rooted-tree.qza
+    """
+}
+
 process get_sampling_depth {
 
     input:
@@ -96,6 +135,7 @@ process diversity_analysis {
         --i-table ${table} \\
         --p-sampling-depth ${sampling_depth} \\
         --m-metadata-file ${metadata} \\
+	--p-ignore-missing-samples \\
         --o-rarefied-table                     core_metrics_output/rarefied_table.qza \\
         --o-faith-pd-vector                    core_metrics_output/faith_pd_vector.qza \\
         --o-observed-features-vector           core_metrics_output/observed_features_vector.qza \\
@@ -135,7 +175,7 @@ process diversity_analysis {
         --input-path core_metrics_output/simpson_vector.qza \\
         --output-path diversity_table/simpson
 
-    sed -i 's/functools.partial(<function _simpsons_dominance.*>)/simpson/' \\
+    sed -i 's|functools.partial(<function _simpsons_dominance.*>)|simpson|' \\
         diversity_table/simpson/alpha-diversity.tsv
 
     qiime tools export \\
@@ -149,14 +189,21 @@ process diversity_analysis {
 }
 
 workflow {
-    phylogeny = file("${params.data_dir}/rooted-tree.qza")
-    table     = file("${params.data_dir}/table.qza")
-    metadata  = file("${params.data_dir}/sample-metadata.tsv")
+    metadata       = file("${params.data_dir}/sample-metadata.tsv")
+    asv_table      = file("${params.data_dir}/asv_table.tsv")
+    rep_seqs_fasta = file("${params.data_dir}/rep-seqs.fasta")
 
-    get_sampling_depth(table)
+    prepare_inputs(asv_table, rep_seqs_fasta)
+
+    get_sampling_depth(prepare_inputs.out.table)
 
     depth = get_sampling_depth.out.depth
                 .map { it.text.trim().toInteger() }
 
-    diversity_analysis(phylogeny, table, metadata, depth)
+    diversity_analysis(
+        prepare_inputs.out.rooted_tree,
+        prepare_inputs.out.table,
+        metadata,
+        depth
+    )
 }

@@ -1,0 +1,11 @@
+2026-05-26 08:46:23	1m 50s	gigantic_booth	ERR	a7d2d8accd4b67d09b3b0f6f39d32fe7	d07c4b2f-ab5e-4332-8325-cdd974501066	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 08:52:37	8m	jovial_boltzmann	ERR	a7d2d8accd4b67d09b3b0f6f39d32fe7	56850c56-5f01-4728-b61f-17b47bb52624	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 09:07:44	-	compassionate_cuvier	-	017c6672eac0c4374f1129bff445f947	bda97db5-1b48-447a-b111-fba03829a258	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 09:27:06	11.3s	silly_agnesi	ERR	b79cf7f0c8e0db2207bdd1b7fc36d54d	3ae0be3d-8abe-494d-a701-7eb6e5296457	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 09:28:47	9.6s	maniac_engelbart	ERR	b79cf7f0c8e0db2207bdd1b7fc36d54d	4bf34e2d-8754-412f-ba1f-f7a65480ad0f	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 09:53:27	41.1s	big_marconi	ERR	2b9c3c426137afe2f0ae37eaf39d87fc	1199692c-390d-4fd6-91e0-7edf4e98806b	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 10:28:52	9.7s	cheesy_coulomb	ERR	2b9c3c426137afe2f0ae37eaf39d87fc	04bb9f01-c1f6-401b-b590-81d32e52726b	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 10:42:33	9.4s	sleepy_fermat	ERR	2b9c3c426137afe2f0ae37eaf39d87fc	c25f2516-e0c9-41aa-9abd-4f2d538c1295	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 10:47:55	9.3s	pensive_poisson	ERR	28d48769f58cdb25e8319d8618f4426f	61203cc7-48a9-4877-b70f-ed2b9eec85d7	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 10:50:19	9.9s	infallible_fourier	ERR	067b690859b6956febd560b19ea604b2	9f84dbd5-bf9f-4082-8141-0f8ee89bb314	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
+2026-05-26 10:52:15	11m 47s	hopeful_engelbart	OK	a41056a8ca1065635dc88a53c6477127	673322ff-569f-4333-a837-53dfbc00d4e4	nextflow run diversity_analysis.nf --data_dir ./data --outdir ./results
