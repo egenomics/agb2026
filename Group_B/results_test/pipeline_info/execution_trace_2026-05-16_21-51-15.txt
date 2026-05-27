@@ -1,4 +1,0 @@
-task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
-3	6c/c50ba6	118175	GROUPB:KRAKEN2 (test_sample)	FAILED	127	2026-05-16 21:51:18.060	103ms	66ms	-	-	-	-	-
-1	52/09c8e3	118190	GROUPB:FASTQC (test_sample)	FAILED	127	2026-05-16 21:51:18.083	106ms	90ms	-	-	-	-	-
-2	66/275ea9	118269	GROUPB:DADA2_FILTNTRIM (test_sample)	FAILED	127	2026-05-16 21:51:18.187	63ms	5ms	-	-	-	-	-

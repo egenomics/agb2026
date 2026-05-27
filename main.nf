@@ -70,6 +70,7 @@ workflow NFCORE_ABGTEMPLATE {
     // GROUP D: Reporting
     //
     GROUPD(
+        GROUPA.out.metadata
         GROUPC.out.validated_results,
         GROUPB.out.analysis_results
     )

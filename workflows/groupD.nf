@@ -1,23 +1,4 @@
 /*
-<<<<<<< HEAD
- * Group D — Visualisation workflow
- *
- * Takes QIIME2 TSV exports from upstream groups and produces a single
- * self-contained HTML report (microsee_report.html) that can be opened
- * in any browser with no server required.
- *
- * Required params (set in nextflow.config or via --param on the CLI):
- *   params.feature_table  path to feature-table.tsv
- *   params.taxonomy       path to taxonomy.tsv
- *   params.metadata       path to metadata.tsv
- *   params.alpha              path to alpha-diversity.tsv  (optional)
- *   params.distance_matrix    path to distance-matrix.tsv  (optional, e.g. Bray-Curtis)
- *   params.mode               'cohort' (default) | 'patient' | 'all'
- *   params.outdir         where to publish the HTML report
- */
-
-include { MICROSEE_REPORT } from '../modules/groupD/microsee_report/main'
-=======
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     GROUP D: REPORTING WORKFLOW
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -42,116 +23,36 @@ include { MICROSEE_REPORT } from '../modules/groupD/microsee_report/main'
 // TODO: Import your group's modules here
 // include { MODULE_NAME } from '../modules/groupD/module_name/main'
 // include { SUBWORKFLOW_NAME } from '../subworkflows/local/groupD_subworkflow'
+include { alpha_diversity_status } from '../modules/groupD/explanatory_report/alpha_diversity_status'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOW DEFINITION
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
->>>>>>> Group_A/main
 
 workflow GROUPD {
 
     take:
-<<<<<<< HEAD
-    feature_table   // channel: path
-    taxonomy        // channel: path
-    metadata        // channel: path
-    alpha             // channel: path  (can be file('NO_FILE'))
-    distance_matrix   // channel: path  (can be file('NO_FILE'))
-    mode              // val: 'cohort' | 'patient' | 'all'
-
-    main:
-    MICROSEE_REPORT(
-        Channel.of(file("${moduleDir}/../modules/groupD/microsee_report/report_generator")),
-        feature_table,
-        taxonomy,
-        metadata,
-        alpha,
-        distance_matrix,
-        mode,
-    )
-
-    emit:
-    report          = MICROSEE_REPORT.out.report
-    patient_reports = MICROSEE_REPORT.out.patient_reports
-}
-
-/*
- * Standalone entrypoint — run this workflow directly:
- *
- *   nextflow run workflows/groupD.nf \
- *       --feature_table path/to/feature-table.tsv \
- *       --taxonomy      path/to/taxonomy.tsv       \
- *       --metadata      path/to/metadata.tsv       \
- *       [--alpha            path/to/alpha-diversity.tsv] \
- *       [--distance_matrix  path/to/distance-matrix.tsv] \
- *       [--mode             all]                         \
- *       --outdir            results/
- */
-workflow {
-
-    // Validate required parameters before attempting to stage any files.
-    // Channel.fromPath on a null param gives a cryptic Nextflow error; this gives a clear one.
-    if (!params.feature_table) error "Missing required parameter: --feature_table"
-    if (!params.taxonomy)      error "Missing required parameter: --taxonomy"
-    if (!params.metadata)      error "Missing required parameter: --metadata"
-
-    feature_table_ch = Channel.fromPath(params.feature_table, checkIfExists: true)
-    taxonomy_ch      = Channel.fromPath(params.taxonomy,      checkIfExists: true)
-    metadata_ch      = Channel.fromPath(params.metadata,      checkIfExists: true)
-
-    alpha_ch = params.containsKey('alpha') && params.alpha
-        ? Channel.fromPath(params.alpha, checkIfExists: true)
-        : Channel.of(file('NO_FILE'))
-
-    distance_matrix_ch = params.containsKey('distance_matrix') && params.distance_matrix
-        ? Channel.fromPath(params.distance_matrix, checkIfExists: true)
-        : Channel.of(file('NO_FILE'))
-
-    GROUPD(
-        feature_table_ch,
-        taxonomy_ch,
-        metadata_ch,
-        alpha_ch,
-        distance_matrix_ch,
-        params.mode,
-    )
-}
-=======
-    ch_validated_results    // channel: Validated results from Group C
-    ch_analysis_data        // channel: Analysis data (if needed for visualization)
+    ch_metadata  // channel: Metadata from Group A
+    ch_groupC    // channel: Validated results from Group C
+    ch_groupB  // channel: Analysis data
 
     main:
 
     ch_versions = channel.empty()
 
-    /*
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        PLACEHOLDER: Add your team's workflow logic here
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    */
+    //Assuming groupA sends metadata and groupC the diversities
+    ch_input_for_alpha = ch_metadata.combine(ch_groupC)
 
-    // Example structure (replace with your actual modules):
-    //
-    // VISUALIZATION_MODULE(ch_validated_results)
-    // ch_versions = ch_versions.mix(VISUALIZATION_MODULE.out.versions.first())
-    //
-    // REPORT_GENERATION(VISUALIZATION_MODULE.out.plots, ch_validated_results)
-    // ch_versions = ch_versions.mix(REPORT_GENERATION.out.versions.first())
-    //
-    // DASHBOARD_MODULE(ch_validated_results, VISUALIZATION_MODULE.out.plots)
-    // ch_versions = ch_versions.mix(DASHBOARD_MODULE.out.versions.first())
+    // The channel is just passed to the process (it unwraps the tuple)
+    alpha_diversity_status(ch_input_for_alpha)
 
     emit:
+    // Captures the process `.out` emitted as the name `alpha_div_dist_dir`
+    alpha_plots = alpha_diversity_status.out.alpha_div_dist_dir
 
-    // TODO: Define your team's final outputs
-    // html_report = REPORT_GENERATION.out.html             // channel: HTML report
-    // plots = VISUALIZATION_MODULE.out.plots               // channel: Visualization files
-    // dashboard = DASHBOARD_MODULE.out.dashboard           // channel: Interactive dashboard
-
-    versions = ch_versions                                   // channel: Software versions
-
+    versions = ch_versions // channel: Software versions
 }
 
 /*
@@ -159,4 +60,3 @@ workflow {
     THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
->>>>>>> Group_A/main
