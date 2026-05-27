@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test process REPORTING_MODULE"
+    script "../main.nf"
+    process "REPORTING_MODULE"
+
+    test("REPORTING_MODULE - basic") {
+
+        when {
+            params {
+                outdir = "test-output"
+            }
+            process {
+                """
+                input[0] = [[ id:'test' ], file('${baseDir}/tests/fixtures/validated.tsv')]
+                input[1] = file('${baseDir}/tests/fixtures/metrics.json')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.html_report).match() },
+                { assert snapshot(process.out.plots).match() }
+            )
+        }
+
+    }
+
+}

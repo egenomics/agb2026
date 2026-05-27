@@ -1,0 +1,31 @@
+nextflow_process {
+
+    name "Test process ANALYSIS_MODULE"
+    script "../main.nf"
+    process "ANALYSIS_MODULE"
+
+    test("ANALYSIS_MODULE - basic") {
+
+        when {
+            params {
+                outdir = "test-output"
+            }
+            process {
+                """
+                input[0] = [[ id:'test' ], file('${baseDir}/tests/fixtures/reads.fastq.gz')]
+                input[1] = file('${baseDir}/tests/fixtures/metadata.json')
+                """
+            }
+        }
+
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out.results).match() },
+                { assert snapshot(process.out.abundance).match() }
+            )
+        }
+
+    }
+
+}
