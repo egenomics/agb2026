@@ -80,8 +80,6 @@ with open('summary.txt', 'r') as f:
         match = re.match(r'^\\S+:\\s+([\\d.,]+)', line)
         if match:
             raw = match.group(1)
-            raw = raw.replace('.', '')
-            raw = raw.replace(',', '.')
             val = int(float(raw))
             counts.append(val)
 
@@ -116,14 +114,14 @@ process diversity_analysis {
     val  sampling_depth
 
     output:
-    path "diversity_table/shannon/*",          emit: shannon
-    path "diversity_table/observed/*",         emit: observed_features
-    path "diversity_table/faith/*",            emit: faith_pd
-    path "diversity_table/simpson/*",          emit: simpson
+    path "diversity_table/shannon/*",               emit: shannon
+    path "diversity_table/observed/*",              emit: observed_features
+    path "diversity_table/faith/*",                 emit: faith_pd
+    path "diversity_table/simpson/*",               emit: simpson
     path "diversity_table/weighted_unifrac/*", emit: weighted_unifrac
     path "diversity_table/bray_curtis/*",      emit: bray_curtis
-    path "core_metrics_output/*.qza",          emit: qza_files
-    path "core_metrics_output/*.qzv",          emit: qzv_files
+    path "core_metrics_output/*.qza",               emit: qza_files
+    path "core_metrics_output/*.qzv",               emit: qzv_files
 
     script:
     """

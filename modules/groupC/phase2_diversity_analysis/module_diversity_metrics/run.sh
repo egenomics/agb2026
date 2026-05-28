@@ -8,7 +8,7 @@
 set -euo pipefail
 mkdir -p logs
 
-module load conda
+module load apptainer
 module load nextflow
 
 nextflow run diversity_analysis.nf \
