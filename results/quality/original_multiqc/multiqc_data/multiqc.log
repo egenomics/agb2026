@@ -1,0 +1,21 @@
+[2026-05-28 13:06:25,061] multiqc                                            [DEBUG  ]  This is MultiQC v1.19
+[2026-05-28 13:06:25,062] multiqc                                            [DEBUG  ]  Command used: /usr/local/bin/multiqc .
+[2026-05-28 13:06:25,579] multiqc                                            [WARNING]  MultiQC Version v1.35 now available!
+[2026-05-28 13:06:25,579] multiqc                                            [DEBUG  ]  Working dir : /home/alberto/nextflow-run-agb/work/24/e93c3e584ca281f5aa4834d903aef6
+[2026-05-28 13:06:25,579] multiqc                                            [DEBUG  ]  Template    : default
+[2026-05-28 13:06:25,579] multiqc                                            [DEBUG  ]  Running Python 3.11.7 | packaged by conda-forge | (main, Dec 15 2023, 08:38:37) [GCC 12.3.0]
+[2026-05-28 13:06:25,579] multiqc                                            [DEBUG  ]  Analysing modules: custom_content, ccs, ngsderive, purple, conpair, lima, peddy, somalier, methylQA, mosdepth, phantompeakqualtools, qualimap, preseq, hifiasm, quast, qorts, rna_seqc, rockhopper, rsem, rseqc, busco, bustools, goleft_indexcov, gffcompare, disambiguate, supernova, deeptools, sargasso, verifybamid, mirtrace, happy, mirtop, sambamba, gopeaks, homer, hops, macs2, theta2, snpeff, gatk, htseq, bcftools, featureCounts, fgbio, dragen, dragen_fastqc, dedup, pbmarkdup, damageprofiler, mapdamage, biobambam2, jcvi, mtnucratio, picard, vep, bakta, prokka, qc3C, nanostat, samblaster, samtools, sexdeterrmine, seqera_cli, eigenstratdatabasetools, bamtools, jellyfish, vcftools, longranger, stacks, varscan2, snippy, umitools, truvari, bbmap, bismark, biscuit, diamond, hicexplorer, hicup, hicpro, salmon, kallisto, slamdunk, star, hisat2, tophat, bowtie2, bowtie1, cellranger, snpsplit, odgi, pangolin, nextclade, freyja, humid, kat, leehom, librarian, adapterRemoval, bbduk, clipandmerge, cutadapt, flexbar, sourmash, kaiju, bracken, kraken, malt, motus, trimmomatic, sickle, skewer, sortmerna, biobloomtools, fastq_screen, afterqc, fastp, fastqc, filtlong, prinseqplusplus, pychopper, porechop, pycoqc, minionqc, anglerfish, multivcfanalyzer, clusterflow, checkqc, bcl2fastq, bclconvert, interop, ivar, flash, seqyclean, optitype, whatshap, xenome, xengsort
+[2026-05-28 13:06:25,580] multiqc                                            [DEBUG  ]  Using temporary directory for creating report: /tmp/tmpnym8rzy6
+[2026-05-28 13:06:25,581] multiqc                                            [INFO   ]  Search path : /home/alberto/nextflow-run-agb/work/24/e93c3e584ca281f5aa4834d903aef6
+[2026-05-28 13:06:25,628] multiqc                                            [DEBUG  ]  Summary of files that were skipped by the search: [skipped_module_specific_max_filesize: 58] // [skipped_no_match: 10]
+[2026-05-28 13:06:26,173] multiqc.plots.bargraph                             [DEBUG  ]  Using matplotlib version 3.8.2
+[2026-05-28 13:06:26,176] multiqc.plots.linegraph                            [DEBUG  ]  Using matplotlib version 3.8.2
+[2026-05-28 13:06:26,177] multiqc                                            [DEBUG  ]  No samples found: custom_content
+[2026-05-28 13:06:26,185] multiqc.modules.fastqc.fastqc                      [INFO   ]  Found 4 reports
+[2026-05-28 13:06:26,196] multiqc.utils.software_versions                    [DEBUG  ]  Reading software versions from config.software_versions
+[2026-05-28 13:06:26,199] multiqc                                            [DEBUG  ]  Compressing plot data
+[2026-05-28 13:06:26,210] multiqc                                            [INFO   ]  Report      : multiqc_report.html
+[2026-05-28 13:06:26,210] multiqc                                            [INFO   ]  Data        : multiqc_data
+[2026-05-28 13:06:26,210] multiqc                                            [DEBUG  ]  Moving data file from '/tmp/tmpnym8rzy6/multiqc_data' to '/home/alberto/nextflow-run-agb/work/24/e93c3e584ca281f5aa4834d903aef6/multiqc_data'
+[2026-05-28 13:06:26,210] multiqc                                            [DEBUG  ]  Full report path: /home/alberto/nextflow-run-agb/work/24/e93c3e584ca281f5aa4834d903aef6/multiqc_report.html
+[2026-05-28 13:06:26,246] multiqc                                            [INFO   ]  MultiQC complete

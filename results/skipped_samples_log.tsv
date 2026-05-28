@@ -1,0 +1,3 @@
+Sample_ID	Error_Type	Expected_Path
+ERR1315992	Missing_File	/home/alberto/nextflow-run-agb/containers/ERR1315992.fastq
+ERR0000000	Empty_File	/home/alberto/nextflow-run-agb/data/seqs/ERR0000000.fastq

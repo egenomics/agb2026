@@ -1,0 +1,5 @@
+Module	Section	Sample Name	Source
+FastQC	all_sections	ERR1080200_trim	/home/alberto/nextflow-run-agb/work/de/ac386751807da5d30b1820e1591b4e/ERR1080200_trim_fastqc.zip
+FastQC	all_sections	ERR1458750	/home/alberto/nextflow-run-agb/work/de/ac386751807da5d30b1820e1591b4e/ERR1458750_fastqc.zip
+FastQC	all_sections	ERR1080200	/home/alberto/nextflow-run-agb/work/de/ac386751807da5d30b1820e1591b4e/ERR1080200_fastqc.zip
+FastQC	all_sections	ERR1458750_trim	/home/alberto/nextflow-run-agb/work/de/ac386751807da5d30b1820e1591b4e/ERR1458750_trim_fastqc.zip

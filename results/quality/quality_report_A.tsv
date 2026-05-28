@@ -1,0 +1,5 @@
+sra_id	length	length_interp	deduplicated	deduplicated_interp	%GC	gc_interp	quality_score_status	quality_interp
+ERR1080200	150.99495928654517	pass	3.5478867778208607	few	53.0	pass	pass	pass
+ERR1080200_trim	150.99088794106245	pass	3.5478867778208607	few	53.0	pass	pass	pass
+ERR1458750	150.0	pass	9.992655159750276	few	51.0	pass	pass	pass
+ERR1458750_trim	149.97436650752846	pass	9.981637899375688	few	51.0	pass	pass	pass
