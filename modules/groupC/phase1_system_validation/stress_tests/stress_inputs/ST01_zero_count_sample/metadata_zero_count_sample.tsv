@@ -1,0 +1,7 @@
+sample-id	stress_test_id	sample_type	is_negative_control	notes
+ERR1459175	ST01	sample	no	Includes one zero-depth sample
+ERR1458721	ST01	sample	no	Includes one zero-depth sample
+ERR1459065	ST01	sample	no	Includes one zero-depth sample
+ERR1459109	ST01	sample	no	Includes one zero-depth sample
+ERR1459158	ST01	sample	no	Includes one zero-depth sample
+ST01_zero_reads	ST01	sample	no	Includes one zero-depth sample
