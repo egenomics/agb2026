@@ -22,15 +22,18 @@ workflow GROUPB {
 
     main:
 
-    // STEP 1: QUALITY CONTROL
-    QC_CHECKS(
-        ch_samplesheet,
-        multiqc_config,
-        multiqc_logo,
-        ch_collated_versions,
-        ch_methods_description,
-        ch_workflow_summary
-    )
+    // STEP 1: QUALITY CONTROL — disabled here; Group A already runs FastQC/MultiQC
+    // on the same reads upstream, so re-running in Group B is redundant. Re-enable
+    // (and re-sync modules/nf-core/multiqc/ to the iteration-tree version) if Group B
+    // ever needs its own QC pass independent of Group A.
+    // QC_CHECKS(
+    //     ch_samplesheet,
+    //     multiqc_config,
+    //     multiqc_logo,
+    //     ch_collated_versions,
+    //     ch_methods_description,
+    //     ch_workflow_summary
+    // )
 
     // STEP 2: TAXONOMIC PROFILING (DADA2 map-reduce: filtntrim/err/denoising
     // per-sample, then merge+chimera+taxonomy once on the merged seqtab)
@@ -52,7 +55,7 @@ workflow GROUPB {
     taxonomy       = TAXONOMIC_PROFILING.out.taxonomy         // ASV_taxonomy.tsv
 
     // GENERAL OUTPUTS
-    multiqc_report = QC_CHECKS.out.multiqc_report
+    // multiqc_report = QC_CHECKS.out.multiqc_report  // re-enable with QC_CHECKS call above
     pathways       = FUNCTIONAL_ANNOTATION.out.pathways
     versions       = channel.empty()
 }

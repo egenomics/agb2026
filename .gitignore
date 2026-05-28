@@ -3,15 +3,12 @@ biodb/
 *.fa
 *.fa.gz
 
-# Raw / intermediate data deliveries from Group A
+# Raw data
 paquete_cluster/
 *.fastq
 *.fastq.gz
 *.sra
 *.zip
-
-# Allow small test reads under assets/ to be tracked
-!assets/test_R*.fastq.gz
 
 # Pipeline outputs
 results/

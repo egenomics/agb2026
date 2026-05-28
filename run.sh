@@ -11,7 +11,7 @@ export NXF_SINGULARITY_CACHEDIR=/data/upfagb/jvillanueva/apptainer_cache/
 echo "=== Llançant Nextflow Test ==="
 nextflow run test_groupB.nf \
     -profile groupB,slurm,singularity \
-    --input assets/samplesheet_smoke.csv \
-    --outdir results_test \
+    --input assets/samplesheet.csv \
+    --outdir results \
     -ansi-log \
     -resume
