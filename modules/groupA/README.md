@@ -84,7 +84,7 @@ subgraph Nextflow ["Nextflow Pipeline"]
 
 end
 
-split --- comment1@{shape: braces, label: "Split the strands?? <br> Alberto suggests" }
+split --- comment1@{shape: braces, label: "Strands are splitted" }
 FASTQC ---> qreport
 
 
