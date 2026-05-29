@@ -1,0 +1,10 @@
+# Input Configuration
+sample_sheet: "./data/sample_sheet.csv"
+input_dir: "./data/seqs"
+
+# Output Configuration
+out_dir: "./results"
+
+# Cutadapt Primers
+fwd_primer: "GTGYCAGCMGCCGCGGTAA"
+rev_primer: 'GGACTACNVGGGTWTCTAAT'

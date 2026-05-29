@@ -1,75 +1,96 @@
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    GROUP A: DATA HANDLING & PREPROCESSING WORKFLOW
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nextflow.enable.dsl=2
 
-    This workflow orchestrates all modules from Group A.
-    Responsibilities:
-    - Data input and validation
-    - Quality control
-    - Preprocessing and normalization
-    - Metadata integration
+// Module imports
+include { FASTQC as FASTQC_RAW }  from '../groupA/modules/a_fastqc.nf'
+include { FASTQC as FASTQC_TRIM } from '../groupA/modules/a_fastqc.nf'
+include { CUTADAPT }              from '../groupA/modules/a_cutadapt.nf'
+include { MULTIQC }               from '../groupA/modules/a_multiqc.nf'
+include { CLEAN_MULTIQC }         from '../groupA/modules/a_clean_multiqc.nf'
+include { NEW_SAMPLE_SHEET }      from '../groupA/modules/a_new_sample_sheet.nf'
 
-    PLACEHOLDER: Add your group's modules and subworkflows below
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+// Initialize error log file
+file("${params.out_dir}/errors").mkdirs()
+def error_log = file("${params.out_dir}/errors/skipped_samples_log.tsv")
+error_log.text = "Sample_ID\tError_Type\tExpected_Path\n"
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    IMPORT MODULES / SUBWORKFLOWS
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+// Main workflow engine
+workflow {
 
-// TODO: Import your group's modules here
-// include { MODULE_NAME } from '../modules/groupA/module_name/main'
-// include { SUBWORKFLOW_NAME } from '../subworkflows/local/groupA_subworkflow'
+    // Read CSV and check the files
+    raw_reads_ch = Channel.fromPath(params.sample_sheet)
+        // Splits the file by colons
+        .splitCsv(sep: ',', header: true) 
+        // Map the file to extract the sample_id and fastq file location
+        .map { row ->
+            def sra_id = row.sample_id
+            def fastq_file = file("${row.directory}/${sra_id}.fastq")
+            return tuple(sra_id, fastq_file)
+        }
+        // Apply error detection
+            // First, does the file exist?
+        .filter { sra_id, fastq_file ->
+            if (!sra_id) return false
+            if (!fastq_file.exists()) {
+                log.warn "Skipping sample [${sra_id}]: File does not exist"
+                error_log.append("${sra_id}\tMissing_File\t${fastq_file}\n")
+                return false
+            }
+            // Second, is the file empty?
+            if (fastq_file.size() == 0) {
+                log.warn "Skipping sample [${sra_id}]: File is empty (0 bytes)"
+                error_log.append("${sra_id}\tEmpty_File\t${fastq_file}\n")
+                return false
+            }
+            return true
+        }
 
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    WORKFLOW DEFINITION
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
+    // Apply the FASTQC on the raw reads
+    fastqc_raw_in = raw_reads_ch.map { id, read -> tuple(id, 'raw', read) }
+    FASTQC_RAW(fastqc_raw_in)
 
-workflow GROUPA {
+    // Apply cutadapt to trim the reads
+    CUTADAPT(raw_reads_ch)
 
-    take:
-    ch_samplesheet  // channel: samplesheet read in from --input
-    ch_metadata     // channel: metadata file
+    // Apply the FASTQC on the trimmed reads
+    fastqc_trim_in = CUTADAPT.out.trimmed_reads.map { id, read -> tuple(id, 'trimmed', read) }
+    FASTQC_TRIM(fastqc_trim_in)
 
-    main:
+    // Aggregate all the FASTQC results to pipe them into the MULTIQC
+    all_qc_files_ch = FASTQC_RAW.out.qc_files
+        .mix(FASTQC_TRIM.out.qc_files)
+        .map { id, stage, files -> files }
+        .collect()
 
-    ch_versions = channel.empty()
+    // Apply the MULTIQC to all the FASTQC
+    MULTIQC(all_qc_files_ch)
 
-    /*
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        PLACEHOLDER: Add your team's workflow logic here
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    */
+    // Apply the cleaning of the MULTIQC file, extracting specific data and applying some basic interpretation
+    CLEAN_MULTIQC(MULTIQC.out.fastqc_txt)
 
-    // Example structure (replace with your actual modules):
-    //
-    // QUALITY_CHECK(ch_samplesheet)
-    // ch_versions = ch_versions.mix(QUALITY_CHECK.out.versions.first())
-    //
-    // PREPROCESSING(QUALITY_CHECK.out.filtered_data)
-    // ch_versions = ch_versions.mix(PREPROCESSING.out.versions.first())
-    //
-    // METADATA_INTEGRATION(ch_metadata, QUALITY_CHECK.out.sample_ids)
-    // ch_versions = ch_versions.mix(METADATA_INTEGRATION.out.versions.first())
+    // Gather all the data needed to create the new sample sheet
+    successful_ids_file = CUTADAPT.out.trimmed_reads
+        .map { sample_id, fastq -> sample_id }
+        .collectFile(name: 'successful_samples.txt', newLine: true)
+
+    // Generatee a new sample sheet for the group B
+    NEW_SAMPLE_SHEET(successful_ids_file)
+
+    // Generate the channels for the following group
+    
+    // Group all the trimmed files into a single folder channel
+    pre_ch_trimmed_seqs = CUTADAPT.out.trimmed_reads.map { id, fastq -> fastq }.collect()
 
     emit:
 
-    // TODO: Define your team's outputs
-    // trimmed_reads = PREPROCESSING.out.trimmed           // channel: Preprocessed sequences
-    // metadata = METADATA_INTEGRATION.out.metadata         // channel: Integrated metadata
-    // qc_reports = QUALITY_CHECK.out.reports              // channel: QC reports
-
-    versions = ch_versions                                  // channel: Software versions
-
+    // ch_trimmed: folder of all the trimmed sequences (not published)
+    ch_trimmed = pre_ch_trimmed_seqs
+    
+    // ch_sample_sheet_B: the generated sample sheet (not published)
+    ch_sample_sheet_B = NEW_SAMPLE_SHEET.out.final_sheet
+    
+    // ch_metadata: reads the file from params without publishing it
+    ch_metadata = Channel.fromPath(params.metadata, checkIfExists: true)
+    
+    // ch_quality_report: passes the multiqc report and your custom report
+    ch_quality_report = MULTIQC.out.report.mix(CLEAN_MULTIQC.out.final_report).collect()
 }
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    THE END
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/

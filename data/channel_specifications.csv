@@ -1,0 +1,5 @@
+channel,type,elements,content
+ch_trimmed,path,folder,folder with all the trimmed sequences of the samples that did not receive an error
+ch_sample_sheet_B,path,file,".csv for the group B, it will be used as the sample sheet"
+ch_metadata,path,file,.tsv with the metadata of the patients
+ch_quality_report,path,folder,folder with the original multiqc rpeort and our interpretation given the nature of the data
