@@ -1,0 +1,18 @@
+=== Rarefaction threshold selection ===
+Date      : 2026-05-29T09:41:31.111945
+Method    : coverage
+Metric    : observed_features
+Threshold : 1,454 reads
+Total     : 58 samples
+Retained  : 55
+Excluded  : 3 (5.2%)
+  too shallow: 0
+
+Output files:
+  rarefaction_threshold.txt          -- use this in qiime feature-table rarefy
+  samples_to_keep.tsv                -- sample list for qiime filter-samples
+  sample_qc.tsv                      -- per-sample plateau depth + pass/fail
+  summary.json
+  rarefaction_curves.png
+  plateau_depth_distribution.png
+  module1_diversity_by_retention.png

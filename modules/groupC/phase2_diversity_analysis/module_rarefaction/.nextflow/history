@@ -1,0 +1,1 @@
+2026-05-29 11:39:30	6m 8s	shrivelled_yonath	OK	c9dbbebbe7fe72b495e5e785c776f614	6823d7dd-6f57-4eb9-a5ca-5861b35ef144	nextflow run select_rarefaction.nf --diversity_metrics_dir ../module_diversity_metrics --outdir ./results -with-report logs/report.html -with-trace logs/trace.txt

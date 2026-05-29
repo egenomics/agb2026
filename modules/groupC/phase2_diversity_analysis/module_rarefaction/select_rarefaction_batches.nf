@@ -224,25 +224,20 @@ workflow {
 
     def metrics_dir = params.diversity_metrics_dir
 
-    def rarefied_table      = file("${metrics_dir}/core_metrics_output/rarefied_table.qza")
-    def phylogeny           = file("${metrics_dir}/data/rooted-tree.qza")
-    def metadata            = file("${metrics_dir}/data/sample-metadata.tsv")
-    def sampling_depth_f    = file("${metrics_dir}/sampling_depth.txt")
-    // pass the whole diversity_table directory — subdirs keep filenames unique
+    def phylogeny        = file("${metrics_dir}/data/rooted-tree.qza")
+    def metadata         = file("${metrics_dir}/data/sample-metadata.tsv")
+    def sampling_depth_f = file("${metrics_dir}/sampling_depth.txt")
     def diversity_table_dir = file("${metrics_dir}/diversity_table")
 
-    def meta = [id: 'rarefaction']
-
-    def input_ch = Channel.of(
-        tuple(
-            meta,
-            rarefied_table,
-            phylogeny,
-            metadata,
-            diversity_table_dir,
-            sampling_depth_f
-        )
-    )
-
-    RAREFACTION_THRESHOLD(input_ch)
+    // Instead of one fixed table, point to a folder of per-sample tables
+    // Each .qza file in the tables dir is one sample
+    Channel
+        .fromPath("${metrics_dir}/per_sample_tables/*.qza")  // one file per sample
+        .buffer(size: params.batch_size, remainder: true)    // group into batches of 20
+        .filter { batch -> batch.size() >= params.min_batch_size }  // drop batches too small
+        .map { batch ->
+            def meta = [id: "batch_${batch.hashCode()}"]
+            tuple(meta, batch, phylogeny, metadata, diversity_table_dir, sampling_depth_f)
+        }
+        | RAREFACTION_THRESHOLD
 }
