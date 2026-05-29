@@ -1,1 +1,29 @@
+# Reference databases (large, rebuild from SILVA upstream)
+biodb/
+*.fa
+*.fa.gz
+
+# Raw data
+paquete_cluster/
+*.fastq
+*.fastq.gz
+*.sra
+*.zip
+
+# Pipeline outputs
+results/
+results_*/
+
+# Nextflow runtime
+.nextflow/
+.nextflow.log*
+work/
+nextflow_master_*.log
+nextflow_master_*.err
+
+# Editor / OS
+.vscode/
+.idea/
 .DS_Store
+assets/samplesheet.csv
+assets/samplesheet_smoke.csv
