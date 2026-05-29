@@ -25,3 +25,5 @@ nextflow_master_*.err
 .vscode/
 .idea/
 .DS_Store
+assets/samplesheet.csv
+assets/samplesheet_smoke.csv
