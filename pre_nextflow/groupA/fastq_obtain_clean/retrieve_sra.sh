@@ -10,7 +10,7 @@ show_help() {
     cat << EOF
 Usage: ${0##*/} [-h] -i INPUT_FILE [-o OUTPUT_FILE]
 
-Description: Reads a metadata TSV file, searches NCBI SRA using the 'sample_name' column as a full string query, and prepends a new 'sample-id' column containing the resulting SRA IDs.
+Description: Reads a metadata TSV file, searches NCBI SRA using the 'sample_name_id' column as a full string query, and prepends a new 'sample-id' column containing the resulting SRA IDs.
 It also identifies, reports, and removes any samples that could not be resolved (NA).
 
 OPTIONS:
@@ -55,18 +55,18 @@ fi
 
 echo "Processing '$INPUT_FILE'..."
 
-# 5. Find the 'sample_name' column
+# 5. Find the 'sample_name_id' column
 # Hardcode the delimiter for TSV (tab)
 DELIM=$'\t'
 TMP_SRA="sra_temp_column.txt"
 
 # Extract header and strip hidden Windows carriage returns (\r) and quotes
 header=$(head -n 1 "$INPUT_FILE" | tr -d '\r' | tr -d '"')
-col_idx=$(echo "$header" | tr "$DELIM" '\n' | grep -nx "sample_name" | cut -d: -f1)
+col_idx=$(echo "$header" | tr "$DELIM" '\n' | grep -nx "sample_name_id" | cut -d: -f1)
 
 # Safety check
 if [ -z "$col_idx" ]; then
-    echo "Error: Could not find 'sample_name' column in the header."
+    echo "Error: Could not find 'sample_name_id' column in the header."
     exit 1
 fi
 
@@ -114,16 +114,16 @@ rm "$TMP_SRA"
 echo "Checking for unresolved (NA) samples..."
 
 FAILED_LOG="${OUTPUT_FILE%.*}_failed_samples.txt"
-# Since we added 1 column at the beginning, the sample_name column shifted right by 1
+# Since we added 1 column at the beginning, the sample_name_id column shifted right by 1
 NEW_COL_IDX=$((col_idx + 1))
 
-# Extract 'sample_name' for rows where the first column is "NA"
+# Extract 'sample_name_id' for rows where the first column is "NA"
 awk -F"$DELIM" -v c="$NEW_COL_IDX" '$1 == "NA" {print $c}' "$OUTPUT_FILE" > "$FAILED_LOG"
 
 # Check if the failed log has any contents
 if [ -s "$FAILED_LOG" ]; then
     echo "---------------------------------------------------"
-    echo "Warning: The following sample_names returned 'NA':"
+    echo "Warning: The following sample_name_ids returned 'NA':"
     cat "$FAILED_LOG" | while read -r failed_name; do
         echo "  - $failed_name"
     done
