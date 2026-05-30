@@ -1,0 +1,158 @@
+# groupA
+# Preprocessing
+
+This folder contains the Nextflow process modules that handle **quality control and adapter trimming** of the raw FASTQ files generated in the previous step. The workflow is defined in `workflows/groupA.nf`
+
+The pipeline runs sequentially in this order:
+
+```
+raw FASTQs -> FASTQC (raw) -> CUTADAPT -> FASTQC (trimmed) -> MULTIQC -> CLEAN_MULTIQC -> NEW_SAMPLE_SHEET
+```
+
+---
+
+## Modules
+
+| File | Process | Tool | Version |
+|------|---------|------|---------|
+| `a_fastqc.nf` | `FASTQC` | FastQC | 0.12.1 |
+| `a_cutadapt.nf` | `CUTADAPT` | Cutadapt | 4.6 |
+| `a_multiqc.nf` | `MULTIQC` | MultiQC | 1.19 |
+| `a_clean_multiqc.nf` | `CLEAN_MULTIQC` | pandas | 1.5.2 |
+| `a_new_sample_sheet.nf` | `NEW_SAMPLE_SHEET` | pandas | 1.5.2 |
+
+Containers are pulled automatically at runtime from the [Galaxy Project Singularity depot](https://depot.galaxyproject.org/singularity/) or from `quay.io/biocontainers`. Local `.sif` fallback images are listed in each module as comments.
+
+---
+
+## Module details
+
+#### Input validation
+
+Before any process runs, each sample in the input chanel is checked if they exists and is non-empty. Samples that fail either check are skipped with a warning and logged to `<outdir>/groupA/errors/skipped_samples_log.tsv` with columns `Sample_ID`, `Error_Type` and `Expected_Path`. 
+
+### 1. FASTQC - raw data (`a_fastqc.nf`)
+
+Runs FastQC on the raw FASTQ files to establish a quality baseline before trimming.
+
+**Input channel:** `tuple val(sample_id), val(stage), path(reads)`
+
+**Output channel:** `qc_files` - tuple with `sample_id`, `stage`, and all `*_fastqc.html` / `*_fastqc.zip` files.
+
+The `stage` value tags each run as `raw` or `trimmed` so both FastQC passes can be distinguished downstream in MultiQC.
+
+---
+
+### 2. CUTADAPT (`a_cutadapt.nf`)
+
+Trims the forward primer from the raw reads. Only single-end mode is used (reads `reads[0]`).
+
+**Input channel:** `tuple val(sample_id), path(reads)`
+
+**Output channel:** `trimmed_reads` - tuple with `sample_id` and `${sample_id}_trim.fastq.gz`.
+
+**Pipeline parameter used:**
+
+| Parameter | Description |
+|-----------|-------------|
+| `params.fwd_primer` | Forward primer sequence passed to the `-g` flag of Cutadapt |
+
+> The log files (adapter statistics) are not explicitly emitted by this process but are captured by Nextflow's stdout and available in the work directory for inspection.
+
+---
+
+### 3. FASTQC - trimmed data (`a_fastqc.nf`)
+
+The same `FASTQC` module is called a second time on the trimmed FASTQ files, with `stage = "trimmed"`. This allows the trimming effect to be compared against the raw baseline in the MultiQC report.
+
+---
+
+### 4. MULTIQC (`a_multiqc.nf`)
+
+Aggregates all FastQC reports (raw and trimmed) into a single report. The process receives all `.html` and `.zip` files collected from both FastQC runs and runs `multiqc .` in the working directory.
+
+**Input:** `path qc_files` - all FastQC output files collected into a single directory.
+
+**Output channels:**
+
+| Channel | File | Description |
+|---------|------|-------------|
+| `report` | `multiqc_report.html` | Interactive HTML report |
+| `data_dir` | `multiqc_data/` | Full MultiQC data directory |
+| `fastqc_txt` | `multiqc_data/multiqc_fastqc.txt` | Flat-text FastQC summary table; input for `CLEAN_MULTIQC` |
+
+**Published to:** `${outdir}/groupA/multiqc/` (configured in `conf/modules.config`)
+
+---
+
+### 5. CLEAN_MULTIQC (`a_clean_multiqc.nf`)
+
+Parses `multiqc_fastqc.txt` using the `bin/groupA/clean_multiqc.py` script and applies quality thresholds specific to 16S rRNA V4 amplicon data. Samples that do not meet all four criteria are excluded from the output.
+
+**Input:** `path multiqc_fastqc_txt` - the `multiqc_fastqc.txt` file emitted by `MULTIQC`.
+
+**Output channel:** `final_report` - `quality_report_A.tsv`, a structured TSV with one row per sample and the following columns:
+
+| Column | Source field in `multiqc_fastqc.txt` | Description |
+|--------|--------------------------------------|-------------|
+| `sample-id` | `Sample` | SRA run accession |
+| `length` | `avg_sequence_length` | Average read length in bp |
+| `length_interp` | derived | `pass` (120–320 bp) / `few` (<120) / `more` (>320) |
+| `deduplicated` | `total_deduplicated_percentage` | % of reads remaining after deduplication |
+| `deduplicated_interp` | derived | `pass` (80–95%) / `few` (<80%) / `more` (>95%) |
+| `%GC` | `%GC` | GC content percentage |
+| `gc_interp` | derived | `pass` (40–60%) / `few` (<40%) / `more` (>60%) |
+| `quality_score_status` | `per_sequence_quality_scores` | FastQC per-sequence quality score status |
+| `quality_interp` | derived | `pass` / `fail` |
+
+
+**Published to:** `${outdir}/groupA/clean/` (configured in `conf/modules.config`)
+
+---
+
+### 6. NEW_SAMPLE_SHEET (`a_new_sample_sheet.nf`)
+
+Calls `bin/groupA/generate_sample_sheet_B.py` with the list of sample IDs that passed quality filtering and generate a CSV file mapping each sample ID to the trimmed FASTQ directory, intended as a file-based handoff to Group B.
+
+**Input:** `path id_list` - a text file with one valid `sample_id` per line (derived from `quality_report_A.tsv`).
+
+**Output channel:** `final_sheet` - `sample_sheet_B.csv`, a CSV mapping each `sample_id` to its trimmed FASTQ path under `${params.outdir}/seqs/trimmed/`.
+
+**Pipeline parameters used:**
+
+| Column | Content |
+|--------|---------|
+| `sample_id` | SRA run accession |
+| `directory` | Path to the trimmed FASTQ directory (`${params.outdir}/seqs/trimmed`), same for all samples |
+
+---
+
+## Output directory structure
+
+```
+${outdir}/
+└──  groupA/
+    ├── errors/
+    |    └── skipped_samples_log.tsv
+    ├── fastqc/
+    |    └── *_fastqc.{html,zip}    (raw and trimmed runs)
+    ├── multiqc/
+    │   ├── multiqc_report.html
+    │   └── multiqc_data/
+    │       └── multiqc_fastqc.txt
+    └── clean/
+       └── quality_report_A.tsv
+```
+
+`sample_sheet_B.csv` is written to the Nextflow work directory and published according to `conf/modules.config`.
+
+---
+
+## Helper scripts
+
+Two Python scripts called by the Nextflow processes live under `bin/groupA/`:
+
+| Script | Called by | Description |
+|--------|-----------|-------------|
+| `clean_multiqc.py` | `CLEAN_MULTIQC` | Parses `multiqc_fastqc.txt` and applies quality thresholds |
+| `generate_sample_sheet_B.py` | `NEW_SAMPLE_SHEET` | Builds `sample_sheet_B.csv` from the passing sample IDs |
