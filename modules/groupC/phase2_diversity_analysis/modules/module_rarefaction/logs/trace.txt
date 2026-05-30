@@ -1,0 +1,2 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	3b/43ac8b	61477	RAREFACTION_THRESHOLD (batch_n58)	COMPLETED	0	2026-05-30 20:07:09.819	6m 10s	6m 9s	108.5%	1.4 GB	5.6 GB	3.1 GB	485.4 MB

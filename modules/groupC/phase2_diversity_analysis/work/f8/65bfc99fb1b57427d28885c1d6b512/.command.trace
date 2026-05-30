@@ -1,0 +1,17 @@
+nextflow.trace/v2
+realtime=357181
+%cpu=1092
+cpu_model=AMD Ryzen 7 6800HS with Radeon Graphics
+rchar=3298200843
+wchar=508736987
+syscr=973216
+syscw=136294
+read_bytes=57507840
+write_bytes=677036032
+%mem=95
+vmem=5354640
+rss=1482780
+peak_vmem=5764816
+peak_rss=1484472
+vol_ctxt=25707
+inv_ctxt=1752

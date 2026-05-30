@@ -1,0 +1,5 @@
+task_id	hash	native_id	name	status	exit	submit	duration	realtime	%cpu	peak_rss	peak_vmem	rchar	wchar
+1	9d/fedfac	134221	PHASE2_DIVERSITY:DIVERSITY_METRICS:prepare_inputs (prepare_inputs)	COMPLETED	0	2026-05-30 21:20:07.350	4m 52s	4m 51s	104.0%	1.7 GB	4.6 GB	1008.2 MB	73.1 MB
+2	fd/8f7b8f	139219	PHASE2_DIVERSITY:DIVERSITY_METRICS:get_sampling_depth	COMPLETED	0	2026-05-30 21:24:58.919	29.6s	29.3s	112.9%	1.4 GB	3.9 GB	207.7 MB	1.9 MB
+3	0b/deecc7	140249	PHASE2_DIVERSITY:DIVERSITY_METRICS:diversity_analysis (alpha_beta_diversity)	COMPLETED	0	2026-05-30 21:25:28.587	3m 19s	3m 19s	110.5%	1.4 GB	5.6 GB	1.6 GB	63.4 MB
+4	a5/46bdd3	143779	PHASE2_DIVERSITY:RAREFACTION_THRESHOLD (rarefaction)	COMPLETED	0	2026-05-30 21:28:47.841	6m 17s	6m 16s	108.9%	1.4 GB	5.7 GB	3.1 GB	484.8 MB
