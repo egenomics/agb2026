@@ -53,29 +53,31 @@ workflow NFCORE_ABGTEMPLATE {
     //
     // GROUP B: Analysis
     //
+    ch_multiqc_config = file("${projectDir}/assets/multiqc_config.yml", checkIfExists: false)
+    ch_multiqc_logo   = file("${projectDir}/assets/multiqc_logo.png", checkIfExists: false)
+
     GROUPB(
-        GROUPA.out.trimmed_reads,
-        GROUPA.out.metadata
+        GROUPA.out.trimmed_reads,          // [meta, [reads]] — per-sample handoff from Group A
+        ch_multiqc_config,
+        ch_multiqc_logo,
+        channel.empty(),                   // ch_collated_versions   (QC_CHECKS disabled in Group B)
+        channel.empty(),                   // ch_methods_description
+        channel.empty(),                   // ch_workflow_summary
+        file(params.dada2_train_set),
+        file(params.dada2_species_set)
     )
 
     //
-    // GROUP C: Validation
+    // GROUP C / D: Validation & Reporting — NOT yet wired.
+    // Their workflows exist but currently emit only `versions`; the channels
+    // main.nf would consume (analysis_results, validated_results, html_report)
+    // are not produced yet. Re-enable once Groups C and D implement their outputs.
     //
-    GROUPC(
-        GROUPB.out.analysis_results,
-        GROUPA.out.metadata
-    )
-
-    //
-    // GROUP D: Reporting
-    //
-    GROUPD(
-        GROUPC.out.validated_results,
-        GROUPB.out.analysis_results
-    )
+    // GROUPC(GROUPB.out.table_counts, GROUPA.out.metadata)
+    // GROUPD(GROUPC.out.validated_results, GROUPB.out.table_counts)
 
     emit:
-    multiqc_report = GROUPD.out.html_report // channel: /path/to/report
+    multiqc_report = GROUPA.out.quality_report // channel: Group A MultiQC (until Group D produces the final report)
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

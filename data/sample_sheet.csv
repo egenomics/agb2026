@@ -1,5 +1,6 @@
-sample_id,directory
-ERR1080200,./data/seqs
-ERR1458750,./data/seqs
-ERR1315992,./containers
-ERR0000000,./data/seqs
+sample,fastq_1
+ERR1080200,data/seqs/ERR1080200.fastq
+ERR1458739,data/seqs/ERR1458739.fastq
+ERR1458750,data/seqs/ERR1458750.fastq
+ERR0000000,data/seqs/ERR0000000.fastq
+ERR1315992,data/seqs/ERR1315992.fastq

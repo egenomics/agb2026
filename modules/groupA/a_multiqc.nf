@@ -1,10 +1,11 @@
 process MULTIQC {
     // Load the needed containers
-    container "containers/multiqc_1.19.sif"
+    // Fallback (local image): containers/multiqc_1.19.sif
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/multiqc:1.19--pyhdfd78af_0' :
+        'biocontainers/multiqc:1.19--pyhdfd78af_0' }"
 
-    // Publishes the results into the quality report directory
-    publishDir "${params.out_dir}/quality_report", mode: 'copy', pattern: "multiqc_report.html"
-    publishDir "${params.out_dir}/quality_report", mode: 'copy', pattern: "multiqc_data"
+    // publishDir handled by the generic resolver in conf/modules.config -> ${outdir}/groupA/multiqc/
 
     input:
     path qc_files
@@ -12,7 +13,7 @@ process MULTIQC {
     output:
     path "multiqc_report.html", emit: report
     path "multiqc_data",        emit: data_dir
-    path "multiqc_fastqc.txt",  emit: fastqc_txt
+    path "multiqc_data/multiqc_fastqc.txt",  emit: fastqc_txt
 
     script:
     """

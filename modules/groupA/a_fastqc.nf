@@ -2,7 +2,10 @@ process FASTQC {
     // Defines the tags for nexftlow output in the terminal
     tag "${sample_id} (${stage})"
     // Load the needed containers
-    container "containers/fastqc_0.12.1.sif"
+    // Fallback (local image): containers/fastqc_0.12.1.sif
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'https://depot.galaxyproject.org/singularity/fastqc:0.12.1--hdfd78af_0' :
+        'biocontainers/fastqc:0.12.1--hdfd78af_0' }"
 
     input:
     tuple val(sample_id), val(stage), path(reads)
