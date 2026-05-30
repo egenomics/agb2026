@@ -82,7 +82,7 @@ Reads sample accessions from `sample-id` column of the metadata, locates the cor
 
 ### Usage
 
-``bash
+```bash
 # 1) Retrieve SRA accessions
 conda activate retireve_sra_env
 bash retrieve_sra.sh -i sample_information_cleaned_1834.tsv [-o output_file.tsv]
