@@ -1,0 +1,499 @@
+apptainer version 1.4.5+540-gb743918ac
+
+ N E X T F L O W   ~  version 25.10.2
+
+Launching `groupC.nf` [hopeful_majorana] DSL2 - revision: dfce408985
+
+[-        ] PHA…ITY_METRICS:prepare_inputs -
+[-        ] PHA…METRICS:get_sampling_depth -
+
+[-        ] PHA…ITY_METRICS:prepare_inputs | 0 of 1
+[-        ] PHA…METRICS:get_sampling_depth -
+[-        ] PHA…METRICS:diversity_analysis -
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Rarefaction plots      : [skipped]
+Skip report            : [not triggered]
+Rarefaction depth used : [skipped]
+
+executor >  local (1)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 0 of 1
+[-        ] PHA…METRICS:get_sampling_depth -
+[-        ] PHA…METRICS:diversity_analysis -
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Rarefaction plots      : [skipped]
+Skip report            : [not triggered]
+Rarefaction depth used : [skipped]
+
+executor >  local (2)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 0 of 1
+[-        ] PHA…METRICS:diversity_analysis -
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+
+
+
+
+executor >  local (2)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 0 of 1
+[-        ] PHA…METRICS:diversity_analysis -
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+
+
+
+
+executor >  local (2)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1 ✔
+[-        ] PHA…METRICS:diversity_analysis | 0 of 1
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Sampling depth         : 6904
+
+executor >  local (3)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1 ✔
+[75/752d8e] PHA…sis (alpha_beta_diversity) | 0 of 1
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Sampling depth         : 6904
+
+executor >  local (4)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1 ✔
+[75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1 ✔
+[f3/35a7b3] PHA…ON_THRESHOLD (rarefaction) | 0 of 1
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+
+
+executor >  local (4)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1 ✔
+[75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1 ✔
+[f3/35a7b3] PHA…ON_THRESHOLD (rarefaction) | 0 of 1
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+ERROR ~ Error executing process > 'PHASE2_DIVERSITY:RAREFACTION_THRESHOLD (rarefaction)'
+
+Caused by:
+  Process `PHASE2_DIVERSITY:RAREFACTION_THRESHOLD (rarefaction)` terminated with an error exit status (2)
+
+
+Command executed:
+
+  mkdir -p rarefaction_output \
+               merged_tsvs \
+               final_diversity/core_metrics \
+               final_diversity/diversity_table/shannon \
+               final_diversity/diversity_table/observed \
+               final_diversity/diversity_table/faith \
+               final_diversity/diversity_table/simpson \
+               final_diversity/diversity_table/weighted_unifrac \
+               final_diversity/diversity_table/bray_curtis
+  
+      # Read the sampling depth produced by module_diversity_metrics
+      SAMPLING_DEPTH=$(cat sampling_depth.txt | tr -d '[:space:]')
+  
+      # max_depth for the rarefaction sweep: use ext.max_depth if set, otherwise fall back to sampling depth
+      MAX_DEPTH=$SAMPLING_DEPTH
+  
+  
+      # Step 1: copy / merge tables into the working directory
+  
+      if [ "1" -gt 1 ]; then
+          MERGE_ARGS=""
+          for t in rarefied_table.qza; do
+              MERGE_ARGS="$MERGE_ARGS --i-tables $t"
+          done
+          qiime feature-table merge \
+              $MERGE_ARGS \
+              --o-merged-table rarefaction_output/merged_table.qza
+      else
+          cp rarefied_table.qza rarefaction_output/merged_table.qza
+      fi
+  
+  
+      # Step 2: merge the alpha diversity TSVs from module_diversity_metrics
+      # Each metric lives in its own subdirectory of diversity_table dir,
+      # so there is no filename collision when Nextflow stages the directory.
+  
+      python -c "
+  import pandas as pd, sys, os
+  
+  TAB = chr(9)
+  base = 'diversity_table'
+  
+  for mname, subdir in [
+      ('shannon',           'shannon'),
+      ('observed_features', 'observed'),
+      ('faith_pd',          'faith'),
+      ('simpson',           'simpson'),
+  ]:
+      fpath = os.path.join(base, subdir, 'alpha-diversity.tsv')
+      try:
+          df = pd.read_csv(fpath, sep=TAB, index_col=0)
+          df.to_csv('merged_tsvs/' + mname + '.tsv', sep=TAB)
+          print('Read ' + str(len(df)) + ' samples for ' + mname)
+      except Exception as e:
+          print('Warning: could not read ' + fpath + ': ' + str(e), file=sys.stderr)
+  "
+  
+  
+      # Step 3: QIIME2 alpha-rarefaction curves on the merged table
+  
+      qiime diversity alpha-rarefaction \
+          --i-table         rarefaction_output/merged_table.qza \
+          --i-phylogeny     rooted-tree.qza \
+          --p-max-depth     $MAX_DEPTH \
+          --p-steps         20 \
+          --p-metrics       observed_features \
+          --p-metrics       shannon \
+          --p-metrics       faith_pd \
+          --m-metadata-file sample-metadata.tsv \
+          --o-visualization rarefaction_output/rarefaction_curves.qzv
+  
+  
+      # Step 4: Python plateau detection
+      # For the cluster, the python file has to be put in the bin folder, 
+      python /data/upfagb/u269208/agb2026/workflows/select_rarefaction_depth.py \
+          --curves          rarefaction_output/rarefaction_curves.qzv \
+          --shannon         merged_tsvs/shannon.tsv \
+          --observed        merged_tsvs/observed_features.tsv \
+          --faith           merged_tsvs/faith_pd.tsv \
+          --simpson         merged_tsvs/simpson.tsv \
+          --output          rarefaction_output \
+          --method          coverage \
+          --metric          observed_features \
+          --coverage-pct    90 \
+          --percentile      50 \
+          --dropout-max     0.10 \
+          --sampling-depth  $SAMPLING_DEPTH \
+          
+  
+      DEPTH=$(cat rarefaction_output/rarefaction_threshold.txt | tr -d '[:space:]')
+      echo "$DEPTH" > rarefaction_depth_used.txt
+  
+      # Step 5: filter samples that did not reach the plateau
+  
+      qiime feature-table filter-samples \
+          --i-table          rarefaction_output/merged_table.qza \
+          --m-metadata-file  rarefaction_output/samples_to_keep.tsv \
+          --o-filtered-table rarefaction_output/filtered_table.qza
+  
+  
+      # Step 6: rarefy the filtered table at the auto-selected depth
+  
+      qiime feature-table rarefy \
+          --i-table          rarefaction_output/filtered_table.qza \
+          --p-sampling-depth $DEPTH \
+          --o-rarefied-table rarefaction_output/rarefied_table.qza
+  
+  
+      # Step 7: core-metrics-phylogenetic on the rarefied table
+  
+      qiime diversity core-metrics-phylogenetic \
+          --i-phylogeny rooted-tree.qza \
+          --i-table     rarefaction_output/rarefied_table.qza \
+          --p-sampling-depth $DEPTH \
+          --m-metadata-file  sample-metadata.tsv \
+          --o-rarefied-table                     final_diversity/core_metrics/rarefied_table.qza \
+          --o-faith-pd-vector                    final_diversity/core_metrics/faith_pd_vector.qza \
+          --o-observed-features-vector           final_diversity/core_metrics/observed_features_vector.qza \
+          --o-shannon-vector                     final_diversity/core_metrics/shannon_vector.qza \
+          --o-evenness-vector                    final_diversity/core_metrics/evenness_vector.qza \
+          --o-unweighted-unifrac-distance-matrix final_diversity/core_metrics/unweighted_unifrac_distance_matrix.qza \
+          --o-weighted-unifrac-distance-matrix   final_diversity/core_metrics/weighted_unifrac_distance_matrix.qza \
+          --o-jaccard-distance-matrix            final_diversity/core_metrics/jaccard_distance_matrix.qza \
+          --o-bray-curtis-distance-matrix        final_diversity/core_metrics/bray_curtis_distance_matrix.qza \
+          --o-unweighted-unifrac-pcoa-results    final_diversity/core_metrics/unweighted_unifrac_pcoa_results.qza \
+          --o-weighted-unifrac-pcoa-results      final_diversity/core_metrics/weighted_unifrac_pcoa_results.qza \
+          --o-jaccard-pcoa-results               final_diversity/core_metrics/jaccard_pcoa_results.qza \
+          --o-bray-curtis-pcoa-results           final_diversity/core_metrics/bray_curtis_pcoa_results.qza \
+          --o-unweighted-unifrac-emperor         final_diversity/core_metrics/unweighted_unifrac_emperor.qzv \
+          --o-weighted-unifrac-emperor           final_diversity/core_metrics/weighted_unifrac_emperor.qzv \
+          --o-jaccard-emperor                    final_diversity/core_metrics/jaccard_emperor.qzv \
+          --o-bray-curtis-emperor                final_diversity/core_metrics/bray_curtis_emperor.qzv
+  
+      qiime diversity alpha \
+          --i-table   rarefaction_output/rarefied_table.qza \
+          --p-metric  simpson \
+          --o-alpha-diversity final_diversity/core_metrics/simpson_vector.qza
+  
+  
+      # Step 8: export final diversity metrics to TSV
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/shannon_vector.qza \
+          --output-path final_diversity/diversity_table/shannon
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/observed_features_vector.qza \
+          --output-path final_diversity/diversity_table/observed
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/faith_pd_vector.qza \
+          --output-path final_diversity/diversity_table/faith
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/simpson_vector.qza \
+          --output-path final_diversity/diversity_table/simpson
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/weighted_unifrac_distance_matrix.qza \
+          --output-path final_diversity/diversity_table/weighted_unifrac
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/bray_curtis_distance_matrix.qza \
+          --output-path final_diversity/diversity_table/bray_curtis
+
+Command exit status:
+  2
+
+Command output:
+  Read 58 samples for shannon
+  Read 58 samples for observed_features
+  Read 58 samples for faith_pd
+  Read 74 samples for simpson
+  Saved Visualization to: rarefaction_output/rarefaction_curves.qzv
+
+Command error:
+  INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+  INFO:    gocryptfs not found, will not be able to use gocryptfs
+  INFO:    Converting SIF file to temporary sandbox...
+  Read 58 samples for shannon
+  Read 58 samples for observed_features
+  Read 58 samples for faith_pd
+  Read 74 samples for simpson
+  /opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+    import pkg_resources
+  Saved Visualization to: rarefaction_output/rarefaction_curves.qzv
+  python: can't open file '/data/upfagb/u269208/agb2026/workflows/select_rarefaction_depth.py': [Errno 2] No such file or directory
+  INFO:    Cleaning up image...
+
+Work dir:
+  /data/upfagb/u269208/agb2026/workflows/work/f3/35a7b365f8531e734ee823aaa8100b
+
+Container:
+  /data/upfagb/u269208/agb2026/containers/qiime2-amplicon-2026.1.sif
+
+Tip: you can replicate the issue by changing to the process work dir and entering the command `bash .command.run`
+
+ -- Check '.nextflow.log' file for details
+
+executor >  local (4)
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1 ✔
+[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1 ✔
+[75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1 ✔
+[f3/35a7b3] PHA…ON_THRESHOLD (rarefaction) | 0 of 1 ✘
+[-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+ERROR ~ Error executing process > 'PHASE2_DIVERSITY:RAREFACTION_THRESHOLD (rarefaction)'
+
+Caused by:
+  Process `PHASE2_DIVERSITY:RAREFACTION_THRESHOLD (rarefaction)` terminated with an error exit status (2)
+
+
+Command executed:
+
+  mkdir -p rarefaction_output \
+               merged_tsvs \
+               final_diversity/core_metrics \
+               final_diversity/diversity_table/shannon \
+               final_diversity/diversity_table/observed \
+               final_diversity/diversity_table/faith \
+               final_diversity/diversity_table/simpson \
+               final_diversity/diversity_table/weighted_unifrac \
+               final_diversity/diversity_table/bray_curtis
+  
+      # Read the sampling depth produced by module_diversity_metrics
+      SAMPLING_DEPTH=$(cat sampling_depth.txt | tr -d '[:space:]')
+  
+      # max_depth for the rarefaction sweep: use ext.max_depth if set, otherwise fall back to sampling depth
+      MAX_DEPTH=$SAMPLING_DEPTH
+  
+  
+      # Step 1: copy / merge tables into the working directory
+  
+      if [ "1" -gt 1 ]; then
+          MERGE_ARGS=""
+          for t in rarefied_table.qza; do
+              MERGE_ARGS="$MERGE_ARGS --i-tables $t"
+          done
+          qiime feature-table merge \
+              $MERGE_ARGS \
+              --o-merged-table rarefaction_output/merged_table.qza
+      else
+          cp rarefied_table.qza rarefaction_output/merged_table.qza
+      fi
+  
+  
+      # Step 2: merge the alpha diversity TSVs from module_diversity_metrics
+      # Each metric lives in its own subdirectory of diversity_table dir,
+      # so there is no filename collision when Nextflow stages the directory.
+  
+      python -c "
+  import pandas as pd, sys, os
+  
+  TAB = chr(9)
+  base = 'diversity_table'
+  
+  for mname, subdir in [
+      ('shannon',           'shannon'),
+      ('observed_features', 'observed'),
+      ('faith_pd',          'faith'),
+      ('simpson',           'simpson'),
+  ]:
+      fpath = os.path.join(base, subdir, 'alpha-diversity.tsv')
+      try:
+          df = pd.read_csv(fpath, sep=TAB, index_col=0)
+          df.to_csv('merged_tsvs/' + mname + '.tsv', sep=TAB)
+          print('Read ' + str(len(df)) + ' samples for ' + mname)
+      except Exception as e:
+          print('Warning: could not read ' + fpath + ': ' + str(e), file=sys.stderr)
+  "
+  
+  
+      # Step 3: QIIME2 alpha-rarefaction curves on the merged table
+  
+      qiime diversity alpha-rarefaction \
+          --i-table         rarefaction_output/merged_table.qza \
+          --i-phylogeny     rooted-tree.qza \
+          --p-max-depth     $MAX_DEPTH \
+          --p-steps         20 \
+          --p-metrics       observed_features \
+          --p-metrics       shannon \
+          --p-metrics       faith_pd \
+          --m-metadata-file sample-metadata.tsv \
+          --o-visualization rarefaction_output/rarefaction_curves.qzv
+  
+  
+      # Step 4: Python plateau detection
+      # For the cluster, the python file has to be put in the bin folder, 
+      python /data/upfagb/u269208/agb2026/workflows/select_rarefaction_depth.py \
+          --curves          rarefaction_output/rarefaction_curves.qzv \
+          --shannon         merged_tsvs/shannon.tsv \
+          --observed        merged_tsvs/observed_features.tsv \
+          --faith           merged_tsvs/faith_pd.tsv \
+          --simpson         merged_tsvs/simpson.tsv \
+          --output          rarefaction_output \
+          --method          coverage \
+          --metric          observed_features \
+          --coverage-pct    90 \
+          --percentile      50 \
+          --dropout-max     0.10 \
+          --sampling-depth  $SAMPLING_DEPTH \
+          
+  
+      DEPTH=$(cat rarefaction_output/rarefaction_threshold.txt | tr -d '[:space:]')
+      echo "$DEPTH" > rarefaction_depth_used.txt
+  
+      # Step 5: filter samples that did not reach the plateau
+  
+      qiime feature-table filter-samples \
+          --i-table          rarefaction_output/merged_table.qza \
+          --m-metadata-file  rarefaction_output/samples_to_keep.tsv \
+          --o-filtered-table rarefaction_output/filtered_table.qza
+  
+  
+      # Step 6: rarefy the filtered table at the auto-selected depth
+  
+      qiime feature-table rarefy \
+          --i-table          rarefaction_output/filtered_table.qza \
+          --p-sampling-depth $DEPTH \
+          --o-rarefied-table rarefaction_output/rarefied_table.qza
+  
+  
+      # Step 7: core-metrics-phylogenetic on the rarefied table
+  
+      qiime diversity core-metrics-phylogenetic \
+          --i-phylogeny rooted-tree.qza \
+          --i-table     rarefaction_output/rarefied_table.qza \
+          --p-sampling-depth $DEPTH \
+          --m-metadata-file  sample-metadata.tsv \
+          --o-rarefied-table                     final_diversity/core_metrics/rarefied_table.qza \
+          --o-faith-pd-vector                    final_diversity/core_metrics/faith_pd_vector.qza \
+          --o-observed-features-vector           final_diversity/core_metrics/observed_features_vector.qza \
+          --o-shannon-vector                     final_diversity/core_metrics/shannon_vector.qza \
+          --o-evenness-vector                    final_diversity/core_metrics/evenness_vector.qza \
+          --o-unweighted-unifrac-distance-matrix final_diversity/core_metrics/unweighted_unifrac_distance_matrix.qza \
+          --o-weighted-unifrac-distance-matrix   final_diversity/core_metrics/weighted_unifrac_distance_matrix.qza \
+          --o-jaccard-distance-matrix            final_diversity/core_metrics/jaccard_distance_matrix.qza \
+          --o-bray-curtis-distance-matrix        final_diversity/core_metrics/bray_curtis_distance_matrix.qza \
+          --o-unweighted-unifrac-pcoa-results    final_diversity/core_metrics/unweighted_unifrac_pcoa_results.qza \
+          --o-weighted-unifrac-pcoa-results      final_diversity/core_metrics/weighted_unifrac_pcoa_results.qza \
+          --o-jaccard-pcoa-results               final_diversity/core_metrics/jaccard_pcoa_results.qza \
+          --o-bray-curtis-pcoa-results           final_diversity/core_metrics/bray_curtis_pcoa_results.qza \
+          --o-unweighted-unifrac-emperor         final_diversity/core_metrics/unweighted_unifrac_emperor.qzv \
+          --o-weighted-unifrac-emperor           final_diversity/core_metrics/weighted_unifrac_emperor.qzv \
+          --o-jaccard-emperor                    final_diversity/core_metrics/jaccard_emperor.qzv \
+          --o-bray-curtis-emperor                final_diversity/core_metrics/bray_curtis_emperor.qzv
+  
+      qiime diversity alpha \
+          --i-table   rarefaction_output/rarefied_table.qza \
+          --p-metric  simpson \
+          --o-alpha-diversity final_diversity/core_metrics/simpson_vector.qza
+  
+  
+      # Step 8: export final diversity metrics to TSV
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/shannon_vector.qza \
+          --output-path final_diversity/diversity_table/shannon
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/observed_features_vector.qza \
+          --output-path final_diversity/diversity_table/observed
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/faith_pd_vector.qza \
+          --output-path final_diversity/diversity_table/faith
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/simpson_vector.qza \
+          --output-path final_diversity/diversity_table/simpson
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/weighted_unifrac_distance_matrix.qza \
+          --output-path final_diversity/diversity_table/weighted_unifrac
+  
+      qiime tools export \
+          --input-path  final_diversity/core_metrics/bray_curtis_distance_matrix.qza \
+          --output-path final_diversity/diversity_table/bray_curtis
+
+Command exit status:
+  2
+
+Command output:
+  Read 58 samples for shannon
+  Read 58 samples for observed_features
+  Read 58 samples for faith_pd
+  Read 74 samples for simpson
+  Saved Visualization to: rarefaction_output/rarefaction_curves.qzv
+
+Command error:
+  INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+  INFO:    gocryptfs not found, will not be able to use gocryptfs
+  INFO:    Converting SIF file to temporary sandbox...
+  Read 58 samples for shannon
+  Read 58 samples for observed_features
+  Read 58 samples for faith_pd
+  Read 74 samples for simpson
+  /opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+    import pkg_resources
+  Saved Visualization to: rarefaction_output/rarefaction_curves.qzv
+  python: can't open file '/data/upfagb/u269208/agb2026/workflows/select_rarefaction_depth.py': [Errno 2] No such file or directory
+  INFO:    Cleaning up image...
+
+Work dir:
+  /data/upfagb/u269208/agb2026/workflows/work/f3/35a7b365f8531e734ee823aaa8100b
+
+Container:
+  /data/upfagb/u269208/agb2026/containers/qiime2-amplicon-2026.1.sif
+
+Tip: you can replicate the issue by changing to the process work dir and entering the command `bash .command.run`
+
+ -- Check '.nextflow.log' file for details
+WARN: Failed to render execution report -- see the log file for details
+

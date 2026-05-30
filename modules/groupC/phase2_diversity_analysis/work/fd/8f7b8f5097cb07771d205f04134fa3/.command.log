@@ -1,7 +1,0 @@
-/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/unifrac/__init__.py:9: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
-  import pkg_resources
-Exported table_filtered.qza as BIOMV210DirFmt to directory exported_table
-All counts: [1, 1, 1, 1, 2, 3, 13, 16, 17, 18, 23, 42, 281, 3219, 3912, 6871, 7031, 7496, 7672, 8194, 8427, 8680, 9538, 9695, 10537, 10701, 10830, 11487, 11758, 12251, 12477, 12546, 12562, 12671, 13069, 14905, 15491, 15528, 15547, 16051, 17102, 17390, 17963, 18256, 18533, 18825, 18827, 19214, 20214, 21913, 22335, 22350, 22775, 22967, 23251, 23451, 23979, 24092, 24455, 24992, 25464, 25636, 25916, 26390, 26472, 27271, 28740, 28772, 28986, 31522, 31810, 32520, 34542, 37493]
-Q1 threshold: 7672
-Filtered counts: [7672, 8194, 8427, 8680, 9538, 9695, 10537, 10701, 10830, 11487, 11758, 12251, 12477, 12546, 12562, 12671, 13069, 14905, 15491, 15528, 15547, 16051, 17102, 17390, 17963, 18256, 18533, 18825, 18827, 19214, 20214, 21913, 22335, 22350, 22775, 22967, 23251, 23451, 23979, 24092, 24455, 24992, 25464, 25636, 25916, 26390, 26472, 27271, 28740, 28772, 28986, 31522, 31810, 32520, 34542, 37493]
-Sampling depth (90% of min filtered): 6904

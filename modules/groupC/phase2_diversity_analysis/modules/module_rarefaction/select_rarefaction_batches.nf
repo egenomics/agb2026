@@ -124,7 +124,7 @@ for mname, subdir in [
 
     # Step 4: Python plateau detection
     # For the cluster, the python file has to be put in the bin folder, 
-    python ${projectDir}/select_rarefaction_depth.py \\
+    select_rarefaction_depth.py \\
         --curves          rarefaction_output/rarefaction_curves.qzv \\
         --shannon         merged_tsvs/shannon.tsv \\
         --observed        merged_tsvs/observed_features.tsv \\

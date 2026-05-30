@@ -1,0 +1,12 @@
+INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+INFO:    Converting SIF file to temporary sandbox...
+Read 58 samples for shannon
+Read 58 samples for observed_features
+Read 58 samples for faith_pd
+Read 74 samples for simpson
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+Saved Visualization to: rarefaction_output/rarefaction_curves.qzv
+/data/upfagb/u269208/agb2026/workflows/work/59/d2501045ecb0a4d6072d03f6463804/.command.sh: line 77: select_rarefaction_depth.py: command not found
+INFO:    Cleaning up image...

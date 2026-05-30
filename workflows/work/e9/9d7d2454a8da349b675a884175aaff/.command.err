@@ -1,0 +1,48 @@
+INFO:    squashfuse not found, will not be able to mount SIF or other squashfs files
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+INFO:    Converting SIF file to temporary sandbox...
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+[INFO] Step 1/5 Extracting rarefaction curves...
+[INFO] Extracting curves from rarefaction_output/rarefaction_curves.qzv (metric: observed_features)
+[INFO] 58 samples x 20 depths (1 to 6904 reads)
+[INFO] Step 2/5 Finding plateau depth for each sample...
+[INFO] Plateaus: min=727  median=1454  max=2180  NaN=0
+[INFO] Step 3/5 Selecting threshold (method=coverage)...
+[INFO] threshold = 1454 reads
+[INFO] Retained 54 / 58 (dropped 6.9%)
+[INFO] Step 4/5 Loading alpha diversity tables...
+[INFO] Loaded shannon (58 samples)
+[INFO] Loaded observed_features (58 samples)
+[INFO] Loaded faith_pd (58 samples)
+[INFO] Loaded simpson (74 samples)
+[INFO] Step 5/5 Saving outputs...
+[INFO] Saved rarefaction_curves.png
+[INFO] Saved plateau_depth_distribution.png
+[INFO] Saved diversity_by_retention.png
+[INFO] Saved rarefaction_plots.png
+[INFO] Removed rarefaction_curves.png
+[INFO] Removed plateau_depth_distribution.png
+[INFO] Removed diversity_by_retention.png
+[INFO] Done. Output in: rarefaction_output
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+/opt/conda/envs/qiime2-amplicon-2026.1/lib/python3.10/site-packages/rescript/evaluate.py:25: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+INFO:    Cleaning up image...

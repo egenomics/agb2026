@@ -1,0 +1,17 @@
+nextflow.trace/v2
+realtime=1659413
+%cpu=209
+cpu_model=AMD EPYC 9654 96-Core Processor
+rchar=3339519977
+wchar=502471989
+syscr=1021691
+syscw=122947
+read_bytes=460492800
+write_bytes=824086528
+%mem=4
+vmem=3563128
+rss=1495872
+peak_vmem=3757688
+peak_rss=1498532
+vol_ctxt=924798
+inv_ctxt=6134
