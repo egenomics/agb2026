@@ -1,0 +1,11 @@
+{
+  "date": "2026-05-30T11:00:29.669789",
+  "method": "coverage",
+  "curve_metric": "observed_features",
+  "threshold": 1563,
+  "n_total": 58,
+  "n_retained": 52,
+  "n_dropped": 6,
+  "n_too_shallow": 0,
+  "dropout_frac": 0.1034
+}
