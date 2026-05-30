@@ -1,95 +1,89 @@
-# fastq_obtain_clean
+# metadata_obtain_clean
 
-This folder contains the scripts used to **retrieve SRA accession numbers, dowload raw sequencing data, and convert it to FASTQ format** from the NCBI SRA database.
+This folder contains the scripts used to **select, cleaan and label** the metadata from American Gut Project (AGP) before it enters the pipeline.
 
-The three scripts run sequenctially and take as input the celaned metadata file produced by `cleaning_metadata.py`.
+The process runs in two sequential setps, both implemented in `cleaning_metadata.py`.
 
-## Files 
+---
+
+## Files
 
 | File | Description |
 |------|-------------|
-| `retrieve_sra.sh` | Queries NCBI SRA to resolve a run accession (SRR/ERR/DRR) for each sample and adds it to the metadata as a `sample-id` column. |
-| `download_sra.sh` | Downloads raw `.sra` files from NCBI using `prefetch` for each accession in the `sample-id` column. |
-| `fasterq_dump.sh` | Converts `.sra` files to FASTQ format using `fasterq-dump`, handling both single-end and paired-end layouts automatically. |
+| `cleaning_metadata.py` | Main script: column subsetting + metadata cleaning + sample splitting (healthy/unhealthy) |
+| `sample_information_from_prep_1834.tsv` | Raw meadata export from Qiita (Study ID: 10317, Analysis ID: 1834) |
+| `library.xslx` | Variable dictionary: store all types of variables of metadata and its information | 
+
+---
 
 ## Requirements
 
+**Python ≥ 3.10** 
+
+### Dependencies
+
 ```bash
-# For retrieve_sra.sh
-conda create -n retrieve_sra_env -y
-conda install -n retrieve_sra_env bioconda::entrez-direct -y
-
-# For download_sra.sh and fasterq_dump.sh 
-conda create -n fasterq_dump_env -y
-conda install -n fasterq_dump_env bioconda::sra-tools -y
+conda install pandas openpyxl  
 ```
-> `bioconda::entrez-direct` is required to query NCBI database for search by `sample_name_id column` and then search each SRA code with `esearch` and retrieve the accession number with `efetch`.
-> `bioconda::sra-tools` is required to work with `.sra` files to download them with `prefetch` and convert them into `.fastq`files with `fasterq-dump`.
+> `pandas` is required to read `sample_information_from_prem_1834.tsv`and its management
+> `openpyxl`is required to real `library.xlsx`, the AGP data dictionary. 
 
-## Pipeline
+---
 
-#### 1) Retriev SRA accessions (`retrieve_sra.sh`)
+## Usage 
 
-Reads the `sample_name_id` column from `sample_information_cleaned_1834.tsv` and queries NCBI SRA via `esearch` + `efetch` to find the corresponding run accession (SRR/ERR/DRR). The accession is added as a new `sample-id` column. 
+Make sure both `sample_information_from_prep_1834q.tsv`and `library.slsx`are in the same directory as `cleaning_metadata.py`, then run:
 
-Samples that cannot be resolved are flagged as `NA`, reported to the terminal, logged to a separated file and removed from the output.
+```bash
+python cleaning_metadata.py
+```
 
-**Input:** The resulting file from `cleaning_metadata.py`
-- `<input>.tsv` # sample_information_cleaned_1834.tsv
+---
 
-**Output:** 
-- `<input>_clean.tsv` # sample_information_cleaned_1834_clean.tsv
-- `<output>_failed_samples.txt` 
+## Steps
 
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-i` | Yes | Path to the input metadata TSV |
-| `-o` | No | Path to the output file (defaults to `<input>_clean.tsv`) |
+### 1) Column subsetting
+
+Reads the raw Qiita export and retains only the columns could realistically be collected in a clinical setting (e.g., age, sex, BMI, dietary habits, antibiotic history and disgnosed medical contitions). THe selection is guided by `library.xlsx`information.
+
+**Output:** `raw_metadata_1834.tsv`
+
+### 2) Cleaning
+
+Takes `raw_metadata_1834.tsv`and applies the following:
+
+- Drops columns that exceed the missing data threshold (> 20% NaN), are entirely invalid (e.g. "not providede2, "not applicable") or are constant across all samples. Then save a summary of all dropped columns and the reason for removal
+
+**Output:** `dropped_columns_summary_1834.tsv`
+
+### 3) Sample splitting
+
+Split samples into two groups:
+ 
+- **Unhealthy**: individuals with an autoinmune disease diagnosed by a mediacl professional, without gut-related comorbidities (cancer, C.diff, diabetes, fungal overgrowth, IBD, IBS, kidney disease, liver diseade, SIBO) and without andibiotic use in the past 6 months.
+- **Healthy**: individuals with a normal BMI, no diagnosed condition across all disease columns, and no antibiotic use in the past year.
+
+The adds a `healthy`column (`yes`/`no`) according to the previous criteira. And rename `sample_name`column to `sample_name_id` which is necessay to have no confict to retrieve sra in next steps.
+
+**Output:** `sample_information_cleaned_1834.tsv`
+
+## Configuration
+
+There are some key parameters that can be adjusted:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `nan_threshold` | `0.20` | Maximum fraction of NaN values allowed per column |
+| `invalid_threshold` | `None` | If `None`, only drops columns where **all** values are invalid |
+| `invalid_values` | `["not provided", "not applicable", "n/a", "not collected"]` | Strings treated as missing |
+| `required_columns` | `["sample_name", "sex", "age_cat", "bmi_cat", "autoimmune"]` | Columns that must be present in the input |
 
 
-#### 2) Download `.sra` files (`dowlnoad_sra.sh`)
+## Data source
 
-Reads the `sample-id` column from `<input>_clean.tsv` (sample_information_cleaned_1834_clean.tsv). Files are dowloaded to a temporary subdirectory, then moved to a flat output directory. Failed dowloads are reported per sampl without interrupting the overall run.
+- **Platform:** Qiita - Stydy ID:10317, Analysis ID: 1834
+- **Reference:** McDonald, D. et al. (2018). American Gut: an Open Platform for Citizen Science Microbiome Research. mSystems, 3(3). https://doi.org/10.1128/mSystems.00031-18
 
-**Input:** The resulting file from `retrieve_sra.sh`
--  `<input>_clean.tsv` # sample_information_cleaned_1834_clean.tsv
-- Output directory path
+## Next step
 
-**Output:** Generate a directory with all `.sra` files
-- `<OUTPUT_DIR>/<sample_id>.sra` 
-
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-s` | Yes | Path to the metadata TSV |
-| `-o` | Yes | Path to the output directory for `.sra` files |
-
-#### 3) Convert `.sra` files into `.fastq` files (`fasterq_dump.sh`)
-
-Reads sample accessions from `sample-id` column of the metadata, locates the corresponding `.sra` file in the input directory and runs `fasterq-dump --split-3`. The `--split-3` flag automatically handles both single-end (SE) and paired-end (PE) layouts: SE data produces one `.fastq` file, PE data produces two files (`_1.fastq`and `_2.fastq`). Samples whose `.sra` file is not found are skipped with a warning.
-
-**Input:**
-- Directory containing `.sra` files (output of `download_sra.sh`).
-- Base output directory for FASTQ files.
-- Metadata TSV with a `sample-id` column: `sample_information_cleaned_1834_clean.tsv`
-**Output:**
-- `<OUTPUT_DIR>/inter_data/seqs/splitted/` — FASTQ files per sample.
-
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-i` | Yes | Directory containing `.sra` files |
-| `-o` | Yes | Base output directory for FASTQ files |
-| `-s` | Yes | Path to the metadata TSV |
-
-### Usage
-
-´´´bash
-# 1) Retrieve SRA accessions
-conda activate retireve_sra_env
-bash retrieve_sra.sh -i sample_information_cleaned_1834.tsv [-o output_file.tsv]
-# 2) Download .sra files
-conda activate fasterq_dump_env
-bash download_sra.sh -s sample_information_cleaned_1834_clean.tsv -o data/sra
-# 3) Convert .sra into .fastq files
-conda activate fasterq_dump_env
-bash fasterq_dump.sh -i data/sra -o data/ -s sample_information_cleaned_1834_clean.tsv
-´´´
+The output file `sample_information_cleaned_1834.tsv`is passed to `retrieve_sra.sh` to resolva NCBI SRA accession numbers for each sample.
