@@ -119,6 +119,43 @@ Metrics are computed per replicate and averaged per community type (even and sta
 
 See `modules/groupC/phase1_system_validation/dataset_validation/validation_metrics.py`.
 
+### Validation Results
+
+The pipeline was run on 6 mock community samples (3 even, 3 staggered) from PRJEB10949 on the Pirineus cluster (30th of May 2026).
+Full  outputs are in
+`modules/groupC/phase1_system_validation/results/validation_outputs`.
+
+**Detection metrics (genus level)**
+
+| Replicate | Community | Precision | Recall | F1 | Accuracy |
+|---|---|---|---|---|---|
+| ERR1049996 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049997 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049998 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049999 | staggered | 0.875 | 0.4375 | 0.5833 | 0.4118 |
+| ERR1050000 | staggered | 0.8333 | 0.3125 | 0.4545 | 0.2941 |
+| ERR1050001 | staggered | 0.8 | 0.25 | 0.381 | 0.2353 |
+| **average** | **even** | **0.8125** | **0.8125** | **0.8125** | **0.6842** |
+| **average** | **staggered** | **0.8361** | **0.3333** | **0.4729** | **0.3137** |
+
+**Abundance metrics**
+
+| Replicate | Community | RMSE | Bray-Curtis |
+|---|---|---|---|
+| ERR1049996 | even | 0.0272 | 0.3143 |
+| ERR1049997 | even | 0.0254 | 0.305 |
+| ERR1049998 | even | 0.0257 | 0.312 |
+| ERR1049999 | staggered | 0.0304 | 0.2323 |
+| ERR1050000 | staggered | 0.035 | 0.2535 |
+| ERR1050001 | staggered | 0.0322 | 0.2453 |
+| **average** | **even** | **0.0261** | **0.3104** |
+| **average** | **staggered** | **0.0325** | **0.2437** |
+
+The pipeline correctly identified 13 of 16 expected genera in the even mock community (F1 = 0.81). Performance dropped in the staggered community (F1 = 0.47), meaning it has difficulty detecting rare taxa at low abundance. Precision remained high in both communities (~0.81–0.84), indicating that detections are generally correct.
+
+> **Known limitation:** Group A's Cutadapt step is hardcoded for the AGP 515F primer. PRJEB10949 dataset uses Vaiomer V3-V4 primers, so primers were not removed before DADA2 processing. Results are still within expected ranges, suggesting limited affect on classification accuracy.
+
+
 ---
 
 ### Contamination Filtering
