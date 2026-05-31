@@ -1,0 +1,51 @@
+Bootstrap: docker
+From: rocker/tidyverse:4.3.2
+
+%labels
+    Author GroupD
+    Version v1.0
+    Description Entorno R + Python para microbiome analysis
+
+%post
+
+# ---------------------------------------------------------
+# System dependencies
+# ---------------------------------------------------------
+apt-get update && apt-get install -y --no-install-recommends \
+    libxt6 \
+    python3 \
+    python3-pip \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libfontconfig1-dev \
+    libharfbuzz-dev \
+    libfribidi-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libtiff5-dev \
+    libjpeg-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# ---------------------------------------------------------
+# R packages from CRAN
+# ---------------------------------------------------------
+Rscript -e "install.packages(c('tidyverse', 'pheatmap', 'viridis', 'optparse', 'GGally', 'ggrepel', 'compositions', 'FactoMineR', 'factoextra', 'plotly', 'htmlwidgets'), repos='https://cloud.r-project.org/')"
+
+# ---------------------------------------------------------
+# Bioconductor
+# ---------------------------------------------------------
+Rscript -e "if (!requireNamespace('BiocManager', quietly=TRUE)) install.packages('BiocManager', repos='https://cloud.r-project.org/')"
+
+Rscript -e "BiocManager::install(c('ANCOMBC','phyloseq'), ask=FALSE, update=FALSE)"
+
+# ---------------------------------------------------------
+# Python packages
+# ---------------------------------------------------------
+pip3 install --no-cache-dir \
+    numpy \
+    pandas \
+    scipy \
+    matplotlib \
+    matplotlib-inline \
+    seaborn
