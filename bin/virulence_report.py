@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-
-import sys
+import argparse
+import os
 import warnings
+import sys
+
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -11,15 +13,16 @@ import matplotlib.patches as mpatches
 
 warnings.filterwarnings('ignore')
 
-
 ASV_TABLE_PATH  = sys.argv[1]
 TAXONOMY_PATH   = sys.argv[2]     # --taxonomy
 METADATA_PATH   = sys.argv[3]  # --metadata
 OUTPUT_PATH     = "virulence_abundance_plot.png"  # --output
 
+# Optional: set to an sra_id string to generate only that patient's plot.
+# Leave as None to generate all 16 patient plots.
+PATIENT_ID_FILTER = None    # e.g. "ERR1074192"
 
-# Exact genus-level labels as they appear in Group B's taxonomy output.
-# "Escherichia-Shigella" is a single merged label (SILVA/QIIME2 convention).
+
 VIRULENT_GENERA = [
     "Escherichia-Shigella",
     "Enterococcus",
@@ -27,29 +30,25 @@ VIRULENT_GENERA = [
 ]
 
 
+
+# Top N non-virulent genera shown individually; rest → "Other (benign)"
 TOP_N_BENIGN = 10
 
-# Matches the actual column header in sample-metadata.tsv
-METADATA_SAMPLE_ID_COL = "sample-id"
+# Metadata column linking ASV table columns to metadata rows
+SAMPLE_ID_COL = "sra_id"
 
-# 'healthy' column uses lowercase "yes" / "no"
+# Metadata column + value that identifies healthy samples
 HEALTHY_COL   = "healthy"
 HEALTHY_VALUE = "yes"
 
 
-VIRULENT_REDS = [
-    "#FF0000", "#D10000", "#A80000",
-    "#800000", "#FF4444", "#FF7777",
-]
-
-BENIGN_BLUES = [
+VIRULENT_RED  = "#FF0000"
+BENIGN_BLUES  = [
     "#4E79A7", "#76B7B2", "#59A14F", "#EDC948",
     "#B07AA1", "#1F77B4", "#2CA02C", "#9467BD",
     "#17BECF", "#6BAED6",
 ]
-
-OTHER_COLOUR   = "#AAAAAA"
-VIRULENT_GROUP = "#FF0000"
+OTHER_COLOUR  = "#AAAAAA"
 
 BG    = "#0F1117"
 PANEL = "#161B22"
@@ -58,83 +57,102 @@ GRID  = "#2A3040"
 SPINE = "#444C56"
 
 
-def load_and_process():
-    print("[INFO] Loading files...")
-    asv  = pd.read_csv(ASV_TABLE_PATH,  sep='\t', index_col=0)
-    tax  = pd.read_csv(TAXONOMY_PATH,   sep='\t')
-    meta = pd.read_csv(METADATA_PATH,   sep='\t')
 
-    meta_samples = set(meta[METADATA_SAMPLE_ID_COL].dropna())
+def load_data():
+
+    print("[INFO] Loading files...")
+    asv  = pd.read_csv(ASV_TABLE_PATH, sep='\t', index_col=0)
+    tax  = pd.read_csv(TAXONOMY_PATH,  sep='\t')
+    meta = pd.read_csv(METADATA_PATH,  sep='\t')
+
+    # ── Filter to samples present in metadata ─────────────────────────────────
+    meta_samples = set(meta[SAMPLE_ID_COL].dropna())
     shared = [c for c in asv.columns if c in meta_samples]
     asv = asv[shared]
     print(f"[INFO] {len(shared)} samples matched between ASV table and metadata")
 
-    print("[INFO] Computing relative abundance...")
+    # ── Relative abundance (computed after filtering so columns sum to 100%) ──
     col_totals = asv.sum(axis=0).replace(0, np.nan)
     rel = asv.div(col_totals, axis=1) * 100.0
 
+    # ── Map ASV IDs → best available taxonomy label ───────────────────────────
+    # Falls back through Genus → Family → Order → Class → Phylum → Unclassified
+    # so that NaN genus values never cause groupby to silently drop rows.
     def best_label(row):
         for col in ['Genus', 'Family', 'Order', 'Class', 'Phylum']:
-            if col in row and pd.notna(row[col]) and str(row[col]).strip():
+            if col in row.index and pd.notna(row[col]) and str(row[col]).strip():
                 suffix = '' if col == 'Genus' else f' ({col[0].lower()})'
                 return str(row[col]) + suffix
         return 'Unclassified'
 
     tax['_label'] = tax.apply(best_label, axis=1)
-    genus_map = dict(zip(tax['ASV_ID'], tax['_label']))
-    rel.index = [genus_map.get(i, i) for i in rel.index]
+    label_map = dict(zip(tax['ASV_ID'], tax['_label']))
+    rel.index = [label_map.get(i, i) for i in rel.index]
     rel = rel.groupby(level=0).sum()
 
-    healthy_ids = set(
-        meta.loc[meta[HEALTHY_COL] == HEALTHY_VALUE, METADATA_SAMPLE_ID_COL]
-    )
-    patient_ids = set(
-        meta.loc[meta[HEALTHY_COL] != HEALTHY_VALUE, METADATA_SAMPLE_ID_COL]
-    )
+    # ── Split healthy vs patient ───────────────────────────────────────────────
+    healthy_ids = set(meta.loc[meta[HEALTHY_COL] == HEALTHY_VALUE, SAMPLE_ID_COL])
+    patient_ids = set(meta.loc[meta[HEALTHY_COL] != HEALTHY_VALUE, SAMPLE_ID_COL])
 
     healthy_samples = [c for c in rel.columns if c in healthy_ids]
     patient_samples = [c for c in rel.columns if c in patient_ids]
 
-    print(f"[INFO] Healthy samples: {len(healthy_samples)}")
-    print(f"[INFO] Patient (non-healthy) samples: {len(patient_samples)}")
+    print(f"[INFO] Healthy samples  : {len(healthy_samples)}")
+    print(f"[INFO] Patient samples  : {len(patient_samples)}")
 
-    return rel, patient_samples, healthy_samples
+    # Sanity check
+    col_sums = rel.sum(axis=0).round(1)
+    if not (col_sums == 100.0).all():
+        print(f"[WARN] Column sum range: {col_sums.min()}–{col_sums.max()}%")
+    else:
+        print("[INFO] All columns sum to 100% ✓")
+
+    return rel, patient_samples, healthy_samples, meta
 
 
 def classify_taxa(rel):
-    all_genera = rel.index.tolist()
+    """
+    Split relative abundance table into virulent and benign DataFrames.
 
-    virulent_genera = [
-        g for g in all_genera
-        if any(v.lower() == g.lower() for v in VIRULENT_GENERA)
+    Returns:
+      virulent_df  — rows are virulent genera
+      benign_df    — rows are top N benign genera + 'Other (benign)'
+      benign_colour — {genus: colour} dict (consistent across all patient plots)
+    """
+    all_taxa = rel.index.tolist()
+
+    virulent_taxa = [
+        t for t in all_taxa
+        if any(v.lower() == t.lower() for v in VIRULENT_GENERA)
     ]
-    benign_genera = [g for g in all_genera if g not in virulent_genera]
+    benign_taxa = [t for t in all_taxa if t not in virulent_taxa]
 
-    virulent_df = rel.loc[virulent_genera] if virulent_genera else pd.DataFrame(columns=rel.columns)
+    virulent_df = (rel.loc[virulent_taxa]
+                   if virulent_taxa
+                   else pd.DataFrame(index=[], columns=rel.columns))
 
-    benign_rel   = rel.loc[benign_genera]
-    mean_abund   = benign_rel.mean(axis=1).sort_values(ascending=False)
-    top_genera   = mean_abund.head(TOP_N_BENIGN).index.tolist()
-    top_benign   = benign_rel.loc[top_genera]
+    # Top N benign genera by mean abundance across ALL samples (consistent order)
+    benign_rel  = rel.loc[benign_taxa]
+    mean_abund  = benign_rel.mean(axis=1).sort_values(ascending=False)
+    top_taxa    = mean_abund.head(TOP_N_BENIGN).index.tolist()
+    top_benign  = benign_rel.loc[top_taxa]
+    other       = benign_rel.loc[~benign_rel.index.isin(top_taxa)].sum(axis=0)
+    other_row   = pd.DataFrame([other], index=["Other (benign)"])
+    benign_df   = pd.concat([top_benign, other_row])
 
-    other_benign = benign_rel.loc[~benign_rel.index.isin(top_genera)].sum(axis=0)
-    other_row    = pd.DataFrame([other_benign], index=["Other (benign)"])
-    benign_df    = pd.concat([top_benign, other_row])
+    # Colour map — fixed order so colours are the same in every patient plot
+    benign_colour = {
+        t: BENIGN_BLUES[i % len(BENIGN_BLUES)]
+        for i, t in enumerate(top_taxa)
+    }
+    benign_colour["Other (benign)"] = OTHER_COLOUR
 
-    total = virulent_df.sum(axis=0) if not virulent_df.empty else 0
-    total = total + benign_df.sum(axis=0)
-    if not (total.round(1) == 100.0).all():
-        print(f"[WARN] Some columns don't sum to 100% — min={total.min():.1f}% max={total.max():.1f}%")
-    else:
-        print("[INFO] All sample columns sum to 100% ✓")
+    print(f"[INFO] Virulent genera found: {virulent_taxa or 'none'}")
 
-    print(f"[INFO] Virulent genera detected: {virulent_genera or 'none'}")
-    print(f"[INFO] Top {TOP_N_BENIGN} named benign genera + 'Other (benign)' shown")
-
-    return virulent_df, benign_df
+    return virulent_df, benign_df, benign_colour
 
 
-def _style_ax(ax):
+def _style(ax):
     ax.set_facecolor(PANEL)
     ax.tick_params(colors=FG)
     ax.xaxis.label.set_color(FG)
@@ -148,69 +166,63 @@ def _style_ax(ax):
     ax.set_axisbelow(True)
 
 
-def draw_stacked_bars(ax, virulent_df, benign_df, sample_ids,
-                      title, show_ylabel=True, is_control=False):
+def draw_bar(ax, virulent_df, benign_df, benign_colour,
+             sample_ids, title, bar_width=0.45, show_ylabel=True):
+    """
+    Draw stacked bars for the given sample_ids onto ax.
+    Stack order (bottom → top): benign genera → Other (benign) → virulent (red)
+    """
     x      = np.arange(len(sample_ids))
     bottom = np.zeros(len(sample_ids))
-    width  = 0.65 if not is_control else 0.35
 
-    benign_genera = [g for g in benign_df.index if g != "Other (benign)"]
-    benign_colour = {g: BENIGN_BLUES[i % len(BENIGN_BLUES)]
-                     for i, g in enumerate(benign_genera)}
-
-    for genus in benign_genera:
+    # Benign top genera
+    for genus in [t for t in benign_df.index if t != "Other (benign)"]:
         vals = benign_df.loc[genus, sample_ids].fillna(0).values
-        ax.bar(x, vals, width, bottom=bottom,
-               color=benign_colour[genus], zorder=3, linewidth=0)
+        ax.bar(x, vals, bar_width, bottom=bottom,
+               color=benign_colour.get(genus, OTHER_COLOUR),
+               zorder=3, linewidth=0)
         bottom += vals
 
-    if "Other (benign)" in benign_df.index:
-        vals = benign_df.loc["Other (benign)", sample_ids].fillna(0).values
-        ax.bar(x, vals, width, bottom=bottom,
-               color=OTHER_COLOUR, zorder=3, linewidth=0)
-        bottom += vals
+    # Other (benign)
+    vals = benign_df.loc["Other (benign)", sample_ids].fillna(0).values
+    ax.bar(x, vals, bar_width, bottom=bottom,
+           color=OTHER_COLOUR, zorder=3, linewidth=0)
+    bottom += vals
 
+    # Virulent — single red segment grouping all virulent genera
     if not virulent_df.empty:
-        virulent_total = virulent_df[sample_ids].fillna(0).sum(axis=0).values
-        ax.bar(x, virulent_total, width, bottom=bottom,
-               color=VIRULENT_GROUP, zorder=4, linewidth=0,
-               label="Virulent (grouped)")
-        bottom += virulent_total
+        vir_total = virulent_df.reindex(columns=sample_ids).fillna(0).sum(axis=0).values
+        ax.bar(x, vir_total, bar_width, bottom=bottom,
+               color=VIRULENT_RED, zorder=4, linewidth=0)
 
     ax.set_xticks(x)
-    ax.set_xticklabels(
-        sample_ids, rotation=60, ha='right',
-        fontsize=6.5 if not is_control else 9
-    )
+    ax.set_xticklabels(sample_ids, rotation=30, ha='right', fontsize=8)
     ax.set_xlim(-0.6, len(sample_ids) - 0.4)
     ax.set_ylim(0, 108)
-    ax.set_title(title, fontsize=10, fontweight='bold', pad=8, color=FG)
+    ax.set_title(title, fontsize=10, fontweight='bold', pad=8)
     if show_ylabel:
-        ax.set_ylabel("Relative Abundance (%)", fontsize=9, color=FG)
-    _style_ax(ax)
-
-    return benign_colour
+        ax.set_ylabel("Relative Abundance (%)", fontsize=9)
+    _style(ax)
 
 
-def build_legend(fig, benign_colour, virulent_genera_found):
+def build_legend(fig, benign_colour, virulent_taxa_found):
+    """Two-section legend: Virulent (red) then Benign (blues)."""
     handles = []
 
-    handles.append(mpatches.Patch(color='none', label='━━ VIRULENT TAXA ━━'))
-    label = (", ".join(virulent_genera_found)
-             if virulent_genera_found else "none detected")
-    handles.append(mpatches.Patch(color=VIRULENT_GROUP,
-                                  label=f"Virulent group: {label}"))
+    handles.append(mpatches.Patch(color='none', label='━━ VIRULENT ━━━━━━━━'))
+    vir_label = ", ".join(virulent_taxa_found) if virulent_taxa_found else "none detected"
+    handles.append(mpatches.Patch(color=VIRULENT_RED,
+                                  label=f"Virulent (grouped): {vir_label}"))
 
-    handles.append(mpatches.Patch(color='none', label='━━ OTHER TAXA ━━━━'))
-    for genus, col in benign_colour.items():
-        handles.append(mpatches.Patch(color=col, label=genus))
-    handles.append(mpatches.Patch(color=OTHER_COLOUR, label="Other (benign)"))
+    handles.append(mpatches.Patch(color='none', label='━━ OTHER TAXA ━━━━━━'))
+    for genus, colour in benign_colour.items():
+        handles.append(mpatches.Patch(color=colour, label=genus))
 
     fig.legend(
         handles=handles,
         loc='lower center',
         ncol=4,
-        bbox_to_anchor=(0.5, -0.1),
+        bbox_to_anchor=(0.5, -0.12),
         framealpha=0.15,
         facecolor=PANEL,
         edgecolor=SPINE,
@@ -219,104 +231,128 @@ def build_legend(fig, benign_colour, virulent_genera_found):
     )
 
 
-def make_plot(rel, patient_samples, healthy_samples):
-    virulent_df, benign_df = classify_taxa(rel)
 
-    healthy_virulent_mean = (
-        virulent_df[healthy_samples].mean(axis=1)
-        if not virulent_df.empty and healthy_samples
-        else pd.Series(dtype=float)
-    )
-    healthy_benign_mean = benign_df[healthy_samples].mean(axis=1)
+def plot_patient(patient_id, virulent_df, benign_df, benign_colour,
+                 healthy_samples, outdir):
+    """
+    Generate and save one plot for a single patient.
+    Left panel  = patient sample bar
+    Right panel = healthy cohort average bar
+    """
+    ctrl_label = f"Healthy avg\n(n={len(healthy_samples)})"
 
-    ctrl_label = f"Healthy\nControl\n(n={len(healthy_samples)})"
+    # Build healthy control single-column DataFrames
     ctrl_virulent = pd.DataFrame(
-        healthy_virulent_mean.values.reshape(-1, 1),
-        index=healthy_virulent_mean.index,
+        virulent_df[healthy_samples].mean(axis=1).values.reshape(-1, 1),
+        index=virulent_df.index,
         columns=[ctrl_label]
-    ) if not healthy_virulent_mean.empty else pd.DataFrame(columns=[ctrl_label])
+    ) if not virulent_df.empty else pd.DataFrame(
+        index=[], columns=[ctrl_label]
+    )
 
     ctrl_benign = pd.DataFrame(
-        healthy_benign_mean.values.reshape(-1, 1),
-        index=healthy_benign_mean.index,
+        benign_df[healthy_samples].mean(axis=1).values.reshape(-1, 1),
+        index=benign_df.index,
         columns=[ctrl_label]
     )
 
-    n_patients = len(patient_samples)
-    fig_w = max(16, n_patients * 0.45 + 5)
-    fig   = plt.figure(figsize=(fig_w, 8), facecolor=BG)
-
-    gs = fig.add_gridspec(
+    # ── Figure: 2 panels, patient wider than control ──────────────────────────
+    fig, (ax_pat, ax_ctrl) = plt.subplots(
         1, 2,
-        width_ratios=[n_patients, 2],
-        wspace=0.06
-    )
-    ax_patients = fig.add_subplot(gs[0])
-    ax_control  = fig.add_subplot(gs[1])
-
-    benign_colour = draw_stacked_bars(
-        ax_patients, virulent_df, benign_df,
-        patient_samples,
-        title=f"Patient Samples  (n={len(patient_samples)})",
-        show_ylabel=True,
-        is_control=False
+        figsize=(9, 6),
+        facecolor=BG,
+        gridspec_kw={'width_ratios': [2, 1], 'wspace': 0.08}
     )
 
-    draw_stacked_bars(
-        ax_control, ctrl_virulent, ctrl_benign,
-        [ctrl_label],
-        title="Healthy\nControl Avg",
-        show_ylabel=False,
-        is_control=True
-    )
+    # Patient bar
+    draw_bar(ax_pat, virulent_df, benign_df, benign_colour,
+             [patient_id],
+             title=f"Patient: {patient_id}",
+             bar_width=0.4,
+             show_ylabel=True)
 
-    fig.add_artist(
-        plt.Line2D(
-            [ax_patients.get_position().x1 + 0.005,
-             ax_patients.get_position().x1 + 0.005],
-            [0.1, 0.92],
-            transform=fig.transFigure,
-            color=SPINE, linewidth=1.2, linestyle='--'
-        )
-    )
+    # Healthy control bar
+    draw_bar(ax_ctrl, ctrl_virulent, ctrl_benign, benign_colour,
+             [ctrl_label],
+             title="Healthy Control",
+             bar_width=0.4,
+             show_ylabel=False)
 
-    virulent_found = [
-        g for g in rel.index
-        if any(v.lower() == g.lower() for v in VIRULENT_GENERA)
-    ]
-    build_legend(fig, benign_colour, virulent_found)
+    # Shared vertical divider
+    fig.add_artist(plt.Line2D(
+        [ax_pat.get_position().x1 + 0.01,
+         ax_pat.get_position().x1 + 0.01],
+        [0.15, 0.92],
+        transform=fig.transFigure,
+        color=SPINE, linewidth=1.2, linestyle='--'
+    ))
+
+    # Legend + title
+    virulent_taxa_found = list(virulent_df.index) if not virulent_df.empty else []
+    build_legend(fig, benign_colour, virulent_taxa_found)
 
     fig.suptitle(
-        "Relative Abundance per Sample  |  Red = Virulent taxa (grouped)",
-        color=FG, fontsize=12, fontweight='bold', y=1.01
+        f"Relative Abundance  |  Patient {patient_id}  |  Red = Virulent taxa",
+        color=FG, fontsize=11, fontweight='bold', y=1.01
     )
 
-    plt.savefig(OUTPUT_PATH, dpi=160, bbox_inches='tight',
+    out_path = os.path.join(outdir, f"virulence_{patient_id}.png")
+    plt.savefig(out_path, dpi=150, bbox_inches='tight',
                 facecolor=fig.get_facecolor())
     plt.close()
-    print(f"[INFO] Plot saved → {OUTPUT_PATH}")
+    print(f"[INFO] Saved → {out_path}")
+
+
 
 
 def parse_args():
-    import argparse
     p = argparse.ArgumentParser(
-        description="Virulence relative abundance stacked bar plot"
+        description="Per-patient virulence relative abundance plots"
     )
-    p.add_argument("--asv-table", dest="asv_table", default=None)
-    p.add_argument("--taxonomy",  dest="taxonomy",  default=None)
-    p.add_argument("--metadata",  dest="metadata",  default=None)
-    p.add_argument("--output",    dest="output",    default=None)
+    p.add_argument("--asv-table",   dest="asv_table",  default=None)
+    p.add_argument("--taxonomy",    dest="taxonomy",   default=None)
+    p.add_argument("--metadata",    dest="metadata",   default=None)
+    p.add_argument("--outdir",      dest="outdir",     default=None)
+    p.add_argument(
+        "--patient-id", dest="patient_id", default=None,
+        help="Optional: sra_id of a single patient to plot. "
+             "If omitted, all non-healthy patients are plotted."
+    )
     return p.parse_args()
 
+## Mainnnnnnnnnn
 
 if __name__ == '__main__':
     args = parse_args()
 
-    if args.asv_table: ASV_TABLE_PATH = args.asv_table
-    if args.taxonomy:  TAXONOMY_PATH  = args.taxonomy
-    if args.metadata:  METADATA_PATH  = args.metadata
-    if args.output:    OUTPUT_PATH    = args.output
+    # CLI args override section ❶ defaults
+    if args.asv_table:  ASV_TABLE_PATH    = args.asv_table
+    if args.taxonomy:   TAXONOMY_PATH     = args.taxonomy
+    if args.metadata:   METADATA_PATH     = args.metadata
+    if args.outdir:     OUTDIR            = args.outdir
+    if args.patient_id: PATIENT_ID_FILTER = args.patient_id
 
-    rel, patient_samples, healthy_samples = load_and_process()
-    make_plot(rel, patient_samples, healthy_samples)
-    print("[INFO] Done.")
+    os.makedirs(OUTDIR, exist_ok=True)
+
+    rel, patient_samples, healthy_samples, meta = load_data()
+    virulent_df, benign_df, benign_colour = classify_taxa(rel)
+
+    # ── Apply patient filter ──────────────────────────────────────────────────
+    if PATIENT_ID_FILTER:
+        if PATIENT_ID_FILTER not in patient_samples:
+            raise ValueError(
+                f"--patient-id '{PATIENT_ID_FILTER}' not found in non-healthy samples.\n"
+                f"Available patient IDs: {patient_samples}"
+            )
+        targets = [PATIENT_ID_FILTER]
+        print(f"[INFO] Generating plot for single patient: {PATIENT_ID_FILTER}")
+    else:
+        targets = patient_samples
+        print(f"[INFO] Generating plots for all {len(targets)} patients...")
+
+    # ── Generate one plot per patient ─────────────────────────────────────────
+    for pid in targets:
+        plot_patient(pid, virulent_df, benign_df, benign_colour,
+                     healthy_samples, OUTDIR)
+
+    print(f"\n[INFO] Done. {len(targets)} plot(s) saved to '{OUTDIR}/'")
