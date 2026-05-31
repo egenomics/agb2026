@@ -6,9 +6,8 @@ process RAREFACTION_THRESHOLD {
 
     conda params.qiime2_conda_env ?: "qiime2=2026.1"
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/qiime2-amplicon-2024.10:latest' :
-        'quay.io/qiime2/amplicon:2024.10' }"
+    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+
 
     input:
     tuple val(meta),
@@ -223,9 +222,7 @@ process SKIP_RAREFACTION {
 
     conda params.qiime2_conda_env ?: "qiime2=2026.1"
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/qiime2-amplicon-2024.10:latest' :
-        'quay.io/qiime2/amplicon:2024.10' }"
+    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
 
     input:
     tuple val(meta), val(n_samples), val(min_batch_size)

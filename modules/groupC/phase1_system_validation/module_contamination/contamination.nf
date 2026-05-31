@@ -40,14 +40,15 @@ process CONTAMINATION_FILTER {
     path taxonomy
     path kraken2_raw_output
     path metadata
-
+    path r_script
+        
     output:
     path "contamination_summary.png", emit: summary_png
 
     script:
     def args = task.ext.args ?: ''
     """
-    contamination_filtering.R \\
+    Rscript ${r_script} \\
         ${asv_table} \\
         ${taxonomy} \\
         ${kraken2_raw_output} \\
@@ -70,7 +71,8 @@ workflow CONTAMINATION {
         asv_table,
         taxonomy,
         KRAKEN2.out.raw_output,
-        metadata
+        metadata,
+        file("${projectDir}/bin/groupC/contamination_filtering.R")
     )
 
     emit:

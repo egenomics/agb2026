@@ -1,6 +1,7 @@
 process prepare_inputs {
     tag "prepare_inputs"
-
+    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+    
     input:
     path asv_table
     path rep_seqs_fasta
@@ -45,7 +46,8 @@ process prepare_inputs {
 }
 
 process get_sampling_depth {
-
+    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+    
     input:
     path table
 
@@ -107,7 +109,8 @@ EOF
 
 process diversity_analysis {
     tag "alpha_beta_diversity"
-
+    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+    
     input:
     path phylogeny
     path table
