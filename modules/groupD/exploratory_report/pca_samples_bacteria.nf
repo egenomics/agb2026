@@ -6,7 +6,7 @@ process PCA_MICROBIOME {
         mode: 'copy'
 
     // Load the needed containers
-    container "containers/r_groupD.sif"
+    container "containers/groupD.sif"
 
     input:
     path(asv_table)

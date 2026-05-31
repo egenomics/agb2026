@@ -5,7 +5,7 @@ process PARALLEL_PLOT_MICROBIOME {
     publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
-    container "containers/r_groupD.sif"
+    container "containers/groupD.sif"
 
     input:
     path(asv_table)

@@ -1,15 +1,17 @@
-process overvoew_table{
+process overview_table{
 
-    publishDir "${params.outdir}/explanatory_report", mode: 'copy'
+    publishDir "${params.outdir}/explanatory", mode: 'copy'
     
+    container "containers/groupD.sif"
+
     input:
     tuple path(metadata), path(pca), path(z_scores), path(genus_counts)
 
     output:
-    path "explanatory_report/overview_sample", emit: overview_sample_table_dir  
+    path "explanatory/overview_sample", emit: overview_sample_table_dir  
 
     script:
     """
-    PCoA.sh $metadata $pca $z_scores $genus_counts "explanatory_report/overview_sample"
+    PCoA.sh $metadata $pca $z_scores $genus_counts "explanatory/overview_sample"
     """
 }

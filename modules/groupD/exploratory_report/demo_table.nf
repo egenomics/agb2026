@@ -1,5 +1,7 @@
 process DEMOGRAPHIC_SUMMARY {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/exploratory", mode: 'copy'
+
+    container "containers/groupD.sif"
 
     input:
     tuple path metadata

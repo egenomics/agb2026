@@ -1,6 +1,8 @@
 
 process VIRULENCE_PLOT {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/explanatory", mode: 'copy'
+
+    container "containers/groupD.sif"
 
     input:
     path meta 

@@ -1,5 +1,7 @@
 process BETA_DIVERSITY_TREE {
-    publishDir "${params.outdir}", mode: 'copy'
+    publishDir "${params.outdir}/exploratory", mode: 'copy'
+
+    container "containers/groupD.sif"
 
     input:
     

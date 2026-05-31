@@ -1,15 +1,17 @@
 process PCoA_plots{
 
-    publishDir "${params.outdir}/explanatory_report", mode: 'copy'
+    publishDir "${params.outdir}/explanatory", mode: 'copy'
     
+    container "containers/groupD.sif"
+
     input:
     tuple path(pca), path(metadata)
 
     output:
-    path "explanatory_report/PCoA_patient", emit: PCoA_patient_plots_dir  
+    path "explanatory/PCoA_patient", emit: PCoA_patient_plots_dir  
 
     script:
     """
-    PCoA.sh $pca $metadata "explanatory_report/PCoA_patient"
+    PCoA.sh $pca $metadata "explanatory/PCoA_patient"
     """
 }
