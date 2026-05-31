@@ -69,11 +69,15 @@ workflow NFCORE_ABGTEMPLATE {
     //
     // GROUP D: Reporting
     //
-    GROUPD(
-        GROUPA.out.metadata
-        GROUPC.out.validated_results,
-        GROUPB.out.analysis_results
-    )
+        GROUPD(
+            GROUPA.out.metadata, // channel: Metadata from Group A
+            GROUPC.out.OutputMetricResultsAlpha,
+            GROUPC.out.OutputMetricResultsBeta,
+            GROUPC.out.OutputMetricResultsRarefaction,
+            GROUPC.out.annotated_counts,
+            GROUPC.out.annotated_taxonomy,
+            GROUPC.out.summary /// channel: Path to "contamination_summary.tsv"
+        )
 
     emit:
     multiqc_report = GROUPD.out.html_report // channel: /path/to/report
