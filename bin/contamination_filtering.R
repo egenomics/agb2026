@@ -29,6 +29,8 @@ alien_taxa <- c(
   "Thermus aquaticus"
 )
 
+CONTAMINATION_THRESHOLD <- 15.0
+
 # ===============
 # LOAD INPUT DATA
 # ===============
@@ -125,13 +127,14 @@ contamination_summary <- counts_long %>%
   )
 
 # ==========================
-# GROUP AVERAGES
+# TABLE 1 — GROUP AVERAGES
+# (Healthy and Non-healthy only)
 # ==========================
 
 group_averages <- contamination_summary %>%
+  filter(sample_type %in% c("Healthy", "Non-healthy")) %>%
   group_by(sample_type) %>%
   summarise(
-    `sample-id`      = paste0("AVG_", sample_type[1]),
     total_asvs       = round(mean(total_asvs), 1),
     n_passed         = round(mean(n_passed), 1),
     n_flagged_kitome = round(mean(n_flagged_kitome), 1),
@@ -140,46 +143,95 @@ group_averages <- contamination_summary %>%
     pct_flagged      = round(mean(pct_flagged), 2),
     .groups = "drop"
   ) %>%
-  relocate(`sample-id`, .before = sample_type)
-
-# ==========================
-# COMBINE AND RENDER AS PNG
-# ==========================
-
-final_table <- bind_rows(contamination_summary, group_averages) %>%
-  arrange(sample_type, `sample-id`)
-
-# Rename columns for display
-display_table <- final_table %>%
   rename(
-    "Sample ID"       = `sample-id`,
-    "Sample Type"     = sample_type,
-    "Total ASVs"      = total_asvs,
-    "Passed"          = n_passed,
-    "Kitome"          = n_flagged_kitome,
-    "Alien"           = n_flagged_alien,
-    "Both"            = n_flagged_both,
-    "% Flagged"       = pct_flagged
+    "Sample Type"    = sample_type,
+    "Avg Total ASVs" = total_asvs,
+    "Avg Passed"     = n_passed,
+    "Avg Kitome"     = n_flagged_kitome,
+    "Avg Alien"      = n_flagged_alien,
+    "Avg Both"       = n_flagged_both,
+    "Avg % Flagged"  = pct_flagged
   )
 
-# Highlight average rows
-row_fill <- ifelse(str_starts(display_table$`Sample ID`, "AVG_"), "#D3D3D3", "white")
+# ==========================
+# TABLE 2 — HIGH CONTAMINATION SAMPLES
+# (Healthy and Non-healthy with pct_flagged > threshold)
+# ==========================
 
-png("contamination_summary.png",
-    width  = 1400,
-    height = max(400, nrow(display_table) * 20 + 100),
-    res    = 120)
+high_contam <- contamination_summary %>%
+  filter(
+    sample_type %in% c("Healthy", "Non-healthy"),
+    pct_flagged > CONTAMINATION_THRESHOLD
+  ) %>%
+  arrange(desc(pct_flagged)) %>%
+  select(`sample-id`, sample_type, total_asvs, pct_flagged) %>%
+  rename(
+    "Sample ID"   = `sample-id`,
+    "Sample Type" = sample_type,
+    "Total ASVs"  = total_asvs,
+    "% Flagged"   = pct_flagged
+  )
 
-grid.newpage()
-grid.table(
-  display_table,
-  rows  = NULL,
-  theme = ttheme_default(
-    core    = list(bg_params = list(fill = row_fill)),
-    colhead = list(bg_params = list(fill = "#4CAF50", col = "white"),
-                   fg_params = list(col = "white", fontface = "bold"))
+# ==========================
+# RENDER PNG
+# ==========================
+
+header_theme <- ttheme_default(
+  colhead = list(
+    bg_params = list(fill = "#2E86AB", col = "white"),
+    fg_params = list(col = "white", fontface = "bold")
+  ),
+  core = list(
+    bg_params = list(fill = c("white", "#F0F0F0")),
+    fg_params = list(col = "black")
   )
 )
 
-dev.off()
+warning_theme <- ttheme_default(
+  colhead = list(
+    bg_params = list(fill = "#E63946", col = "white"),
+    fg_params = list(col = "white", fontface = "bold")
+  ),
+  core = list(
+    bg_params = list(fill = c("white", "#FFF0F0")),
+    fg_params = list(col = "black")
+  )
+)
 
+grob_list <- list(
+  textGrob("Contamination Summary Report",
+           gp = gpar(fontsize = 16, fontface = "bold")),
+  textGrob(paste0("Threshold for high contamination: ", CONTAMINATION_THRESHOLD, "%"),
+           gp = gpar(fontsize = 11, col = "grey40")),
+  textGrob("Group Averages (patient samples only)",
+           gp = gpar(fontsize = 13, fontface = "bold")),
+  tableGrob(group_averages, rows = NULL, theme = header_theme)
+)
+
+if (nrow(high_contam) > 0) {
+  grob_list <- c(grob_list, list(
+    textGrob(paste0("Samples above ", CONTAMINATION_THRESHOLD, "% contamination threshold"),
+             gp = gpar(fontsize = 13, fontface = "bold", col = "black")),
+    tableGrob(high_contam, rows = NULL, theme = warning_theme)
+  ))
+} else {
+  grob_list <- c(grob_list, list(
+    textGrob(paste0("No patient samples exceed the ", CONTAMINATION_THRESHOLD, "% contamination threshold."),
+             gp = gpar(fontsize = 12, col = "#2E86AB", fontface = "italic"))
+  ))
+}
+
+base_height <- 550
+
+if (nrow(high_contam) > 0) {
+  table2_height <- nrow(high_contam) * 60 + 150
+} else {
+  table2_height <- 80
+}
+
+png("contamination_summary.png",
+    width  = 1000,
+    height = base_height + table2_height,
+    res    = 120)
+grid.arrange(grobs = grob_list, ncol = 1)
+dev.off()
