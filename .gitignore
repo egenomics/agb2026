@@ -56,6 +56,8 @@ requirements-dev.txt
 
 # ── Docker ────────────────────────────────────────────────────────────────────
 .docker/
+*sif
+*def
 
 # ── Test / temp outputs ───────────────────────────────────────────────────────
 /tmp/microsee_report*.html
@@ -64,3 +66,7 @@ requirements-dev.txt
 # Run: curl -fsSL https://cdn.plot.ly/plotly-2.35.2.min.js \
 #      -o modules/groupD/microsee_report/report_generator/charts/plotly.min.js
 !report_generator/charts/plotly.min.js
+
+
+nextflow.config.test
+test_run.nf
