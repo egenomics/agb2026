@@ -6,10 +6,6 @@ library(optparse)
 # Only takes the argument you pass
 
 arg_list <- list(
-  # Beta Diversity Files
-  make_option(c("--bray"), type = "character", help = "Path to bray_curtis.tsv", metavar = "path"),
-  make_option(c("--unifrac"), type = "character", help = "Path to unifrac.tsv", metavar = "path"),
-  
   # Alpha Diversity (Diversity Table) Files
   make_option(c("--faith"), type = "character", help = "Path to faith.tsv", metavar = "path"),
   make_option(c("--observed"), type = "character", help = "Path to observed.tsv", metavar = "path"),
@@ -36,7 +32,7 @@ if (is.null(opt$metadata)) {
 cat("--- Processing Files ---\n")
 
 # Checking the existance of the files
-files_to_check <- c("bray", "unifrac", "faith", "observed", "shannon", "simpson", "metadata", "outdir")
+files_to_check <- c("faith", "observed", "shannon", "simpson", "metadata", "outdir")
 
 for (f in files_to_check) {
   path <- opt[[f]]
@@ -57,13 +53,9 @@ alpha_list =c(
   shannon = opt$shannon,
   simpson = opt$simpson
   )
-beta_list = c(
-  bray = opt$bray,
-  weighted_unifrac = opt$unifrac
-)
 
 # Load metadata to separate by groups
-meta <- invisible(read_tsv(opt$metadata)) %>% filter(`sample-id` != "#q2:types")
+meta <- invisible(read_tsv(opt$metadata))
 
 rename_metric <- function(path, name){
   invisible(read_tsv(path)) %>%
@@ -93,7 +85,7 @@ alpha_div_scaled <- alpha_div_scaled %>% filter(Sample %in% (meta %>% pull(`samp
 alpha_div_scaled_healthy <- alpha_div_scaled %>%
   filter(
     Sample %in%
-      (meta %>% filter(subject == "subject-1") %>% pull(`sample-id`)) # ADJUST TO REAL DATA
+      (meta %>% filter(healthy == "yes") %>% pull(`sample-id`)) # ADJUST TO REAL DATA
   )
 
 # Creating the base plot with the distribution before iterating
@@ -108,8 +100,28 @@ healthy_dist <- ggplot(alpha_div_scaled_healthy, aes(x = mean))+
   theme_minimal()
 
 
-#Iterating over each sample (healthy or not)
-patient_ids <- alpha_div_scaled %>% pull(Sample)
+#Iterating over each sample (non-healthy)
+non_healthy_patients <- alpha_div_scaled %>% 
+  filter(
+    Sample %in%
+      (meta %>% filter(healthy == "no") %>% pull(`sample-id`))
+  )
+
+# Extract the Z-score_table
+alpha_p_value <- non_healthy_patients %>%
+  mutate(
+    # Get the area of the smaller tail (the probability/p-value)
+    tail_prob = pmin(pnorm(mean), 1 - pnorm(mean))
+  ) %>%
+  select(Sample, mean, tail_prob)
+
+rds_filename <- file.path("alpha_zscore_status.rds")
+saveRDS(alpha_p_value, file = rds_filename)
+
+cat(paste("\nRDS table saved to:", rds_filename))
+cat("\nProcess complete.\n")
+
+patient_ids <- non_healthy_patients %>% pull(Sample)
 patient_plots <- patient_ids %>% walk(
   function(id){
     p_value <- alpha_div_scaled %>%

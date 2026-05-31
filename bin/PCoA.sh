@@ -4,9 +4,8 @@ set -euo pipefail
 
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")") 
 
-METADATA=$1
-BRAY=$2
-W_UNIFRAC=$3
-OUTDIR=$4
+PCA=$1
+METADATA=$2
+OUTDIR=$3
 
-Rscript PCoA.R
+Rscript ${SCRIPT_DIR}/PCoA.R --metadata $METADATA --pca $PCA --outdir $OUTDIR
