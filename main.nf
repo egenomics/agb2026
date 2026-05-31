@@ -68,12 +68,19 @@ workflow NFCORE_ABGTEMPLATE {
     )
 
     //
-    // GROUP C / D: Validation & Reporting — NOT yet wired.
-    // Their workflows exist but currently emit only `versions`; the channels
-    // main.nf would consume (analysis_results, validated_results, html_report)
-    // are not produced yet. Re-enable once Groups C and D implement their outputs.
+    // GROUP C: Validation & Contamination Filtering → Diversity Analysis
+    // Produces output channels that flow to Group D
     //
-    // GROUPC(GROUPB.out.table_counts, GROUPA.out.metadata)
+    GROUPC(
+        GROUPB.out.table_counts,
+        GROUPB.out.rep_seqs,
+        GROUPB.out.taxonomy,
+        GROUPA.out.metadata
+    )
+
+    //
+    // GROUP D: Reporting — Re-enable once Group D implements its outputs
+    //
     // GROUPD(GROUPC.out.validated_results, GROUPB.out.table_counts)
 
     emit:
