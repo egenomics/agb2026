@@ -2,7 +2,7 @@ process HEATMAP_MICROBIOME {
 
     tag "${metadata.baseName}"
 
-    publishDir "${params.outdir}/heatmap",
+    publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
     container "containers/r_groupD.sif"
@@ -13,7 +13,7 @@ process HEATMAP_MICROBIOME {
     path(metadata)
 
     output:
-    path("heatmap_results")
+    path("heatmap_results"), emit: heatmap_results
 
     script:
     """

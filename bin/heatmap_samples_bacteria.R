@@ -18,7 +18,7 @@ arg_list <- list(
   make_option(c("-m", "--metadata"), type = "character",
               help = "Metadata table"),
   make_option(c("-o", "--outdir"), type = "character",
-              default = "./parallel_results",
+              default = "./heatmap_results",
               help = "Output directory")
 )
 

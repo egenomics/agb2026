@@ -2,7 +2,7 @@ process PARALLEL_PLOT_MICROBIOME {
 
     tag "${metadata.baseName}"
 
-    publishDir "${params.outdir}/parallel_plot",
+    publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
     container "containers/r_groupD.sif"
@@ -13,7 +13,7 @@ process PARALLEL_PLOT_MICROBIOME {
     path(metadata)
 
     output:
-    path("parallel_results")
+    path("parallel_results"), emit: parallel_results
 
     script:
     """
