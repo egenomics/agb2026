@@ -2,64 +2,53 @@ apptainer version 1.4.5+540-gb743918ac
 
  N E X T F L O W   ~  version 25.10.2
 
-Launching `groupC.nf` [scruffy_becquerel] DSL2 - revision: dfce408985
+Launching `groupC.nf` [romantic_turing] DSL2 - revision: 2aa5c9569c
 
 [-        ] PHA…ITY_METRICS:prepare_inputs -
 [-        ] PHA…METRICS:get_sampling_depth -
 [-        ] PHA…METRICS:diversity_analysis -
-[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
 
-[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1, cached: 1 ✔
-[4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1, cached: 1 ✔
+[1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1, cached: 1
+[-        ] PHA…METRICS:get_sampling_depth -
 [-        ] PHA…METRICS:diversity_analysis -
 [-        ] PHA…SITY:RAREFACTION_THRESHOLD -
 [-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
 Skip report            : [not triggered]
 Rarefaction plots      : [skipped]
 Rarefaction depth used : [skipped]
-Sampling depth         : 6904
 
-executor >  local (1)
 [1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1, cached: 1 ✔
 [4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1, cached: 1 ✔
 [75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1, cached: 1 ✔
-[e9/9d7d24] PHA…ON_THRESHOLD (rarefaction) | 0 of 1
+[-        ] PHA…SITY:RAREFACTION_THRESHOLD -
 [-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
 Skip report            : [not triggered]
 Rarefaction plots      : [skipped]
 Rarefaction depth used : [skipped]
 Sampling depth         : 6904
 
-executor >  local (1)
 [1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1, cached: 1 ✔
 [4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1, cached: 1 ✔
 [75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1, cached: 1 ✔
-[e9/9d7d24] PHA…ON_THRESHOLD (rarefaction) | 1 of 1 ✔
+[e9/9d7d24] PHA…ON_THRESHOLD (rarefaction) | 1 of 1, cached: 1 ✔
 [-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Skip report            : [not triggered]
+Rarefaction plots      : [skipped]
+Rarefaction depth used : [skipped]
+Sampling depth         : 6904
 Rarefaction plots      : /data/upfagb/u269208/agb2026/workflows/work/e9/9d7d2454a8da349b675a884175aaff/rarefaction_output/rarefaction_plots.png
 Rarefaction depth used : 1454
 
-
-
-
-
-executor >  local (1)
 [1b/1a13f9] PHA…re_inputs (prepare_inputs) | 1 of 1, cached: 1 ✔
 [4a/49d688] PHA…METRICS:get_sampling_depth | 1 of 1, cached: 1 ✔
 [75/752d8e] PHA…sis (alpha_beta_diversity) | 1 of 1, cached: 1 ✔
-[e9/9d7d24] PHA…ON_THRESHOLD (rarefaction) | 1 of 1 ✔
+[e9/9d7d24] PHA…ON_THRESHOLD (rarefaction) | 1 of 1, cached: 1 ✔
 [-        ] PHA…DIVERSITY:SKIP_RAREFACTION -
+Skip report            : [not triggered]
+Rarefaction plots      : [skipped]
+Rarefaction depth used : [skipped]
+Sampling depth         : 6904
 Rarefaction plots      : /data/upfagb/u269208/agb2026/workflows/work/e9/9d7d2454a8da349b675a884175aaff/rarefaction_output/rarefaction_plots.png
 Rarefaction depth used : 1454
-
-
-
-
-Completed at: 31-May-2026 01:07:46
-Duration    : 27m 53s
-CPU hours   : 2.5 (26,2% cached)
-Succeeded   : 1
-Cached      : 3
-
 WARN: Failed to render execution report -- see the log file for details
 

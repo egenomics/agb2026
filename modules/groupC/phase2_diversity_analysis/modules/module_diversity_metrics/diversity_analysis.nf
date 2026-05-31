@@ -38,9 +38,9 @@ process prepare_inputs {
 
     qiime feature-table filter-samples \\
         --i-table table.qza \\
-	    --m-metadata-file ${metadata} \\
+	--m-metadata-file ${metadata} \\
         --p-where "[healthy] IN ('yes', 'no')" \\
-	    --o-filtered-table table_filtered.qza
+	--o-filtered-table table_filtered.qza
     """
 }
 
