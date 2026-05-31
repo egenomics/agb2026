@@ -3,7 +3,7 @@ process VIRULENCE_PLOT {
     publishDir "${params.outdir}", mode: 'copy'
 
     input:
-    path metadata 
+    path meta 
     path asv_table 
     path annotated_taxonomy 
     
@@ -13,6 +13,6 @@ process VIRULENCE_PLOT {
 
     script:
     """
-    virulence_report.sh ${asv_table} ${annotated_taxonomy} ${metadata}
+    virulence_report.sh ${asv_table} ${annotated_taxonomy} ${meta}
     """
 }
