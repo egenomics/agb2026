@@ -1,10 +1,11 @@
+import os
 import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
 # 1. Load data from Nextflow arguments
 metadata_file = sys.argv[1]
-output_img = sys.argv[2]
+output_dir = sys.argv[2]
 
 df = pd.read_csv(metadata_file, sep="\t")
 
@@ -83,4 +84,6 @@ for (row, col), cell in table.get_celld().items():
 plt.title("Table: Cohort Baseline Characteristics", fontsize=16, weight='bold', y=0.96)
 
 # Save using the Nextflow argument (Force PNG format)
-plt.savefig(output_img, dpi=300, bbox_inches='tight', format='png')
+os.makedirs(output_dir, exist_ok=True)
+
+plt.savefig(os.path.join(output_dir, "demographic_table.png"), dpi=300, bbox_inches='tight', format='png')

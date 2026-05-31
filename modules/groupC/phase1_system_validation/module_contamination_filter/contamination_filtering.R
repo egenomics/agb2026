@@ -51,7 +51,7 @@ sample_metadata <- bind_rows(
   blanks_metadata   %>% mutate(across(everything(), as.character)),
   patients_metadata %>% mutate(across(everything(), as.character))
 ) %>%
-  select(sra_id, healthy) %>%
+  select(`sample-id`, healthy) %>%
   mutate(sample_type = case_when(
     healthy == "blank" ~ "Blank",
     healthy == "yes"   ~ "Healthy",
@@ -68,7 +68,7 @@ asv_matrix <- counts_df %>%
   t()
 
 sample_names <- rownames(asv_matrix)
-is_blank     <- sample_names %in% blanks_metadata$sra_id
+is_blank     <- sample_names %in% blanks_metadata$`sample-id`
 
 contamination_results <- isContaminant(asv_matrix, neg = is_blank,
                                        method = "prevalence", threshold = 0.1)
@@ -111,13 +111,13 @@ annotated_taxonomy_df <- apply_flags(taxonomy_df)
 
 counts_long <- annotated_counts_df %>%
   pivot_longer(-c(ASV_ID, Contamination_Flag),
-               names_to  = "sra_id",
+               names_to  = "sample-id",
                values_to = "count") %>%
   filter(count > 0) %>%
-  left_join(sample_metadata, by = "sra_id")
+  left_join(sample_metadata, by = "sample-id")
 
 contamination_summary <- counts_long %>%
-  group_by(sra_id, sample_type) %>%
+  group_by(`sample-id`, sample_type) %>%
   summarise(
     total_asvs       = n(),
     n_passed         = sum(Contamination_Flag == "Passed"),

@@ -1,3 +1,4 @@
+import os
 import sys
 import pandas as pd
 import numpy as np
@@ -6,7 +7,7 @@ import seaborn as sns
 
 # 1. Load data from Nextflow arguments
 metadata_file = sys.argv[1]
-output_img = sys.argv[2]
+output_dir = sys.argv[2]
 
 df = pd.read_csv(metadata_file, sep="\t")
 
@@ -41,4 +42,6 @@ plt.xticks(rotation=45, ha='right')
 plt.tight_layout()
 
 # Save using the Nextflow argument (Force PNG format)
-plt.savefig(output_img, dpi=150, format='png')
+os.makedirs(output_dir, exist_ok=True)
+
+plt.savefig(os.path.join(output_dir, "clinical_association_map.png"), dpi=150)

@@ -1,3 +1,4 @@
+import os
 import sys
 import pandas as pd
 import numpy as np
@@ -9,11 +10,11 @@ from scipy.spatial.distance import squareform
 # 1. Load data from Nextflow arguments
 dm_file = sys.argv[1]
 metadata_file = sys.argv[2]
-output_img = sys.argv[3]
+output_dir = sys.argv[3]
 
 dm_df = pd.read_csv(dm_file, sep="\t", index_col=0)
 meta_df = pd.read_csv(metadata_file, sep="\t")
-status_map = dict(zip(meta_df['sra_id'], meta_df['healthy']))
+status_map = dict(zip(meta_df['sample-id'], meta_df['healthy']))
 
 # 3. CLEAN AND CONDENSE MATRIX
 matrix = dm_df.values
@@ -49,4 +50,6 @@ for spine in ['top', 'right', 'left', 'bottom']:
     ax.spines[spine].set_visible(False)
 
 # 8. SAVE OUTPUT IMAGE (Force PNG format)
-plt.savefig(output_img, dpi=300, bbox_inches='tight', format='png')
+os.makedirs(output_dir, exist_ok=True)
+
+plt.savefig(os.path.join(output_dir, "beta_diversity_tree.png"), dpi=300, bbox_inches='tight', format='png')

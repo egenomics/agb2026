@@ -13,6 +13,6 @@ OUTDIR=$5
 Rscript ${SCRIPT_DIR}/overview_table.R \
   --metadata $METADATA \
   --pca $PCA \
-  --zscored $ZSCORED \
+  --zscored $ZSCORES \
   --counts $GENES_COUNTS \
   --outdir $OUTDIR

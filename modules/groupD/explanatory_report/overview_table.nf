@@ -12,6 +12,6 @@ process overview_table{
 
     script:
     """
-    PCoA.sh $metadata $pca $z_scores $genus_counts "explanatory/overview_sample"
+    overview_table.sh $metadata $pca $z_scores $genus_counts "explanatory/overview_sample"
     """
 }

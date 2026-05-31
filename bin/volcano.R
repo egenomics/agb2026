@@ -22,13 +22,13 @@ meta_df <- meta_df %>%
   mutate(healthy_status = factor(healthy_status, levels = c("Healthy", "Has Condition")))
 
 asv_samples <- colnames(asv_df)
-meta_df_valid <- meta_df %>% filter(sra_id %in% asv_samples)
-overlap_samples <- meta_df_valid$sra_id
+meta_df_valid <- meta_df %>% filter(`sample-id` %in% asv_samples)
+overlap_samples <- meta_df_valid$`sample-id`
 
 asv_subset <- asv_df[, overlap_samples, drop = FALSE]
 asv_subset <- asv_subset[rowSums(asv_subset) > 0, , drop = FALSE]
 
-rownames(meta_df_valid) <- meta_df_valid$sra_id
+rownames(meta_df_valid) <- meta_df_valid$`sample-id`
 rownames(tax_df)        <- tax_df$ASV_ID
 
 tax_mat <- as.matrix(tax_df[rownames(asv_subset), c("Family", "Genus")])
@@ -88,5 +88,5 @@ interactive_plot <- ggplotly(gg_volcano, tooltip = "text") %>% layout(hoverlabel
 # It demands an .html extension to compile successfully via Pandoc.
 # We save it temporarily as HTML, then rename it to match Nextflow's exact expected output name.
 temp_file <- paste0(out_file, ".html")
-saveWidget(interactive_plot, file = temp_file, selfcontained = TRUE)
-file.rename(temp_file, out_file)
+dir.create(out_file, recursive = TRUE, showWarnings = FALSE)
+saveWidget(interactive_plot, file = file.path(out_file, "volcano_plot.html"), selfcontained = TRUE)

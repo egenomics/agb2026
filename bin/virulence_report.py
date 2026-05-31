@@ -18,7 +18,7 @@ TAXONOMY_PATH   = sys.argv[2]     # --taxonomy
 METADATA_PATH   = sys.argv[3]  # --metadata
 OUTPUT_PATH     = "virulence_abundance_plot.png"  # --output
 
-# Optional: set to an sra_id string to generate only that patient's plot.
+# Optional: set to an sample-id string to generate only that patient's plot.
 # Leave as None to generate all 16 patient plots.
 PATIENT_ID_FILTER = None    # e.g. "ERR1074192"
 
@@ -35,7 +35,7 @@ VIRULENT_GENERA = [
 TOP_N_BENIGN = 10
 
 # Metadata column linking ASV table columns to metadata rows
-SAMPLE_ID_COL = "sra_id"
+SAMPLE_ID_COL = "sample-id"
 
 # Metadata column + value that identifies healthy samples
 HEALTHY_COL   = "healthy"
@@ -315,7 +315,7 @@ def parse_args():
     p.add_argument("--outdir",      dest="outdir",     default=None)
     p.add_argument(
         "--patient-id", dest="patient_id", default=None,
-        help="Optional: sra_id of a single patient to plot. "
+        help="Optional: sample-id of a single patient to plot. "
              "If omitted, all non-healthy patients are plotted."
     )
     return p.parse_args()
