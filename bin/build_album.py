@@ -200,6 +200,43 @@ def tsv_card(title: str, rows: list) -> str:
     )
 
 
+def collect_cohort_tsvs(root: Path) -> list:
+    """
+    Cohort (non per-patient) TSV tables. Scans recursively for .tsv files whose
+    filename does NOT contain a patient id and that are not under a per-patient
+    subtree. Mirrors the exclusion logic of collect_exploratory.
+    Returns a list of (label, rows) pairs sorted by filename.
+    Malformed or empty files are skipped silently.
+    """
+    explanatory_markers = {"explanatory", "explanatory_report",
+                           "PCoA_patient", "alpha_patient", "overview_sample",
+                           "Virulence_analysis"}
+
+    def under_explanatory(p: Path) -> bool:
+        return any(part in explanatory_markers for part in p.parts)
+
+    results = []
+    seen: set = set()
+    for tsv in sorted(root.rglob("*.tsv")):
+        rp = tsv.resolve()
+        if rp in seen:
+            continue
+        if PATIENT_RE.search(tsv.name):
+            continue
+        if under_explanatory(tsv):
+            continue
+        seen.add(rp)
+        try:
+            with tsv.open(newline="", encoding="utf-8") as fh:
+                rows = list(csv.reader(fh, delimiter="\t"))
+            if not rows:
+                continue
+        except Exception:
+            continue
+        results.append((pretty_name(tsv.stem), rows))
+    return results
+
+
 def collect_exploratory(root: Path) -> list[Path]:
     """
     Cohort (non per-patient) PNGs. Searches the whole input tree recursively
@@ -458,12 +495,16 @@ def build_patient_page(pid: str, groups: dict, tsv_groups: dict | None = None, s
 </body></html>"""
 
 
-def build_index(exploratory: list, explanatory: dict, patient_tsvs: dict | None = None) -> str:
+def build_index(exploratory: list, explanatory: dict, patient_tsvs: dict | None = None,
+                cohort_tsvs: list | None = None) -> str:
     if patient_tsvs is None:
         patient_tsvs = {}
+    if cohort_tsvs is None:
+        cohort_tsvs = []
     n_explor = len(exploratory)
     n_patients = len(explanatory)
-    n_total = n_explor + sum(
+    n_cohort_tsvs = len(cohort_tsvs)
+    n_total = n_explor + n_cohort_tsvs + sum(
         len(v) + len(patient_tsvs.get(pid, {})) for pid, v in explanatory.items()
     )
 
@@ -475,13 +516,15 @@ def build_index(exploratory: list, explanatory: dict, patient_tsvs: dict | None 
             nav_links.append(f'<a href="patients/{pid}.html" target="_blank" rel="noopener">{pid}</a>')
     nav_html = "\n".join(nav_links)
 
-    if exploratory:
-        cards = "\n".join(img_card(pretty_name(p.stem), b64_img(p), p.stem) for p in exploratory)
+    if exploratory or cohort_tsvs:
+        png_cards = "\n".join(img_card(pretty_name(p.stem), b64_img(p), p.stem) for p in exploratory)
+        tbl_cards = "\n".join(tsv_card(label, rows) for label, rows in cohort_tsvs)
+        all_cohort = "\n".join(filter(None, [png_cards, tbl_cards]))
         explor_html = f"""
     <section id="exploratory">
       <div class="sec-header">Exploratory Report — Whole Cohort</div>
       <div class="sec-insight">Cohort-level overview across all samples. Click any plot to enlarge.</div>
-      <div class="grid2">{cards}</div>
+      <div class="grid2">{all_cohort}</div>
     </section>"""
     else:
         explor_html = """
@@ -564,6 +607,7 @@ def main() -> int:
 
     explanatory = collect_explanatory(root)
     patient_tsvs = collect_patient_tsvs(root)
+    cohort_tsvs = collect_cohort_tsvs(root)
 
     # ── Mode 1: single patient standalone ───────────────────────────────────
     if args.patient:
@@ -599,7 +643,7 @@ def main() -> int:
     if not args.explanatory_only:
         exploratory = collect_exploratory(root)
         (outdir / "index.html").write_text(
-            build_index(exploratory, explanatory, patient_tsvs), encoding="utf-8")
+            build_index(exploratory, explanatory, patient_tsvs, cohort_tsvs), encoding="utf-8")
         print(f"Wrote {outdir}/index.html")
 
     return 0
