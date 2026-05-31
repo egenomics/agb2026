@@ -3,13 +3,11 @@ args <- commandArgs(trailingOnly = TRUE)
 asv_file  <- args[1]
 tax_file  <- args[2]
 meta_file <- args[3]
-out_file  <- args[4]
+out_dir   <- args[4] 
 
 library(ANCOMBC)
 library(phyloseq)
 library(tidyverse)
-library(plotly)
-library(htmlwidgets)
 
 # Read inputs directly from arguments
 asv_df <- read.delim(asv_file, row.names = 1, sep = "\t", check.names = FALSE)
@@ -22,6 +20,8 @@ meta_df <- meta_df %>%
   mutate(healthy_status = factor(healthy_status, levels = c("Healthy", "Has Condition")))
 
 asv_samples <- colnames(asv_df)
+
+
 meta_df_valid <- meta_df %>% filter(`sample-id` %in% asv_samples)
 overlap_samples <- meta_df_valid$`sample-id`
 
@@ -65,28 +65,24 @@ plot_data <- res_df %>%
     )
   )
 
-plot_data <- plot_data %>%
-  mutate(tooltip_text = paste0(
-    "<b>ASV ID:</b> ", ASV_ID, "<br><b>Family:</b> ", Family, "<br><b>Genus:</b> ", Genus, 
-    "<br><b>Log2 FC:</b> ", round(log2FoldChange, 3), "<br><b>P-Value:</b> ", format(pvalue, scientific = TRUE, digits = 3), 
-    "<br><b>Q-Value:</b> ", format(qvalue, scientific = TRUE, digits = 3)
-  ))
-
-# 5. GENERATE AND SAVE INTERACTIVE PLOT
+# 5. GENERATE AND SAVE STATIC PLOT
 color_map <- c("Not Significant" = "#e0e0e0", "Enriched in Condition" = "#d9534f", "Depleted in Condition" = "#2b579a")
 
-gg_volcano <- ggplot(plot_data, aes(x = log2FoldChange, y = negLog10P, color = Significance, text = tooltip_text)) +
-  geom_point(alpha = 0.7, size = 1.5) + scale_color_manual(values = color_map) +
+# Filter for ALL significant points (both Enriched and Depleted) for labeling
+significant_points <- plot_data %>% filter(Significance != "Not Significant")
+
+gg_volcano <- ggplot(plot_data, aes(x = log2FoldChange, y = negLog10P, color = Significance)) +
+  geom_point(alpha = 0.7, size = 1.5) + 
+  scale_color_manual(values = color_map) +
   geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "black", alpha = 0.4) +
   geom_vline(xintercept = c(-1, 1), linetype = "dashed", color = "black", alpha = 0.4) +
-  labs(title = "Interactive Differential Abundance (Volcano Plot via ANCOM-BC2)", x = "Log2 Fold Change", y = "-Log10 (P-Value)") +
-  theme_minimal() + theme(panel.background = element_blank(), panel.grid.major = element_line(color = "#f5f5f5"), panel.grid.minor = element_blank())
+  geom_text(data = significant_points,
+            aes(label = paste0(ASV_ID, " (", round(log2FoldChange, 1), ")")),
+            size = 3, vjust = -1, check_overlap = TRUE, color = "black") +
+  labs(title = "Differential Abundance (Volcano Plot)", x = "Log2 Fold Change", y = "-Log10 (P-Value)") +
+  theme_minimal() + 
+  theme(panel.background = element_blank(), panel.grid.major = element_line(color = "#f5f5f5"), panel.grid.minor = element_blank())
 
-interactive_plot <- ggplotly(gg_volcano, tooltip = "text") %>% layout(hoverlabel = list(bgcolor = "white"))
 
-# Workaround for saveWidget: 
-# It demands an .html extension to compile successfully via Pandoc.
-# We save it temporarily as HTML, then rename it to match Nextflow's exact expected output name.
-temp_file <- paste0(out_file, ".html")
-dir.create(out_file, recursive = TRUE, showWarnings = FALSE)
-saveWidget(interactive_plot, file = file.path(out_file, "volcano_plot.html"), selfcontained = TRUE)
+dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+ggsave(file.path(out_dir, "volcano_plot.png"), plot = gg_volcano, width = 10, height = 8, dpi = 300)
