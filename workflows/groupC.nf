@@ -1,5 +1,7 @@
 // main.nf: phase2_diversity_analysis
 
+include { CONTAMINATION } from '../modules/groupC/phase1_system_validation/contamination.nf'
+
 include {DIVERSITY_METRICS} from '../modules/groupC/phase2_diversity_analysis/modules/module_diversity_metrics/diversity_analysis.nf'
 include {RAREFACTION_THRESHOLD;
         SKIP_RAREFACTION} from '../modules/groupC/phase2_diversity_analysis/modules/module_rarefaction/select_rarefaction_batches.nf'
@@ -116,6 +118,62 @@ workflow PHASE2_DIVERSITY {
     skip_report           = SKIP_RAREFACTION.out.report
 }
 
+workflow GROUPC {
+
+    take:
+    ch_table_counts  // path: asv_table.tsv from Group B
+    ch_rep_seqs      // path: rep_seqs.fasta from Group B
+    ch_taxonomy      // path: ASV_taxonomy.tsv from Group B
+    ch_metadata      // path: sample-metadata.tsv from Group A
+
+    main:
+
+    // Phase 1 — Contamination filtering 
+    CONTAMINATION(
+        ch_table_counts,
+        ch_taxonomy,
+        ch_rep_seqs,
+        ch_metadata
+    )
+
+    // Phase 2 — Diversity analysis 
+    PHASE2_DIVERSITY(
+        ch_table_counts,
+        ch_rep_seqs,
+        ch_metadata
+    )
+
+    emit:
+    // Contamination report output for Group D
+    contamination_summary = CONTAMINATION.out.summary_png
+
+    // All original Phase 2 Diversity outputs
+    rooted_tree           = PHASE2_DIVERSITY.out.rooted_tree
+    sampling_depth        = PHASE2_DIVERSITY.out.sampling_depth
+    m1_shannon            = PHASE2_DIVERSITY.out.m1_shannon
+    m1_observed           = PHASE2_DIVERSITY.out.m1_observed
+    m1_faith              = PHASE2_DIVERSITY.out.m1_faith
+    m1_simpson            = PHASE2_DIVERSITY.out.m1_simpson
+    m1_weighted_unifrac   = PHASE2_DIVERSITY.out.m1_weighted_unifrac
+    m1_bray_curtis        = PHASE2_DIVERSITY.out.m1_bray_curtis
+    m1_qza_files          = PHASE2_DIVERSITY.out.m1_qza_files
+    m1_qzv_files          = PHASE2_DIVERSITY.out.m1_qzv_files
+    rarefaction_threshold = PHASE2_DIVERSITY.out.rarefaction_threshold
+    rarefaction_plots     = PHASE2_DIVERSITY.out.rarefaction_plots
+    rarefaction_curves    = PHASE2_DIVERSITY.out.rarefaction_curves
+    rarefaction_qc        = PHASE2_DIVERSITY.out.rarefaction_qc
+    rarefaction_report    = PHASE2_DIVERSITY.out.rarefaction_report
+    depth_used            = PHASE2_DIVERSITY.out.depth_used
+    shannon               = PHASE2_DIVERSITY.out.shannon
+    observed              = PHASE2_DIVERSITY.out.observed
+    faith                 = PHASE2_DIVERSITY.out.faith
+    simpson               = PHASE2_DIVERSITY.out.simpson
+    weighted_unifrac      = PHASE2_DIVERSITY.out.weighted_unifrac
+    bray_curtis           = PHASE2_DIVERSITY.out.bray_curtis
+    qza_files             = PHASE2_DIVERSITY.out.qza_files
+    qzv_files             = PHASE2_DIVERSITY.out.qzv_files
+    skip_report           = PHASE2_DIVERSITY.out.skip_report
+}
 
 workflow {
     asv_table      = Channel.value(file("${params.data_dir}/asv_table.tsv"))
