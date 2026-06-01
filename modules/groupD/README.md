@@ -188,7 +188,7 @@ From group_B:
 
 ### Technical information
 Languages: 
-- ![GitHub R package version](https://img.shields.io/github/r-package/v/:user/:repo) 
+- _**R**_
 - ![Python](https://img.shields.io/badge/Python-3.10-3776AB?style=flat&logo=python&logoColor=white)
 
 
