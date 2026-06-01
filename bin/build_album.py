@@ -460,8 +460,13 @@ def build_patient_page(pid: str, groups: dict, tsv_groups: dict | None = None, s
     if tsv_groups is None:
         tsv_groups = {}
     png_cards = "\n".join(img_card(label, b64_img(path), path.stem) for label, path in groups.items())
-    table_cards = "\n".join(tsv_card(label, rows) for label, rows in tsv_groups.items())
+    # Metadata table is large (key/value, many rows) → render full-width below the
+    # grid. All other tables (e.g. Top genus) stay in the grid with the plots.
+    grid_tables = {l: r for l, r in tsv_groups.items() if "metadata" not in l.lower()}
+    wide_tables = {l: r for l, r in tsv_groups.items() if "metadata" in l.lower()}
+    table_cards = "\n".join(tsv_card(label, rows) for label, rows in grid_tables.items())
     all_cards = png_cards + ("\n" + table_cards if table_cards else "")
+    wide_cards = "\n".join(tsv_card(label, rows) for label, rows in wide_tables.items())
     n_items = len(groups) + len(tsv_groups)
     generated = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M")
     back_sidebar = "" if standalone else '<a href="../index.html">← Back to overview</a>'
@@ -490,6 +495,7 @@ def build_patient_page(pid: str, groups: dict, tsv_groups: dict | None = None, s
       <div class="sec-header">Patient {pid} — Individual Report</div>
       <div class="sec-insight">Per-patient diversity plots and tables. Click any plot to enlarge. Use Download PDF to save this patient's report on its own.</div>
       <div class="grid2">{all_cards}</div>
+      {wide_cards}
     </section>
     <p style="font-size:11px;color:{TEXT2}">Generated {generated} · AGB 2026 - Group D</p>
   </div>
