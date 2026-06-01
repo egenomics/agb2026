@@ -246,7 +246,11 @@ def collect_exploratory(root: Path) -> list[Path]:
     pngs: list[Path] = []
     seen = set()
 
-    excluded_plots = {"pca_individuals.png", "pca_scree_plot.png", "pca_pc1_density.png"}
+    # INSULATION: Define exclusions using lowercase file stems to match sorting mechanics
+    excluded_stems = {
+        "pca_individuals", 
+        "pca_scree_plot"
+    }
 
     # Directories whose contents are per-patient and must be excluded here.
     explanatory_markers = {"explanatory", "explanatory_report",
@@ -265,8 +269,8 @@ def collect_exploratory(root: Path) -> list[Path]:
         if under_explanatory(p):           # inside a per-patient subtree → skip
             continue
         
-        # 2. Add the actual skip condition right here!
-        if p.name in excluded_plots:
+        # FIX: Check against a case-insensitive conversion of the file stem
+        if p.stem.lower() in excluded_stems:
             continue
             
         seen.add(rp)
