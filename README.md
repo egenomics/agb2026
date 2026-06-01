@@ -202,50 +202,29 @@ contamination filtering Nextflow module and R script.
 
 ### Stress Testing
 
-Pipeline robustness is evaluated using targeted stress scenarios designed to test how the
-system behaves under abnormal, adverse, or extreme input conditions. The goal is not only
-to determine whether the pipeline completes successfully, but also whether it fails safely,
-reports clear errors, and avoids generating misleading downstream results.
+Stress testing evaluates the robustness of the Group C validation workflow under controlled adverse conditions. The final approach uses the PRJEB10949 BEI mock-community dataset, whose expected microbial composition is known, and applies stress perturbations directly to the processed ASV table. Each stressed dataset is then compared against the ground truth using the same validation framework applied in the main benchmarking step.
 
-This first stress-testing stage uses the current Group B outputs as input:
+The baseline scenario (`ST00_baseline`) corresponds to the unmodified PRJEB10949 ASV table. The quantitative stress scenarios include a zero-count biological sample (`ST01_zero_count_sample`), low sequencing depth (`ST02_low_depth`), single-taxon dominance (`ST04_single_taxon`) and biological contamination spike-in (`ST06b_contamination_biological`). These scenarios are evaluated with `validation_metrics.py` and compared against the baseline using precision, recall, F1-score, accuracy, RMSE and Bray-Curtis dissimilarity.
 
-- `asv_table.tsv`
-- `ASV_taxonomy.tsv`
-- `rep_seqs.fasta`
+Additional technical checks are included for cases that should not produce standard F1/recall metrics. These include an invalid count table with non-numeric values (`ST03_invalid_count_table`), a metadata/sample-ID mismatch (`ST05_metadata_mismatch`) and contamination enriched in H2O blank controls (`ST06a_contamination_blanks`). These checks are automatically evaluated as pass/fail tests by the stress-test summary script.
 
-These files are used to prepare small derived test inputs at the ASV table, taxonomy, and
-metadata level. This allows Group C modules to be tested before full end-to-end FASTQ-level
-stress tests are run on the cluster.
+The stress-testing workflow is automated through two scripts:
 
-The initial stress-test scenarios include:
+| Script                          | Purpose                                                                             |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `generate_asv_stress_inputs.py` | Regenerates the stress-test ASV tables from the baseline PRJEB10949 pipeline output |
+| `run_validation_metrics_all.sh` | Runs `validation_metrics.py` across the main quantitative stress scenarios          |
+| `summarize_stress_tests.py`     | Summarizes quantitative results, technical checks and generates a Markdown report   |
 
-| Test ID | Scenario | Purpose | Expected behaviour |
-|---|---|---|---|
-| `ST00` | Valid subset control | Confirm that a small valid input runs correctly | The module completes and generates expected outputs |
-| `ST01` | Zero-count sample | Test behaviour when one sample has no reads | The sample is excluded or clearly flagged |
-| `ST02` | Very low sequencing depth | Test robustness with samples downsampled to very few reads | Low-depth samples are flagged or removed during rarefaction/depth filtering |
-| `ST03` | Invalid count table | Test behaviour when the ASV table contains a non-numeric count | The module fails early with a clear parsing error |
-| `ST04` | Single-taxon dominance | Test biologically extreme but valid input | The module completes and reports very low diversity |
-| `ST05` | Metadata mismatch | Test sample identifier inconsistencies between metadata and ASV table | The mismatch is detected before downstream analysis |
-| `ST06` | Artificial contamination spike | Test whether control-enriched ASVs can be detected as potential contaminants | Spiked ASVs are flagged or reported as suspicious |
+The workflow can be executed from the stress-testing directory:
 
-For each stress test, the following information will be recorded:
+```bash
+cd modules/groupC/phase1_system_validation/stress_tests
+bash scripts/run_validation_metrics_all.sh
+python scripts/summarize_stress_tests.py
+```
 
-- input files used
-- expected behaviour
-- executed command or module
-- exit status
-- whether outputs were generated
-- whether the error or warning message was clear
-- whether any silent failure occurred
-- final status: `PASS`, `FAIL`, or `WARNING`
-
-A stress test can be considered successful even if the pipeline fails, as long as the failure
-is expected, occurs early, and produces an interpretable error message. The main failure mode
-to avoid is silent execution that produces apparently valid but biologically misleading outputs.
-
-This section includes a documented stress-test folder with scenario definitions, small 
-derived input files, scripts to regenerate the test inputs, and a results template.
+Final outputs are written under the Phase 1 results directory in `results/stress_test_outputs/`. These include per-scenario validation outputs, a quantitative summary table, a technical-check summary table and a short stress-test report.
 
 ### Validation Thresholds
 
