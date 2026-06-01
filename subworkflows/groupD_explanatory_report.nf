@@ -27,7 +27,7 @@ workflow EXPLANATORY_REPORT{
     // ---------------------------------------------------------
     // PCoA process expects: tuple path(pca), path(metadata)
     //Change for the PCA
-    ch_input_for_pcoa = ch_counts.combine(ch_metadata)
+    ch_input_for_pcoa = ch_pca.combine(ch_metadata)
     
     PCoA_plots(ch_input_for_pcoa)
 
@@ -37,8 +37,8 @@ workflow EXPLANATORY_REPORT{
     // overview process expects: tuple path(metadata), path(pca), path(z_scores), path(genus_counts)
     //Change for the PCA and annotated genus
     ch_overview = ch_metadata
-        .join(ch_pca)
-        .join(alpha_diversity_status.out.zscore_status)
+        .combine(ch_pca)
+        .combine(alpha_diversity_status.out.zscore_status)
         .combine(ch_genus_counts)
 
     overview_table(ch_overview)

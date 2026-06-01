@@ -26,6 +26,8 @@
 
 include { EXPLANATORY_REPORT }         from '../subworkflows/groupD_explanatory_report'
 include { EXPLORATORY_REPORT }         from '../subworkflows/groupD_exploratory_report'
+include { MICROSEE_REPORT }    from '../modules/groupD/reporting_module/report'
+include { MICROSEE_PATIENT_REPORT }    from '../modules/groupD/reporting_module/report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -59,10 +61,33 @@ workflow GROUPD {
         EXPLORATORY_REPORT.out.pca_object,        // PCA RDS path
         EXPLORATORY_REPORT.out.pca_genus_counts   // PCA genus counts
     )
+
+
+    // ---------------------------------------------------------
+    // 3. Prepare and report building process
+    // ---------------------------------------------------------
+    // This will need a collection of all the plot dirs and files
+    ch_all_plots = channel.empty()
+        .mix(
+            EXPLORATORY_REPORT.out.pca_results,
+            EXPLORATORY_REPORT.out.parallel_plot,
+            EXPLORATORY_REPORT.out.heatmap_plot,
+            EXPLORATORY_REPORT.out.volcano_plot,
+            EXPLORATORY_REPORT.out.beta_tree,
+            EXPLANATORY_REPORT.out.overview_table,
+            EXPLANATORY_REPORT.out.alpha_plots,
+            EXPLANATORY_REPORT.out.pcoa_plots,
+            EXPLANATORY_REPORT.out.patogeny_plots,
+            EXPLANATORY_REPORT.out.violin_plots
+        )
+        .collect()
+
+    MICROSEE_REPORT(ch_all_plots)
     
     emit:
     alpha_plots = EXPLANATORY_REPORT.out.alpha_plots
-    pcoa_plots  = EXPLANATORY_REPORT.out.pcoa_plots 
+    pcoa_plots  = EXPLANATORY_REPORT.out.pcoa_plots
+    html_report = MICROSEE_REPORT.out.report
 
 }
 

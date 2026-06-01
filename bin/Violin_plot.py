@@ -4,6 +4,10 @@ import argparse
 import os
 import warnings
 import sys
+import tempfile
+
+# Forcing nextflow to use system's /tmp dir before importing it
+os.environ['MPLCONFIGDIR'] = tempfile.gettempdir()
 
 import numpy as np
 import pandas as pd
@@ -28,7 +32,7 @@ VIRULENT_GENERA = [
 ]
 
 
-SAMPLE_ID_COL = "sra_id"
+SAMPLE_ID_COL = "sample-id"
 HEALTHY_COL   = "healthy"
 HEALTHY_VALUE = "yes"
 

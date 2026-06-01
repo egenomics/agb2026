@@ -17,7 +17,7 @@ process HEATMAP_MICROBIOME {
     """
     mkdir -p heatmap_results
 
-    Rscript heatmap_samples_bacteria.R \
+    heatmap_samples_bacteria.R \
         --asv ${asv_table} \
         --taxonomy ${taxonomy} \
         --metadata ${metadata} \

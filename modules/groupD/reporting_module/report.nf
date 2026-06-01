@@ -16,24 +16,20 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 process MICROSEE_REPORT {
-
-    tag "microsee_report"
+    // Publish the final compiled website to your results directory
     publishDir "${params.outdir}", mode: 'copy'
-    conda 'conda-forge::python=3.11'
 
     input:
-    // Any number of plot directories from the upstream processes. Collect them
-    // into one channel in the workflow and pass as a list, e.g.:
-    //   MICROSEE_REPORT( plots_ch.collect() )
-    path plot_dirs
+    // This catches an aggregated list of all plot directories
+    path(plot_dirs, stageAs: 'staged_inputs/*')
 
     output:
+    // The outputs created by build_album.py
     path "report", emit: report
 
     script:
     """
-    build_report.sh report ${plot_dirs}
-    echo "✓ MicroSee report at \${PWD}/report/index.html"
+    build_report.sh report staged_inputs/*
     """
 }
 

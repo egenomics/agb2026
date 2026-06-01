@@ -8,10 +8,10 @@ process PCoA_plots{
     tuple path(pca), path(metadata)
 
     output:
-    path "explanatory/PCoA_patient", emit: PCoA_patient_plots_dir  
+    path "PCoA_patient", emit: PCoA_patient_plots_dir  
 
     script:
     """
-    PCoA.sh $pca $metadata "explanatory/PCoA_patient"
+    PCoA.sh $pca $metadata "PCoA_patient"
     """
 }

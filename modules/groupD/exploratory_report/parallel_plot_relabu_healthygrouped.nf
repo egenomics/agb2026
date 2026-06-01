@@ -17,7 +17,7 @@ process PARALLEL_PLOT_MICROBIOME {
     """
     mkdir -p parallel_results
 
-    Rscript parallel_plot_relabu_healthygrouped.R \
+    parallel_plot_relabu_healthygrouped.R \
         --asv ${asv_table} \
         --taxonomy ${taxonomy} \
         --metadata ${metadata} \

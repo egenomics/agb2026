@@ -11,6 +11,6 @@ process BETA_DIVERSITY_TREE {
 
     script:
     """
-    python tree_beta.py ${bray} ${metadata} "beta_diversity_tree"
+    tree_beta.py ${bray} ${metadata} "beta_diversity_tree"
     """
 }

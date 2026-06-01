@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # ============================================================
 #  PARALLEL COORDINATES PLOT: Relative Abundance per Sample
 #  - Healthy (yes): grouped in groups of ~GROUP_SIZE samples

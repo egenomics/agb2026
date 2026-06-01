@@ -12,6 +12,6 @@ process VIOLIN_PLOTS {
 
     script:
     """
-    violin.sh --asv-table ${asv_table} --taxonomy ${annotated_taxonomy} --metadata ${meta} --outdir .
+    violin.sh ${asv_table} ${annotated_taxonomy} ${meta} "violin_analysis"
     """
 }

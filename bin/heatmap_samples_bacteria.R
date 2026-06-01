@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # ============================================================
 #  HEATMAP: Samples × Bacteria (Relative Abundance)
 #  Taxonomic level: Genus

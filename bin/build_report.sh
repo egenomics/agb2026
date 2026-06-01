@@ -44,7 +44,7 @@ done
 mkdir -p build_input
 for d in "${PLOT_DIRS[@]}"; do
     [ -e "$d" ] || continue
-    cp -r "$d" build_input/ 2>/dev/null || true
+    cp -rL "$d" build_input/ 2>/dev/null || true
 done
 
 if [ -n "$PATIENT_ID" ]; then

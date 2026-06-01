@@ -1,4 +1,4 @@
-#!/usr/bin Rscript
+#!/usr/bin/env Rscript
 
 # 1. Fetch Nextflow Arguments
 args <- commandArgs(trailingOnly = TRUE)
