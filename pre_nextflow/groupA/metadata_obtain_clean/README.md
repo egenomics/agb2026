@@ -1,6 +1,6 @@
 # metadata_obtain_clean
 
-This folder contains the scripts used to **select, cleaan and label** the metadata from American Gut Project (AGP) before it enters the pipeline.
+This folder contains the scripts used to **select, clean and label** the metadata from American Gut Project (AGP) before it enters the pipeline.
 
 The process runs in two sequential setps, both implemented in `cleaning_metadata.py`.
 
@@ -60,7 +60,7 @@ Takes `raw_metadata_1834.tsv`and applies the following:
 
 Split samples into two groups:
  
-- **Unhealthy**: individuals with an autoinmune disease diagnosed by a mediacl professional, without gut-related comorbidities (cancer, C.diff, diabetes, fungal overgrowth, IBD, IBS, kidney disease, liver diseade, SIBO) and without andibiotic use in the past 6 months.
+- **Unhealthy**: individuals with an autoimmune disease diagnosed by a mediacl professional, without gut-related comorbidities (cancer, C.diff, diabetes, fungal overgrowth, IBD, IBS, kidney disease, liver diseade, SIBO) and without andibiotic use in the past 6 months.
 - **Healthy**: individuals with a normal BMI, no diagnosed condition across all disease columns, and no antibiotic use in the past year.
 
 The adds a `healthy`column (`yes`/`no`) according to the previous criteira. And rename `sample_name`column to `sample_name_id` which is necessay to have no confict to retrieve sra in next steps.
