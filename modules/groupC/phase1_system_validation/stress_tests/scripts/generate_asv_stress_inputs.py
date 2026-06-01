@@ -225,14 +225,14 @@ def main():
 
     outdir   = Path(args.outdir)
     main_dir = outdir / "stress_inputs"
-    tech_dir = outdir / "optional_technical_checks"
+    tech_dir = outdir / "technical_checks"
     main_dir.mkdir(parents=True, exist_ok=True)
     tech_dir.mkdir(parents=True, exist_ok=True)
 
     asv = load_asv(args.asv_table)
 
     print("=" * 60)
-    print("  Stress Test Dataset Generator — Group C / Issue #9")
+    print("  Stress Test Dataset Generator — Group C")
     print("  Dataset: PRJEB10949 (BEI mock communities, Lluch 2015)")
     print("=" * 60)
     print(f"\n  Input: {asv.shape[1]} samples x {asv.shape[0]} ASVs\n")
@@ -251,12 +251,12 @@ def main():
     ST06a_contamination_blanks(asv, args.taxonomy, main_dir)
     ST06b_contamination_biological(asv, args.taxonomy, main_dir)
 
-    print("\n  -- Optional technical checks --")
+    print("\n  -- Technical checks --")
     ST03_invalid_count_table(asv, tech_dir)
     ST05_metadata_mismatch(asv, tech_dir)
 
     print(f"\n  ✓ stress_inputs/             → {main_dir}")
-    print(f"  ✓ optional_technical_checks/ → {tech_dir}")
+    print(f"  ✓ technical_checks/           → {tech_dir}")
     print(f"  ✓ ASV_taxonomy.tsv")
     print(f"  ✓ metadata_PRJEB10949.tsv")
     print(f"\n  Next step: run validation_metrics.py on each scenario")
