@@ -1,4 +1,0 @@
-sample-id	stress_test_id	sample_type	is_negative_control	notes
-ERR1459175	ST03	sample	no	ASV table contains one non-numeric count value
-ERR1458721	ST03	sample	no	ASV table contains one non-numeric count value
-ERR1459065	ST03	sample	no	ASV table contains one non-numeric count value
