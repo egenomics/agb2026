@@ -28,7 +28,7 @@ VIRULENT_GENERA = [
 ]
 
 
-SAMPLE_ID_COL = "sra_id"
+SAMPLE_ID_COL = "sample-id"
 HEALTHY_COL   = "healthy"
 HEALTHY_VALUE = "yes"
 
