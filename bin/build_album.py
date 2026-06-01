@@ -242,12 +242,11 @@ def collect_exploratory(root: Path) -> list[Path]:
     Cohort (non per-patient) PNGs. Searches the whole input tree recursively
     and keeps any PNG whose filename does NOT contain a patient (ERR) id, and
     that does not live under an explanatory / per-patient subtree.
-    Handles their nested layout (pca_results/, heatmap_results/, volcano_plot/,
-    beta_diversity_tree/, demographic_table/, clinical_association_map/, etc.)
-    without caring about folder names.
     """
     pngs: list[Path] = []
     seen = set()
+
+    excluded_plots = {"pca_individuals.png", "pca_scree_plot.png", "pca_pc1_density.png"}
 
     # Directories whose contents are per-patient and must be excluded here.
     explanatory_markers = {"explanatory", "explanatory_report",
@@ -265,12 +264,16 @@ def collect_exploratory(root: Path) -> list[Path]:
             continue
         if under_explanatory(p):           # inside a per-patient subtree → skip
             continue
+        
+        # 2. Add the actual skip condition right here!
+        if p.name in excluded_plots:
+            continue
+            
         seen.add(rp)
         pngs.append(p)
 
     rank = {name: i for i, name in enumerate(EXPLORATORY_ORDER)}
     return sorted(pngs, key=lambda p: (rank.get(p.stem, 999), p.stem))
-
 
 def collect_explanatory(root: Path) -> dict:
     """
