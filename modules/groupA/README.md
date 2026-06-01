@@ -13,13 +13,13 @@ raw FASTQs -> FASTQC (raw) -> CUTADAPT -> FASTQC (trimmed) -> MULTIQC -> CLEAN_M
 
 ## Modules
 
-| File | Process | Tool | Version |
-|------|---------|------|---------|
-| `a_fastqc.nf` | `FASTQC` | FastQC | 0.12.1 |
-| `a_cutadapt.nf` | `CUTADAPT` | Cutadapt | 4.6 |
-| `a_multiqc.nf` | `MULTIQC` | MultiQC | 1.19 |
-| `a_clean_multiqc.nf` | `CLEAN_MULTIQC` | pandas | 1.5.2 |
-| `a_new_sample_sheet.nf` | `NEW_SAMPLE_SHEET` | pandas | 1.5.2 |
+| File | Process | Tool | Version | Container |
+|------|---------|------|---------|-----------|
+| `a_fastqc.nf` | `FASTQC` | FastQC | 0.12.1 | fastqc_0.12.1.sif |
+| `a_cutadapt.nf` | `CUTADAPT` | Cutadapt | 4.6 | cutadapt_4.6.sif |
+| `a_multiqc.nf` | `MULTIQC` | MultiQC | 1.19 | multiqc_1.19.sif |
+| `a_clean_multiqc.nf` | `CLEAN_MULTIQC` | pandas | 1.5.2 | pandas_2.0.3.sif |
+| `a_new_sample_sheet.nf` | `NEW_SAMPLE_SHEET` | pandas | 1.5.2 | pandas_2.0.3.sif |
 
 Containers are pulled automatically at runtime from the [Galaxy Project Singularity depot](https://depot.galaxyproject.org/singularity/) or from `quay.io/biocontainers`. Local `.sif` fallback images are listed in each module as comments.
 
@@ -130,18 +130,34 @@ Calls `bin/groupA/generate_sample_sheet_B.py` with the list of sample IDs that p
 ## Output directory structure
 
 ```
-${outdir}/
-└──  groupA/
-    ├── errors/
-    |    └── skipped_samples_log.tsv
-    ├── fastqc/
-    |    └── *_fastqc.{html,zip}    (raw and trimmed runs)
-    ├── multiqc/
-    │   ├── multiqc_report.html
-    │   └── multiqc_data/
-    │       └── multiqc_fastqc.txt
-    └── clean/
-       └── quality_report_A.tsv
+{out_dir}/
+├── quality/
+│   ├── original_multiqc/            # MultiQC report on raw reads only (pre-trim)
+│   │   ├── multiqc_report.html
+│   │   └── multiqc_data/
+│   │       ├── multiqc_fastqc.txt
+│   │       ├── multiqc_general_stats.txt
+│   │       ├── multiqc_data.json
+│   │       ├── multiqc_citations.txt
+│   │       ├── multiqc_software_versions.txt
+│   │       ├── multiqc_sources.txt
+│   │       └── multiqc.log
+│   ├── original_multiqc.zip         # Compressed copy of the original MultiQC report
+│   ├── merged/                      # MultiQC report with pre- and post-trim together
+│   │   ├── multiqc_report.html      # Compare quality before and after trimming
+│   │   └── multiqc_data/
+│   │       ├── multiqc_fastqc.txt
+│   │       ├── multiqc_general_stats.txt
+│   │       ├── multiqc_data.json
+│   │       ├── multiqc_citations.txt
+│   │       ├── multiqc_software_versions.txt
+│   │       ├── multiqc_sources.txt
+│   │       └── multiqc.log
+│   ├── quality_report_A.tsv         # Cleaned FastQC summary table (from CLEAN_MULTIQC)
+│   └── skipped_samples_log.tsv      # Samples excluded due to QC failure, with reasons
+└── seqs/
+    └── trimmed/
+        └── {sample_id}_trim.fastq   # Adapter-trimmed reads (one file per sample)
 ```
 
 `sample_sheet_B.csv` is written to the Nextflow work directory and published according to `conf/modules.config`.
