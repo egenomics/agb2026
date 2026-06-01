@@ -1,0 +1,9 @@
+replicate	community_type	level	TP	FP	FN	accuracy	precision	recall	f1
+ERR1049996	even	genus	13.0	1.0	3.0	0.7647	0.9286	0.8125	0.8667
+ERR1049997	even	genus	13.0	2.0	3.0	0.7222	0.8667	0.8125	0.8387
+ERR1049998	even	genus	13.0	1.0	3.0	0.7647	0.9286	0.8125	0.8667
+ERR1049999	staggered	genus	5.0	1.0	11.0	0.2941	0.8333	0.3125	0.4545
+ERR1050000	staggered	genus	5.0	1.0	11.0	0.2941	0.8333	0.3125	0.4545
+ERR1050001	staggered	genus	4.0	1.0	12.0	0.2353	0.8	0.25	0.381
+average	even	genus				0.7505	0.908	0.8125	0.8574
+average	staggered	genus				0.2745	0.8222	0.2917	0.43

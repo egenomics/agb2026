@@ -1,1 +1,0 @@
-test_id	test_name	community_type	precision	recall	f1	accuracy	rmse	bray_curtis	baseline_precision	baseline_recall	baseline_f1	delta_f1_vs_ST00	interpretation	notes
