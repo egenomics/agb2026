@@ -2,8 +2,6 @@
 process VIRULENCE_PLOT {
     publishDir "${params.outdir}/explanatory", mode: 'copy'
 
-    container "containers/groupD.sif"
-
     input:
     path meta 
     path asv_table 
@@ -11,7 +9,7 @@ process VIRULENCE_PLOT {
     
 
     output:
-    path "Virulence_analysis", emit: virulence_report
+    path("Virulence_analysis"), emit: virulence_report
 
     script:
     """

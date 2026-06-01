@@ -106,7 +106,7 @@ for (pid in non_h_ids){
            pull(healthy) )
          )
 
-  output_file <- file.path(opt$outdir, paste0("PCA_highlight_", pid, ".png"))
+  output_file <- file.path(opt$outdir, paste0(pid, "_PCA_highlight", ".png"))
   
   ggsave(filename = output_file, 
          plot = p_pacient, 

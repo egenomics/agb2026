@@ -5,8 +5,6 @@ process PARALLEL_PLOT_MICROBIOME {
     publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
-    container "containers/groupD.sif"
-
     input:
     path(asv_table)
     path(taxonomy)
@@ -19,7 +17,7 @@ process PARALLEL_PLOT_MICROBIOME {
     """
     mkdir -p parallel_results
 
-    Rscript ${moduleDir}/parallel_plot_relabu_healthygrouped.R \
+    Rscript parallel_plot_relabu_healthygrouped.R \
         --asv ${asv_table} \
         --taxonomy ${taxonomy} \
         --metadata ${metadata} \

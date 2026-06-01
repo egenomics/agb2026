@@ -1,5 +1,5 @@
-process VIRULENCE_PLOT {
-    publishDir "${params.outdir}", mode: 'copy'
+process VIOLIN_PLOTS {
+    publishDir "${params.outdir}/explanatory", mode: 'copy'
 
     input:
     path meta 
@@ -8,9 +8,10 @@ process VIRULENCE_PLOT {
     
 
     output:
-    path "Violin Analysis", emit: violin_report
+    path("violin_analysis"), emit: violin_report
 
     script:
     """
-    violin.sh ${asv_table} ${annotated_taxonomy} ${meta}
-    ""
+    violin.sh --asv-table ${asv_table} --taxonomy ${annotated_taxonomy} --metadata ${meta} --outdir .
+    """
+}

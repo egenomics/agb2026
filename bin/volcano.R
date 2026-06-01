@@ -1,3 +1,5 @@
+#!/usr/bin Rscript
+
 # 1. Fetch Nextflow Arguments
 args <- commandArgs(trailingOnly = TRUE)
 asv_file  <- args[1]

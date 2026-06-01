@@ -23,10 +23,9 @@
 // TODO: Import your group's modules here
 // include { MODULE_NAME } from '../modules/groupD/module_name/main'
 // include { SUBWORKFLOW_NAME } from '../subworkflows/local/groupD_subworkflow'
-include { alpha_diversity_status } from '../modules/groupD/explanatory_report/alpha_diversity_status'
-include { PCoA_plots }             from '../modules/groupD/explanatory_report/PCoA' 
-include { overview_table }         from '../modules/groupD/explanatory_report/overview_table.nf' 
 
+include { EXPLANATORY_REPORT }         from '../subworkflows/groupD_explanatory_report'
+include { EXPLORATORY_REPORT }         from '../subworkflows/groupD_exploratory_report'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,41 +46,24 @@ workflow GROUPD {
 
     main:
 
-    ch_versions = channel.empty()
+    // Extract only the Bray Diversity
+    ch_bray = ch_beta_tuple.map { it[0] }
 
-    // ---------------------------------------------------------
-    // 1. Prepare and Run Alpha Diversity
-    // ---------------------------------------------------------
-    // Combined with metadata
-    ch_input_for_alpha = ch_metadata.combine(ch_alpha_tuple)
+    EXPLORATORY_REPORT(ch_metadata, ch_annotated_counts, ch_annotated_taxonomy, ch_bray)
+
+    EXPLANATORY_REPORT(
+        ch_metadata,
+        ch_annotated_counts,                      // Counts for each sample
+        ch_annotated_taxonomy,                    // Taxonomies in counts
+        ch_alpha_tuple,                           // tuple with all alphas
+        EXPLORATORY_REPORT.out.pca_object,        // PCA RDS path
+        EXPLORATORY_REPORT.out.pca_genus_counts   // PCA genus counts
+    )
     
-    alpha_diversity_status(ch_input_for_alpha)
-
-    // ---------------------------------------------------------
-    // 2. Prepare and Run PCoA
-    // ---------------------------------------------------------
-    // PCoA process expects: tuple path(pca), path(metadata)
-    //Change for the PCA
-    ch_input_for_pcoa = ch_annotated_counts.combine(ch_metadata)
-    
-    PCoA_plots(ch_input_for_pcoa)
-
-    // ---------------------------------------------------------
-    // 3. Prepare and run the overview table
-    // ---------------------------------------------------------
-    // overview process expects: tuple path(metadata), path(pca), path(z_scores), path(genus_counts)
-    //Change for the PCA and annotated genus
-    ch_overview = ch_metadata
-        .join(ch_annotated_counts)
-        .join(ch_annotated_taxonomy)
-        .combine(ch_input_for_alpha.out.PCoA_patient_plots_dir)
-
-    overview_table(ch_overview)
-
     emit:
-    alpha_plots = alpha_diversity_status.out.alpha_div_dist_dir
-    pcoa_plots  = PCoA_plots.out.PCoA_patient_plots_dir 
-    versions    = ch_versions
+    alpha_plots = EXPLANATORY_REPORT.out.alpha_plots
+    pcoa_plots  = EXPLANATORY_REPORT.out.pcoa_plots 
+
 }
 
 /*

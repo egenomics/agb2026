@@ -5,9 +5,6 @@ process PCA_MICROBIOME {
     publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
-    // Load the needed containers
-    container "containers/groupD.sif"
-
     input:
     path(asv_table)
     path(taxonomy)
@@ -22,7 +19,7 @@ process PCA_MICROBIOME {
     """
     mkdir -p pca_results
 
-    Rscript ${moduleDir}/PCA_samples_bacteria.R \
+    PCA_samples_bacteria.R \
         --asv ${asv_table} \
         --taxonomy ${taxonomy} \
         --metadata ${metadata} \

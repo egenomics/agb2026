@@ -5,8 +5,6 @@ process HEATMAP_MICROBIOME {
     publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 
-    container "containers/groupD.sif"
-
     input:
     path(asv_table)
     path(taxonomy)
@@ -19,7 +17,7 @@ process HEATMAP_MICROBIOME {
     """
     mkdir -p heatmap_results
 
-    Rscript ${moduleDir}/heatmap_samples_bacteria.R \
+    Rscript heatmap_samples_bacteria.R \
         --asv ${asv_table} \
         --taxonomy ${taxonomy} \
         --metadata ${metadata} \
