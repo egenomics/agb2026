@@ -30,7 +30,7 @@ analytical conditions.
 **ENA accession:** [PRJEB10949](https://www.ebi.ac.uk/ena/browser/view/PRJEB10949)
 
 Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communities
-(even and staggered) and water-only negative controls. Selected on instructor recommendation.
+(even and staggered) and water-only negative controls.
 
 **Why this dataset:**
 - Known ground truth composition (20 bacterial species, concentrations documented in
