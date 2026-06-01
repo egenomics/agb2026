@@ -52,7 +52,7 @@ Reads the raw Qiita export and retains only the columns could realistically be c
 
 Takes `raw_metadata_1834.tsv`and applies the following:
 
-- Drops columns that exceed the missing data threshold (> 20% NaN), are entirely invalid (e.g. "not providede2, "not applicable") or are constant across all samples. Then save a summary of all dropped columns and the reason for removal
+- Drops columns that exceed the missing data threshold (> 20% NaN), are entirely invalid (e.g. "not provided", "not applicable") or are constant across all samples. Then save a summary of all dropped columns and the reason for removal
 
 **Output:** `dropped_columns_summary_1834.tsv`
 
