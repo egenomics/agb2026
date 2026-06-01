@@ -2,10 +2,15 @@
 module purge
 module load nextflow
 module load singularityCE/4.3
+
 # 2. Apptainer / Singularity image cache
 export NXF_APPTAINER_CACHEDIR=/data/upfagb/jvillanueva/apptainer_cache/
 export NXF_SINGULARITY_CACHEDIR=/data/upfagb/jvillanueva/apptainer_cache/
-# 3. Run
+
+# 3. Create tmp dir for current user
+mkdir -p /data/upfagb/${USER}/agb2026/tmp
+
+# 4. Run
 echo "=== Launching nf-core/abgtemplate ==="
 nextflow run main.nf \
     -profile groupB,slurm,singularity \
@@ -14,5 +19,6 @@ nextflow run main.nf \
     --outdir results_integ \
     --dada2_train_set /data/upfagb/u269668/agb2026/biodb/dada2/silva_nr99_v138.2_toGenus_trainset.fa \
     --dada2_species_set /data/upfagb/u269668/agb2026/biodb/dada2/silva_v138.2_assignSpecies.fa \
+    --qiime2_sif /data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif \
     -ansi-log \
     -resume

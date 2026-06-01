@@ -6,7 +6,7 @@ process RAREFACTION_THRESHOLD {
 
     conda params.qiime2_conda_env ?: "qiime2=2026.1"
 
-    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+    container "${params.qiime2_sif}"
 
 
     input:
@@ -222,7 +222,7 @@ process SKIP_RAREFACTION {
 
     conda params.qiime2_conda_env ?: "qiime2=2026.1"
 
-    container "/data/upfagb/u269208/container/qiime2-amplicon-2026.1.sif"
+    container "${params.qiime2_sif}"
 
     input:
     tuple val(meta), val(n_samples), val(min_batch_size)
