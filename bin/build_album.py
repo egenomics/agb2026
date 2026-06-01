@@ -83,7 +83,6 @@ PRETTY = {
 
 # Preferred display order for cohort plots (unknowns appended after, A–Z).
 EXPLORATORY_ORDER = [
-    "rarefaction_plots", "contamination_summary",
     "demographic_table", "Table1_Demographics_Plot",
     "pca_biplot_healthy_vs_disease", "pca_samples_bacteria",
     "pca_individuals", "pca_variables", "pca_scree_plot",
@@ -193,9 +192,24 @@ def tsv_card(title: str, rows: list) -> str:
         ) + "</tr>"
         for row in body if row
     )
+    # Build CSV text and embed it base64 so commas/quotes/newlines travel safely.
+    def csv_escape(v: str) -> str:
+        v = str(v)
+        if any(c in v for c in [',', '"', '\n', '\r']):
+            return '"' + v.replace('"', '""') + '"'
+        return v
+    csv_text = "\n".join(",".join(csv_escape(c) for c in row) for row in rows if row)
+    csv_b64 = base64.b64encode(csv_text.encode("utf-8")).decode("ascii")
+    fname = re.sub(r"[^A-Za-z0-9_-]+", "_", title).strip("_") or "table"
+    dl_btn = (
+        f'<button class="tbl-dl" data-csv="{csv_b64}" data-fname="{fname}" '
+        f'onclick="dlCsv(this)">⬇ CSV</button>'
+    )
     return (
         f'<div class="chart-card">'
-        f'<div class="chart-title">{title}</div>'
+        f'<div class="chart-title-row">'
+        f'<div class="chart-title">{title}</div>{dl_btn}'
+        f'</div>'
         f'<div style="overflow-x:auto">'
         f'<table style="width:100%;border-collapse:collapse">'
         f'<thead><tr style="background:{BG}">{th_cells}</tr></thead>'
@@ -281,7 +295,12 @@ def collect_exploratory(root: Path) -> list[Path]:
         pngs.append(p)
 
     rank = {name: i for i, name in enumerate(EXPLORATORY_ORDER)}
-    return sorted(pngs, key=lambda p: (rank.get(p.stem, 999), p.stem))
+    # rarefaction_plots is intentionally shown LAST (rank 1000), after all others.
+    def sort_key(p):
+        if p.stem == "rarefaction_plots":
+            return (1000, p.stem)
+        return (rank.get(p.stem, 999), p.stem)
+    return sorted(pngs, key=sort_key)
 
 def collect_explanatory(root: Path) -> dict:
     """
@@ -347,9 +366,18 @@ section{{margin-bottom:40px;scroll-margin-top:70px}}
 .sec-insight{{font-size:12px;color:{TEXT2};line-height:1.55;
   border-left:3px solid {ACCENT};padding:4px 0 4px 10px;margin-bottom:14px}}
 .grid2{{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}}
-@media(max-width:900px){{.grid2{{grid-template-columns:1fr}}}}
+/* If the grid has an odd number of cards, center the lonely last one */
+.grid2 > .chart-card:last-child:nth-child(odd){{grid-column:1 / -1;max-width:calc(50% - 8px);margin:0 auto}}
+@media(max-width:900px){{.grid2{{grid-template-columns:1fr}}
+  .grid2 > .chart-card:last-child:nth-child(odd){{max-width:100%}}}}
 .chart-card{{background:{PAPER};border-radius:10px;padding:16px;box-shadow:0 1px 4px rgba(107,58,42,.08)}}
 .chart-title{{font-size:13px;font-weight:700;color:{TEXT};margin-bottom:10px}}
+.chart-title-row{{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}}
+.chart-title-row .chart-title{{margin-bottom:0}}
+.tbl-dl{{font-size:11px;font-weight:700;padding:4px 10px;border:1px solid rgba(196,160,140,.4);
+  border-radius:14px;background:transparent;color:{TEXT2};cursor:pointer;font-family:{FONT};
+  white-space:nowrap;transition:all .12s}}
+.tbl-dl:hover{{background:{ACCENT};color:#fff;border-color:{ACCENT}}}
 .album-img{{width:100%;height:auto;border-radius:6px;cursor:zoom-in;display:block;background:#faf5f0}}
 .pgrid{{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}}
 .pcard{{background:{PAPER};border-radius:10px;padding:18px 14px;text-decoration:none;
@@ -359,12 +387,14 @@ section{{margin-bottom:40px;scroll-margin-top:70px}}
 .pcard .pid{{font-size:14px;font-weight:700;color:{TEXT}}}
 .pcard .pmeta{{font-size:11px;color:{TEXT2}}}
 .pcard .open{{font-size:11px;font-weight:700;color:{ACCENT};margin-top:auto}}
-#lb{{position:fixed;inset:0;background:rgba(62,26,14,.85);z-index:9999;display:none;
+#lb{{position:fixed;inset:0;background:rgba(232,210,196,.55);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  z-index:9999;display:none;
   align-items:center;justify-content:center;cursor:zoom-out;padding:30px}}
 #lb.open{{display:flex}}
 #lb-card{{background:{PAPER};border-radius:14px;padding:16px;cursor:default;
   max-width:92vw;max-height:92vh;display:flex;flex-direction:column;gap:12px;
-  box-shadow:0 12px 50px rgba(0,0,0,.45);animation:cardPop .22s cubic-bezier(.34,1.56,.64,1)}}
+  box-shadow:0 12px 40px rgba(107,58,42,.22);animation:cardPop .22s cubic-bezier(.34,1.56,.64,1)}}
 @keyframes cardPop{{0%{{opacity:0;transform:scale(.9)}}100%{{opacity:1;transform:scale(1)}}}}
 #lb-card img{{max-width:88vw;max-height:74vh;border-radius:8px;display:block;background:#faf5f0}}
 .lb-head{{display:flex;align-items:center;gap:16px}}
@@ -376,7 +406,7 @@ section{{margin-bottom:40px;scroll-margin-top:70px}}
 .lb-btn:hover{{background:#c06a2e}}
 .lb-btn.ghost{{background:transparent;color:{TEXT2};border:1px solid rgba(196,160,140,.4)}}
 .lb-btn.ghost:hover{{background:rgba(217,122,58,.08);color:{TEXT}}}
-#lb .x{{position:absolute;top:18px;right:24px;color:#fff;font-size:30px;cursor:pointer;line-height:1;font-weight:300}}
+#lb .x{{position:absolute;top:18px;right:24px;color:{TEXT};font-size:30px;cursor:pointer;line-height:1;font-weight:300}}
 @keyframes scoopPop{{0%{{opacity:0;transform:translateY(14px) scale(.75)}}
   65%{{transform:translateY(-2px) scale(1.05)}}100%{{opacity:1;transform:translateY(0) scale(1)}}}}
 @keyframes fadeInUp{{from{{opacity:0;transform:translateY(8px)}}to{{opacity:1;transform:translateY(0)}}}}
@@ -395,10 +425,15 @@ section{{margin-bottom:40px;scroll-margin-top:70px}}
 .splash-sub{{opacity:0;font-size:12px;color:#8B5860;letter-spacing:.04em;
   font-family:{FONT};animation:fadeInUp .55s ease-out 2.35s forwards}}
 @media print{{
-  #sidebar,#topbar,.topbtn,#splash{{display:none!important}}
+  #sidebar,#topbar,.topbtn,#splash,.lb-btn,.tbl-dl,#lb{{display:none!important}}
   body{{display:block}} #main{{padding:0}}
-  .grid2{{grid-template-columns:1fr 1fr}}
-  .chart-card{{box-shadow:none;border:1px solid #eee;break-inside:avoid;page-break-inside:avoid}}
+  /* CSS grid ignores break-inside on children, so use block flow when printing */
+  .grid2{{display:block!important}}
+  .grid2 > .chart-card:last-child:nth-child(odd){{max-width:100%!important;margin:0!important}}
+  .chart-card{{box-shadow:none;border:1px solid #eee;
+    break-inside:avoid;page-break-inside:avoid;margin-bottom:12px}}
+  .chart-card img,.album-img,table{{break-inside:avoid;page-break-inside:avoid}}
+  tr{{break-inside:avoid;page-break-inside:avoid}}
   .album-img{{cursor:default}}
 }}
 """
@@ -449,7 +484,19 @@ function zoom(src,cap,fname){
   document.getElementById('lb').classList.add('open');
 }
 function closeLb(e){document.getElementById('lb').classList.remove('open');}
+function printReport(){closeLb();setTimeout(function(){window.print();},50);}
+window.addEventListener('beforeprint',function(){closeLb();});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLb(e);});
+function dlCsv(btn){
+  var b64=btn.getAttribute('data-csv');
+  var name=(btn.getAttribute('data-fname')||'table')+'.csv';
+  var csv=decodeURIComponent(escape(atob(b64)));
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url; a.download=name; document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
 </script>"""
 
 
@@ -495,7 +542,7 @@ def build_patient_page(pid: str, groups: dict, tsv_groups: dict | None = None, s
     <div class="stat"><div class="stat-val">{n_items}</div><div class="stat-lbl">Items</div></div>
     <div class="btn-row ml-auto">
       {back_top}
-      <button class="topbtn" onclick="window.print()">⬇ Download PDF</button>
+      <button class="topbtn" onclick="printReport()">⬇ Download PDF</button>
     </div>
   </div>
   <div id="main">
@@ -583,7 +630,7 @@ def build_index(exploratory: list, explanatory: dict, patient_tsvs: dict | None 
     <div class="stat"><div class="stat-val">{n_total}</div><div class="stat-lbl">Plots</div></div>
     <div class="stat"><div class="stat-val">{n_explor}</div><div class="stat-lbl">Exploratory</div></div>
     <div class="stat"><div class="stat-val">{n_patients}</div><div class="stat-lbl">Patients</div></div>
-    <button class="topbtn ml-auto" onclick="window.print()">⬇ Download PDF</button>
+    <button class="topbtn ml-auto" onclick="printReport()">⬇ Download PDF</button>
   </div>
   <div id="main">
     {explor_html}
