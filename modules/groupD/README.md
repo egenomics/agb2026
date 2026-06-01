@@ -1,10 +1,25 @@
-# Group D — Visualisation Module 
+# Group D - Visualisation Module 
 
 ## What this module does
 
-This section of the pipeline takes the processed and validated outpus from previous steps, see group_B and group_C readme files for more information, and consolidates the data on a patient and population level by generating reports and graphs for clinicians. The purpose of this output is ultimately to help clinicians easily identify how their patients differ from an average healthy population, and what taxa the 16s sequencing reveals. The plots also summarize the population level symptoms of the patients. 
+This section of the pipeline takes the processed and validated outputs from previous steps (see group_B and group_C README files for more information) and consolidates the data at both patient and population levels by generating reports and visualizations for clinicians. The purpose of these reports is to help clinicians identify how individual patients differ from a healthy reference population, summarize microbiome patterns observed across the cohort, and highlight the taxa detected through 16S sequencing. The plots also summarize population-level clinical characteristics and comorbidity patterns.
 
-Reports are split into two subdirectories, Exploratory charts, and Explanatory Charts. Please see those sections for more information. 
+### Generated reports
+
+The final output of Group D is a set of clinician-oriented reports generated from the processed 16S microbiome data.
+
+Two report types are produced:
+
+* **Exploratory Report**: a single population-level report generated once per pipeline execution. This report summarizes the entire cohort and highlights overall microbiome composition, diversity patterns, demographic characteristics, and disease-associated trends.
+
+* **Explanatory Reports**: one report is generated for each non-healthy patient included in the run. These reports compare an individual patient against the healthy reference population and provide patient-specific microbiome interpretations.
+
+Therefore, a pipeline execution containing *N* non-healthy patients will generate:
+
+* 1 Exploratory Report
+* N Explanatory Reports
+
+Therefore, the generated reports are organized into two subdirectories: Exploratory Report and Explanatory Report. Please see those sections for more information.
 
 ## I/O  -- The following tables show the data inputs and the following outputs of this section of the pipeline
 
@@ -26,23 +41,25 @@ Reports are split into two subdirectories, Exploratory charts, and Explanatory C
 ### Output Charts
 | Chart Name | Description |
 |:----------:|:------------|
-| `alpha_diversity_status` | Compares alpha diversity metrics (Shannon, observed features, Faith's PD, Simpson) across samples to assess within-sample diversity |
+| `alpha_diversity_status` | Visualizes alpha-diversity metrics (Shannon, Observed Features, Faith's PD, and Simpson) for non-healthy patients relative to the healthy reference population |
 | `overview_table` | Summary table of key metrics and sample-level statistics across the cohort |
-| `PCoA.nf` | Principal Coordinates Analysis plot showing between-sample (beta) diversity using UniFrac and Bray-Curtis distance matrices |
+| `PCoA_patient` | Principal Coordinates Analysis plot showing between-sample (beta) diversity using UniFrac and Bray-Curtis distance matrices |
 | `violin_plot` | Violin plot comparing distribution of virulent genus abundance between healthy and non-healthy patient groups |
 | `virulence_patientX` | Per-patient stacked bar plots showing relative abundance of virulent vs non-virulent taxa against healthy control average |
-| `clinical_association_map` | Co-occurrence heatmap showing correlation between microbial taxa across samples |
+| `clinical_association_map` | Co-occurrence heatmap showing how clinical conditions overlap across patients |
 | `demographic_table` | Demographic summary table linking patient metadata to sample information |
 | `heatmap_samples_bacteria` | Heatmap of bacterial relative abundance across all samples |
 | `parallel_plot_relative_abundance` | Parallel coordinates plot comparing relative abundance profiles between healthy and non-healthy patients |
 | `pca_individuals` | PCA plot of bacterial composition across samples |
-| `beta_diversity_tree` | Phylogenetic tree annotated with beta diversity information |
+| `beta_diversity_tree` | Hierarchical clustering tree generated from beta-diversity distances between samples |
 | `volcano_plot` | Volcano plot highlighting differentially abundant taxa between healthy and non-healthy groups |
 
 
 ---
 
 ## Directory layout and file structure of outputs 
+
+The final deliverable for clinicians is an automatically generated HTML report. The files described below are intermediate assets used to build those reports.
 
 ```
 results/
@@ -113,12 +130,12 @@ For the report module, it is interesting to know there are two workflows working
 
 Each of these workflows has different outputs, those are the following
 
-> How are outputs specified in Nexflow?
-- The emitted output of a process or workflow can be accesed using the .out. method
+> How are outputs specified in Nextflow?
+- The emitted output of a process or workflow can be accessed using the .out. method
 - The name specified below are the same for the outputs emitted
 
 ## Exploratory Report
-- The exploratory charts are primarily meant to allow the physician to take a quick look at the overall patient population. These representations show demographic information, metadata reports, PCA resutls, relative abundance across all samples, volcano plots, and a tree plot of the differences between sample alpha diversity. These reports should be used to identify general trends in the sample, and can be useful. For more information on how alpha and beta diversity were calculated and why they were chosen as metrics for clinical diagnosis, please see the repository wiki [here](https://github.com/egenomics/agb2026/wiki/Output).
+- The exploratory charts are primarily meant to allow the physician to take a quick look at the overall patient population. These representations show demographic information, metadata reports, PCA results, relative abundance across all samples, volcano plots, and a tree plot of the differences between sample beta diversity. The purpose of this report is to identify general trends within the cohort and provide an overview of microbiome composition, diversity patterns, and clinical metadata. For more information on how alpha and beta diversity were calculated and why they were chosen as metrics for clinical diagnosis, please see the repository wiki [here](https://github.com/egenomics/agb2026/wiki/Output).
 
 Inside `/exploratory` folder -> **channel_name** (`generated_directory/`):
 
@@ -144,14 +161,14 @@ Inside `/exploratory` folder -> **channel_name** (`generated_directory/`):
 - **heatmap_results** (`heatmap_results/`): Global microbiome composition heatmap.
   - *heatmap_samples_bacteria.png*: Hierarchical clustering heatmap of the most abundant bacterial genera across samples using relative abundances.
 - **volcano_png** (`volcano_plot/`): Differential abundance analysis.
-  - *volcano_plot*: Interactive volcano plot showing differential abundance results, highlighting taxa enriched or depleted in non-healthy samples.
+  - *volcano_plot.html*: Interactive HTML volcano plot showing taxa enriched or depleted in non-healthy samples.
 - **tree_png** (`beta_diversity_tree/`): Beta-diversity hierarchical clustering analysis.
   - *beta_diversity_tree.png*: Hierarchical clustering tree (UPGMA) generated from Bray-Curtis beta-diversity distances, with samples coloured according to health status.
 
 --- 
 
 ## Explanatory Report
-- The explanatory charts are to help clinicians take a deep dive into single patient samples. Every chart in in the explanatory folder is produced per unhealthy patient and compared to the average of the healthy group. To find more information on how the eplanatory plots were created, please see the wiki [here]((https://github.com/egenomics/agb2026/wiki/Output). 
+- The explanatory charts are to help clinicians take a deep dive into single patient samples. Every chart in in the explanatory folder is produced per unhealthy patient and compared to the average of the healthy group. To find more information on how the explanatory plots were created, please see the wiki [here](https://github.com/egenomics/agb2026/wiki/Output). 
   
 Inside `/explanatory` folder -> **channel_name** (`generated_directory/`):
 
@@ -173,8 +190,7 @@ Inside `/explanatory` folder -> **channel_name** (`generated_directory/`):
 ## Running via Nextflow
 - All scripts used to calculate the metrics for the plots are found in the bin folder, while the .nf scripts used to manage the pipeline are found in the modules/exploratory and modules/explanatory folders. The `workflows/groupD.nf` ultimately calls all of the scripts in the modules directories and runs all scripts to summarize them into a downloadable HTML/PDF report. In the broader pipeline, this script is called by main.nf. Please see the root readme for information on how to run the full pipeline. 
 
-
-Each of the .nf files calls the data output from the previous group's pipeline channel. From group_C, the following channels are called:
+Each module consumes channels produced by the previous group's pipeline stages. From group_C, the following channels are called:
 - ch_alpha
 - ch_beta
 - ch_rarefaction
