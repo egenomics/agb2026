@@ -1,4 +1,0 @@
-check_id	check_type	expected_behavior	observed_behavior	metric	pass_fail	notes
-ST03_invalid_count_table	invalid_count_table	Non-numeric count values should be detected.	10 non-numeric cells detected.	10.0	PASS	This verifies corrupt count tables can be detected before metric interpretation.
-ST05_metadata_mismatch	metadata_mismatch	Metadata sample IDs should not match ASV table sample IDs.	0 matching IDs out of 13 ASV samples and 13 metadata samples.	0.0	PASS	Expected 0 matches because metadata IDs contain an intentional suffix.
-ST06a_contamination_blanks	blank_contamination_spike	Spiked contaminant relative abundance in blanks should be >= 10%.	Mean relative abundance of ASV9 in blanks = 0.526.	0.5260326508076767	PASS	This scenario is intended for contamination filtering/decontam rather than validation_metrics.py.
