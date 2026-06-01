@@ -7,7 +7,7 @@ set -euo pipefail
 GT="../dataset_validation/ground_truth_PRJEB10949.tsv"
 VM="../validation_metrics.py"
 TAX="ASV_taxonomy.tsv"
-OUTDIR="stress_results"
+OUTDIR="../results/stress_test_outputs/stress_results"
 
 SCENARIOS=(
   ST00_baseline
