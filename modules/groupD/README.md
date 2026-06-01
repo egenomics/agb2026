@@ -108,7 +108,7 @@ results/
 ---
 ## Exploratory Charts
 ---
-- The exploratory charts are primarily meant to allow the physician to take a quick look at the overall patient population. These representations show demographic information, metadata reports, PCA resutls, relative abundance across all samples, volcano plots, and a tree plot of the differences between sample alpha diversity. These reports should be used to identify general trends in the sample, and can be useful. For more information on how alpha and beta diversity were calculated and why they were chosen as metrics for clinical diagnosis, please see the repository wiki [here](link to wiki).
+- The exploratory charts are primarily meant to allow the physician to take a quick look at the overall patient population. These representations show demographic information, metadata reports, PCA resutls, relative abundance across all samples, volcano plots, and a tree plot of the differences between sample alpha diversity. These reports should be used to identify general trends in the sample, and can be useful. For more information on how alpha and beta diversity were calculated and why they were chosen as metrics for clinical diagnosis, please see the repository wiki [here](https://github.com/egenomics/agb2026/wiki/Output).
 
 ## Explanatory Charts
 - The explanatory charts are to help clinicians take a deep dive into single patient samples. Every chart in in the explanatory folder is produced per unhealthy patient and compared to the average of the healthy group. The explanatory 
