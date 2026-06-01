@@ -76,10 +76,14 @@ PRETTY = {
     "beta_diversity_tree": "Beta Diversity Dendrogram",
     "clinical_cooccurrence_heatmap": "Clinical Co-occurrence Heatmap",
     "clinical_association_map": "Clinical Association Map",
+    # Group C — dataset quality (cohort-level)
+    "rarefaction_plots": "Rarefaction Curves",
+    "contamination_summary": "Contamination Summary",
 }
 
 # Preferred display order for cohort plots (unknowns appended after, A–Z).
 EXPLORATORY_ORDER = [
+    "rarefaction_plots", "contamination_summary",
     "demographic_table", "Table1_Demographics_Plot",
     "pca_biplot_healthy_vs_disease", "pca_samples_bacteria",
     "pca_individuals", "pca_variables", "pca_scree_plot",
