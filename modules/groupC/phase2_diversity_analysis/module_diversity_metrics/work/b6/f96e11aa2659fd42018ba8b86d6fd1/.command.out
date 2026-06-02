@@ -1,7 +1,0 @@
-Imported table.biom as BIOMV210Format to table.qza
-Imported rep-seqs.fasta as DNASequencesDirectoryFormat to rep-seqs.qza
-Saved FeatureData[AlignedSequence] to: aligned-rep-seqs.qza
-Saved FeatureData[AlignedSequence] to: masked-aligned-rep-seqs.qza
-Saved Phylogeny[Unrooted] to: unrooted-tree.qza
-Saved Phylogeny[Rooted] to: rooted-tree.qza
-Saved FeatureTable[Frequency] to: table_filtered.qza
