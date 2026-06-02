@@ -34,11 +34,7 @@ excluded_genera  = [s.split()[0] for s in excluded_from_fn]
 # LOAD DATA
 # =========
 ground_truth = pd.read_csv(ground_truth_file, sep="\t")
-<<<<<<< HEAD
 asv_table    = pd.read_csv(asv_table_file, sep="\t")
-=======
-asv_table    = pd.read_csv(asv_table_file, sep="\t", comment="#")
->>>>>>> Group_D
 asv_table    = asv_table.rename(columns={"#OTU ID": "ASV_ID"})
 
 # Handle comment="#" not catching "#OTU ID" header
@@ -137,11 +133,7 @@ for replicate in all_replicates:
     observed_rel    = normalize(observed_counts)
 
     # Align with ground truth at genus level
-<<<<<<< HEAD
     gt_abundance = ground_truth.groupby("genus")[pct_col].sum() / 100
-=======
-    gt_abundance = ground_truth.set_index("genus")[pct_col] / 100
->>>>>>> Group_D
     all_genera   = gt_abundance.index.union(observed_rel.index)
     gt_aligned   = gt_abundance.reindex(all_genera, fill_value=0)
     obs_aligned  = observed_rel.reindex(all_genera, fill_value=0)
