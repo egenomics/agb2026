@@ -86,8 +86,8 @@ workflow NFCORE_ABGTEMPLATE {
             GROUPC.out.OutputMetricResultsAlpha,
             GROUPC.out.OutputMetricResultsBeta,
             GROUPC.out.OutputMetricResultsRarefaction,
-            GROUPC.out.annotated_counts,
-            GROUPC.out.annotated_taxonomy,
+            GROUPB.out.table_counts,
+            GROUPB.out.taxonomy,
             GROUPC.out.contamination_summary /// channel: Path to "contamination_summary.tsv"
         )
 
