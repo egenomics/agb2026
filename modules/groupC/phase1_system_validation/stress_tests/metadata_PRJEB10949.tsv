@@ -1,0 +1,14 @@
+sample_id	sample_type	community_type	replicate	is_negative_control
+ERR1049996	biological	even	1	no
+ERR1049997	biological	even	2	no
+ERR1049998	biological	even	3	no
+ERR1049999	biological	staggered	1	no
+ERR1050000	biological	staggered	2	no
+ERR1050001	biological	staggered	3	no
+ERR1049992	blank	negative_control	1	yes
+ERR1049993	blank	negative_control	2	yes
+ERR1049994	blank	negative_control	3	yes
+ERR1049995	blank	negative_control	4	yes
+ERR1049938	blank	negative_control	5	yes
+ERR1049939	blank	negative_control	6	yes
+ERR1049940	blank	negative_control	7	yes

@@ -1,154 +1,266 @@
 #!/usr/bin/env python3
 """
-Generate small ASV-table stress-test inputs from Group B output files.
+generate_asv_stress_inputs.py
+─────────────────────────────
+Generates stress-test datasets from the PRJEB10949 mock community dataset
+(BEI mock communities, Lluch et al. 2015), whose composition is fully known.
+
+Output structure:
+    stress_inputs/
+    ├── ST00_baseline/                  unmodified asv_table.tsv
+    ├── ST01_zero_count_sample/         one even sample forced to 0 reads
+    ├── ST02_low_depth/                 biological samples downsampled to 100 reads
+    ├── ST04_single_taxon/              even samples collapsed to one dominant ASV
+    ├── ST06a_contamination_blanks/     Pseudomonas spiked at 50% in blanks (for decontam)
+    └── ST06b_contamination_biological/ Pseudomonas spiked at 30% in even/staggered (for F1)
+    technical_checks/
+    ├── ST03_invalid_count_table/       non-numeric values in count table (no F1/recall)
+    └── ST05_metadata_mismatch/         wrong sample IDs in metadata (no F1/recall)
+    ASV_taxonomy.tsv                    shared taxonomy file (unchanged across scenarios)
+    metadata_PRJEB10949.tsv             sample metadata with clear columns
 
 Usage:
-    python scripts/generate_asv_stress_inputs.py \
-        --asv_table asv_table.tsv \
-        --taxonomy ASV_taxonomy.tsv \
-        --outdir stress_inputs_regenerated
-
-This script creates small modified ASV tables for Group C robustness testing:
-- valid subset
-- zero-count sample
-- very low-depth samples
-- invalid non-numeric count
-- single-taxon dominance
-- metadata mismatch
-- contamination spike
+    python generate_asv_stress_inputs.py \
+        --asv_table  results/pipeline_outputs/asv_table.tsv \
+        --taxonomy   results/pipeline_outputs/ASV_taxonomy.tsv \
+        --outdir     stress_tests/
 """
 
-from pathlib import Path
 import argparse
-import pandas as pd
-import numpy as np
 import shutil
+from pathlib import Path
+import numpy as np
+import pandas as pd
 
-def write_metadata(outpath, sample_ids, test_id, sample_type="sample", extra_notes=""):
-    if isinstance(sample_type, str):
-        sample_type = [sample_type] * len(sample_ids)
-    if isinstance(extra_notes, str):
-        extra_notes = [extra_notes] * len(sample_ids)
+SEED = 42
+rng  = np.random.default_rng(SEED)
 
-    md = pd.DataFrame({
-        "sample-id": sample_ids,
-        "stress_test_id": test_id,
-        "sample_type": sample_type,
-        "is_negative_control": ["yes" if x in ["negative_control", "blank"] else "no" for x in sample_type],
-        "notes": extra_notes
-    })
-    md.to_csv(outpath, sep="\t", index=False)
+# Sample IDs from PRJEB10949 mock community
+EVEN_SAMPLES      = ["ERR1049996", "ERR1049997", "ERR1049998"]
+STAGGERED_SAMPLES = ["ERR1049999", "ERR1050000", "ERR1050001"]
+BLANK_SAMPLES     = ["ERR1049992", "ERR1049993", "ERR1049994",
+                     "ERR1049995", "ERR1049938", "ERR1049939", "ERR1049940"]
+
+
+def load_asv(path):
+    asv = pd.read_csv(path, sep="\t", index_col=0)
+    asv.index.name = "#OTU ID"
+    return asv
+
+
+def save_asv(df, path):
+    df.index.name = "#OTU ID"
+    df.to_csv(path, sep="\t")
+
+
+def make_dir(outdir, sid, name):
+    d = outdir / f"{sid}_{name}"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def build_metadata():
+    """Build improved metadata with clear columns for all 13 PRJEB10949 samples."""
+    rows = []
+    for i, s in enumerate(EVEN_SAMPLES):
+        rows.append({"sample_id": s, "sample_type": "biological",
+                     "community_type": "even", "replicate": i + 1,
+                     "is_negative_control": "no"})
+    for i, s in enumerate(STAGGERED_SAMPLES):
+        rows.append({"sample_id": s, "sample_type": "biological",
+                     "community_type": "staggered", "replicate": i + 1,
+                     "is_negative_control": "no"})
+    for i, s in enumerate(BLANK_SAMPLES):
+        rows.append({"sample_id": s, "sample_type": "blank",
+                     "community_type": "negative_control", "replicate": i + 1,
+                     "is_negative_control": "yes"})
+    return pd.DataFrame(rows)
+
+
+# ── Main stress scenarios (produce F1 / recall / RMSE) ────────────────────────
+
+def ST00_baseline(asv, outdir):
+    """Positive control — unmodified data. Reference for all other scenarios."""
+    d = make_dir(outdir, "ST00", "baseline")
+    save_asv(asv, d / "asv_table.tsv")
+    print(f"  ST00 ✓  {asv.shape[1]} samples x {asv.shape[0]} ASVs — unmodified")
+
+
+def ST01_zero_count_sample(asv, outdir):
+    """One even mock replicate forced to 0 reads."""
+    d      = make_dir(outdir, "ST01", "zero_count_sample")
+    mod    = asv.copy()
+    target = EVEN_SAMPLES[0]
+    orig   = int(mod[target].sum())
+    mod[target] = 0
+    save_asv(mod, d / "asv_table.tsv")
+    print(f"  ST01 ✓  {target}: {orig} → 0 reads")
+
+
+def ST02_low_depth(asv, outdir, target_reads=100):
+    """All biological mock samples downsampled to 100 reads (below threshold of 316)."""
+    d   = make_dir(outdir, "ST02", "low_depth")
+    mod = asv.copy()
+    for s in EVEN_SAMPLES + STAGGERED_SAMPLES:
+        total = int(mod[s].sum())
+        if total > target_reads:
+            probs  = mod[s].values / total
+            mod[s] = rng.multinomial(target_reads, probs)
+    save_asv(mod, d / "asv_table.tsv")
+    print(f"  ST02 ✓  6 biological samples → {target_reads} reads "
+          f"(rarefaction threshold: 316)")
+
+
+def ST04_single_taxon(asv, outdir):
+    """All reads in even samples collapsed into the single most abundant ASV."""
+    d   = make_dir(outdir, "ST04", "single_taxon")
+    mod = asv.copy()
+    for s in EVEN_SAMPLES:
+        total  = int(mod[s].sum())
+        winner = mod[s].idxmax()
+        mod[s] = 0
+        mod.loc[winner, s] = total
+    save_asv(mod, d / "asv_table.tsv")
+    print(f"  ST04 ✓  even samples: all reads → {mod[EVEN_SAMPLES[0]].idxmax()}")
+
+
+def get_contaminant_asv(taxonomy_path, asv):
+    """Find the Pseudomonas ASV in the taxonomy table."""
+    tax    = pd.read_csv(taxonomy_path, sep="\t")
+    pseudo = tax[tax["Genus"].str.contains("Pseudomonas", case=False, na=False)]
+    return pseudo.iloc[0]["ASV_ID"] if len(pseudo) > 0 else asv.index[0]
+
+
+def ST06a_contamination_blanks(asv, taxonomy_path, outdir, contam_pct=0.5):
+    """
+    Pseudomonas spiked at 50% ONLY in the H2O negative controls (blanks).
+    Purpose: validate Contamination filtering module
+             (contamination_filtering.R / Kraken2).
+    Note: does NOT affect precision/recall of even/staggered because
+          validation_metrics.py does not evaluate blanks.
+    """
+    d          = make_dir(outdir, "ST06a", "contamination_blanks")
+    mod        = asv.copy()
+    contam_asv = get_contaminant_asv(taxonomy_path, asv)
+
+    for blank in BLANK_SAMPLES:
+        total = int(mod[blank].sum())
+        spike = int(total * contam_pct) if total > 0 else 5000
+        mod[blank] = (mod[blank] // 2).astype(int)
+        mod.loc[contam_asv, blank] += spike
+
+    save_asv(mod, d / "asv_table.tsv")
+    pd.DataFrame([{"ASV_ID": contam_asv, "spike_pct": contam_pct,
+                   "spike_target": "blanks_only",
+                   "targets": ", ".join(BLANK_SAMPLES)}
+                  ]).to_csv(d / "spiked_contaminant_ASVs.tsv", sep="\t", index=False)
+
+    rel = mod.loc[contam_asv, BLANK_SAMPLES[0]] / mod[BLANK_SAMPLES[0]].sum()
+    print(f"  ST06a ✓  {contam_asv} (Pseudomonas) at {rel:.0%} in blanks "
+          f"→ for Pau Villen (decontam)")
+
+
+def ST06b_contamination_biological(asv, taxonomy_path, outdir, contam_pct=0.3):
+    """
+    Pseudomonas spiked at 30% in biological mock samples (even + staggered).
+    Purpose: measure how contamination affects precision/recall/F1 using
+             validation_metrics.py.
+    Pseudomonas is not in the even/staggered ground truth, so it appears as
+    a false positive → lowers precision.
+    """
+    d          = make_dir(outdir, "ST06b", "contamination_biological")
+    mod        = asv.copy()
+    contam_asv = get_contaminant_asv(taxonomy_path, asv)
+
+    for sample in EVEN_SAMPLES + STAGGERED_SAMPLES:
+        total = int(mod[sample].sum())
+        spike = int(total * contam_pct)
+        mod[sample] = (mod[sample] // (1 + contam_pct)).astype(int)
+        mod.loc[contam_asv, sample] += spike
+
+    save_asv(mod, d / "asv_table.tsv")
+    pd.DataFrame([{"ASV_ID": contam_asv, "spike_pct": contam_pct,
+                   "spike_target": "biological_samples",
+                   "targets": ", ".join(EVEN_SAMPLES + STAGGERED_SAMPLES)}
+                  ]).to_csv(d / "spiked_contaminant_ASVs.tsv", sep="\t", index=False)
+
+    rel = mod.loc[contam_asv, EVEN_SAMPLES[0]] / mod[EVEN_SAMPLES[0]].sum()
+    print(f"  ST06b ✓  {contam_asv} (Pseudomonas) at {rel:.0%} in even/staggered "
+          f"→ for validation_metrics.py (lowers precision)")
+
+
+# ── Technical checks (do not produce F1 / recall) ────────────────────
+
+def ST03_invalid_count_table(asv, outdir):
+    """10 cells set to NOT_A_NUMBER — tests whether the pipeline detects corrupt input."""
+    d   = make_dir(outdir, "ST03", "invalid_count_table")
+    mod = asv.copy().astype(object)
+    for row in rng.choice(mod.index, size=10, replace=False):
+        mod.loc[row, STAGGERED_SAMPLES[0]] = "NOT_A_NUMBER"
+    save_asv(mod, d / "asv_table.tsv")
+    print(f"  ST03 ✓  10 cells → 'NOT_A_NUMBER' (technical check)")
+
+
+def ST05_metadata_mismatch(asv, outdir):
+    """Sample IDs in metadata have a _WRONG suffix — tests mismatch detection."""
+    d    = make_dir(outdir, "ST05", "metadata_mismatch")
+    save_asv(asv, d / "asv_table.tsv")
+    meta = build_metadata().copy()
+    meta["sample_id"] = meta["sample_id"] + "_WRONG"
+    meta.to_csv(d / "metadata_wrong.tsv", sep="\t", index=False)
+    print(f"  ST05 ✓  metadata IDs with '_WRONG' suffix (0/13 match) (technical check)")
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--asv_table", required=True)
-    ap.add_argument("--taxonomy", required=True)
-    ap.add_argument("--outdir", required=True)
-    ap.add_argument("--seed", type=int, default=42)
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("--asv_table", required=True,
+                    help="Path to results/pipeline_outputs/asv_table.tsv")
+    ap.add_argument("--taxonomy",  required=True,
+                    help="Path to results/pipeline_outputs/ASV_taxonomy.tsv")
+    ap.add_argument("--outdir",    required=True,
+                    help="Output directory for stress inputs")
     args = ap.parse_args()
 
-    outdir = Path(args.outdir)
-    if outdir.exists():
-        shutil.rmtree(outdir)
-    outdir.mkdir(parents=True)
+    outdir   = Path(args.outdir)
+    main_dir = outdir / "stress_inputs"
+    tech_dir = outdir / "technical_checks"
+    main_dir.mkdir(parents=True, exist_ok=True)
+    tech_dir.mkdir(parents=True, exist_ok=True)
 
-    rng = np.random.default_rng(args.seed)
-    asv = pd.read_csv(args.asv_table, sep="\t")
-    tax = pd.read_csv(args.taxonomy, sep="\t")
-    id_col = asv.columns[0]
-    sample_cols = list(asv.columns[1:])
-    counts = asv[sample_cols].apply(pd.to_numeric, errors="coerce").fillna(0).astype(int)
-    sample_totals = counts.sum(axis=0).sort_values()
+    asv = load_asv(args.asv_table)
 
-    top_asv_ids = counts.sum(axis=1).sort_values(ascending=False).head(50).index
-    valid_samples = sample_totals[sample_totals > 10000].index[:10].tolist()
-    subset = pd.concat([asv.loc[top_asv_ids, [id_col]], counts.loc[top_asv_ids, valid_samples]], axis=1)
-    subset_tax = tax[tax["ASV_ID"].isin(subset[id_col])].copy()
+    print("=" * 60)
+    print("  Stress Test Dataset Generator — Group C")
+    print("  Dataset: PRJEB10949 (BEI mock communities, Lluch 2015)")
+    print("=" * 60)
+    print(f"\n  Input: {asv.shape[1]} samples x {asv.shape[0]} ASVs\n")
 
-    # ST00
-    d = outdir / "ST00_valid_subset"
-    d.mkdir()
-    subset.to_csv(d / "asv_table_subset.tsv", sep="\t", index=False)
-    subset_tax.to_csv(d / "ASV_taxonomy_subset.tsv", sep="\t", index=False)
-    write_metadata(d / "metadata_valid_subset.tsv", valid_samples, "ST00", "sample", "Valid subset control")
+    # Shared files written once to the root output directory
+    shutil.copy(args.taxonomy, outdir / "ASV_taxonomy.tsv")
+    build_metadata().to_csv(outdir / "metadata_PRJEB10949.tsv", sep="\t", index=False)
+    print(f"  taxonomy ✓  ASV_taxonomy.tsv")
+    print(f"  metadata ✓  metadata_PRJEB10949.tsv\n")
 
-    # ST01
-    d = outdir / "ST01_zero_count_sample"
-    d.mkdir()
-    zero_table = subset.copy()
-    zero_table["ST01_zero_reads"] = 0
-    zero_cols = valid_samples[:5] + ["ST01_zero_reads"]
-    zero_table = zero_table[[id_col] + zero_cols]
-    zero_table.to_csv(d / "asv_table_zero_count_sample.tsv", sep="\t", index=False)
-    write_metadata(d / "metadata_zero_count_sample.tsv", zero_cols, "ST01", "sample", "Includes one zero-depth sample")
+    print("  -- Main scenarios (produce F1 / recall / RMSE) --")
+    ST00_baseline(asv, main_dir)
+    ST01_zero_count_sample(asv, main_dir)
+    ST02_low_depth(asv, main_dir)
+    ST04_single_taxon(asv, main_dir)
+    ST06a_contamination_blanks(asv, args.taxonomy, main_dir)
+    ST06b_contamination_biological(asv, args.taxonomy, main_dir)
 
-    # ST02
-    d = outdir / "ST02_low_depth"
-    d.mkdir()
-    low_cols = valid_samples[:5]
-    low_table = pd.DataFrame({id_col: subset[id_col]})
-    for col in low_cols:
-        v = subset[col].to_numpy(dtype=int)
-        probs = v / v.sum()
-        low_table[f"{col}_downsampled_100"] = rng.multinomial(100, probs)
-    low_table.to_csv(d / "asv_table_low_depth_100_reads.tsv", sep="\t", index=False)
-    write_metadata(d / "metadata_low_depth_100_reads.tsv", list(low_table.columns[1:]), "ST02", "sample", "Artificially downsampled to 100 reads")
+    print("\n  -- Technical checks --")
+    ST03_invalid_count_table(asv, tech_dir)
+    ST05_metadata_mismatch(asv, tech_dir)
 
-    # ST03
-    d = outdir / "ST03_invalid_count_table"
-    d.mkdir()
-    bad_table = subset[[id_col] + valid_samples[:3]].copy()
-    bad_table.iloc[0, 1] = "NOT_A_NUMBER"
-    bad_table.to_csv(d / "asv_table_invalid_non_numeric_count.tsv", sep="\t", index=False)
-    write_metadata(d / "metadata_invalid_count_table.tsv", valid_samples[:3], "ST03", "sample", "One non-numeric count value")
+    print(f"\n  ✓ stress_inputs/             → {main_dir}")
+    print(f"  ✓ technical_checks/           → {tech_dir}")
+    print(f"  ✓ ASV_taxonomy.tsv")
+    print(f"  ✓ metadata_PRJEB10949.tsv")
+    print(f"\n  Next step: run validation_metrics.py on each scenario")
 
-    # ST04
-    d = outdir / "ST04_single_taxon"
-    d.mkdir()
-    tax_counts = tax.merge(pd.DataFrame({"ASV_ID": asv[id_col], "total": counts.sum(axis=1).values}), on="ASV_ID")
-    bact = tax_counts[tax_counts["Genus"].fillna("").str.contains("Bacteroides", case=False, na=False)].sort_values("total", ascending=False)
-    single_asv = bact.iloc[0]["ASV_ID"] if len(bact) else tax_counts.sort_values("total", ascending=False).iloc[0]["ASV_ID"]
-    single_table = subset[[id_col]].copy()
-    single_cols = [f"ST04_single_taxon_{i}" for i in range(1, 6)]
-    for c in single_cols:
-        single_table[c] = 0
-    single_table.loc[single_table[id_col] == single_asv, single_cols] = 10000
-    single_table.to_csv(d / "asv_table_single_taxon_dominance.tsv", sep="\t", index=False)
-    subset_tax.to_csv(d / "ASV_taxonomy_single_taxon_subset.tsv", sep="\t", index=False)
-    write_metadata(d / "metadata_single_taxon_dominance.tsv", single_cols, "ST04", "sample", f"All reads assigned to {single_asv}")
-
-    # ST05
-    d = outdir / "ST05_metadata_mismatch"
-    d.mkdir()
-    subset[[id_col] + valid_samples[:5]].to_csv(d / "asv_table_for_metadata_mismatch.tsv", sep="\t", index=False)
-    mismatch_ids = [f"{s}_WRONG_ID" for s in valid_samples[:5]]
-    write_metadata(d / "metadata_mismatch_wrong_sample_ids.tsv", mismatch_ids, "ST05", "sample", "Metadata IDs do not match ASV table")
-
-    # ST06
-    d = outdir / "ST06_contamination_spike"
-    d.mkdir()
-    contam_table = subset[[id_col] + valid_samples[:5]].copy()
-    candidate_genera = ["Pseudomonas", "Escherichia-Shigella", "Klebsiella", "Streptococcus"]
-    contam_asvs = []
-    for gen in candidate_genera:
-        sub = tax_counts[tax_counts["Genus"].fillna("").str.fullmatch(gen, case=False, na=False)].sort_values("total", ascending=False)
-        if len(sub):
-            contam_asvs.append(sub.iloc[0]["ASV_ID"])
-    contam_asvs = list(dict.fromkeys(contam_asvs))[:3]
-    if not contam_asvs:
-        contam_asvs = tax_counts.sort_values("total", ascending=False).head(3)["ASV_ID"].tolist()
-
-    for nc in ["NC01", "NC02", "NC03"]:
-        contam_table[nc] = 0
-    for asv_id in contam_asvs:
-        contam_table.loc[contam_table[id_col] == asv_id, ["NC01", "NC02", "NC03"]] = [5000, 7000, 6000]
-    contam_table.to_csv(d / "asv_table_contamination_spike.tsv", sep="\t", index=False)
-    subset_tax.to_csv(d / "ASV_taxonomy_contamination_spike_subset.tsv", sep="\t", index=False)
-    sample_ids = valid_samples[:5] + ["NC01", "NC02", "NC03"]
-    sample_types = ["sample"] * 5 + ["negative_control"] * 3
-    notes = ["Biological sample"] * 5 + [f"Negative control spiked with {','.join(contam_asvs)}"] * 3
-    write_metadata(d / "metadata_contamination_spike.tsv", sample_ids, "ST06", sample_types, notes)
-    tax[tax["ASV_ID"].isin(contam_asvs)].to_csv(d / "spiked_contaminant_ASVs.tsv", sep="\t", index=False)
 
 if __name__ == "__main__":
     main()
