@@ -47,7 +47,10 @@ Zscores <- readRDS(opt$zscored)
 genus_counts <- readRDS(opt$counts)
 
 
-meta_filtered <- meta %>% filter(healthy == "no")
+# Filter metadata to only include non-healthy samples that exist in Zscores
+meta_filtered <- meta %>% 
+  filter(healthy == "no") %>% 
+  filter(`sample-id` %in% (Zscores %>% pull(`Sample`)))
 meta_filtered$healthy <- factor(meta_filtered$healthy, 
                                 levels = c("no", "yes"), 
                                 labels = c("Non-Healthy", "Healthy"))
