@@ -1,5 +1,17 @@
-Repository for the AGB 2026 common class project.  
-**Paper:** [Short-Term Ingestion of Essential Amino Acid Based Nutritional Supplements or Whey Protein Improves the Physical Function of Older Adults Independently of Gut Microbiome](https://pubmed.ncbi.nlm.nih.gov/38426663/)
+# Group C — System Validation & Diversity Analysis
+
+## Overview
+
+Group C ensures that the microbiome analysis system produces scientifically reliable,
+reproducible, and robust results before downstream clinical interpretation and visualization.
+
+Our work is divided into two major stages:
+
+1. [System validation](#1-system-validation)
+2. [Diversity Analysis & Depth Optimization](#2-diversity-analysis--depth-optimization)
+
+---
+
 ## 1. System Validation
 
 ### Objective
@@ -18,7 +30,7 @@ analytical conditions.
 **ENA accession:** [PRJEB10949](https://www.ebi.ac.uk/ena/browser/view/PRJEB10949)
 
 Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communities
-(even and staggered) and water-only negative controls. Selected on instructor recommendation.
+(even and staggered) and water-only negative controls.
 
 **Why this dataset:**
 - Known ground truth composition (20 bacterial species, concentrations documented in
@@ -107,6 +119,43 @@ Metrics are computed per replicate and averaged per community type (even and sta
 
 See `modules/groupC/phase1_system_validation/dataset_validation/validation_metrics.py`.
 
+### Validation Results
+
+The pipeline was run on 6 mock community samples (3 even, 3 staggered) from PRJEB10949 on the Pirineus cluster (30th of May 2026).
+Full  outputs are in
+`modules/groupC/phase1_system_validation/results/validation_outputs`.
+
+**Detection metrics (genus level)**
+
+| Replicate | Community | Precision | Recall | F1 | Accuracy |
+|---|---|---|---|---|---|
+| ERR1049996 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049997 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049998 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
+| ERR1049999 | staggered | 0.875 | 0.4375 | 0.5833 | 0.4118 |
+| ERR1050000 | staggered | 0.8333 | 0.3125 | 0.4545 | 0.2941 |
+| ERR1050001 | staggered | 0.8 | 0.25 | 0.381 | 0.2353 |
+| **average** | **even** | **0.8125** | **0.8125** | **0.8125** | **0.6842** |
+| **average** | **staggered** | **0.8361** | **0.3333** | **0.4729** | **0.3137** |
+
+**Abundance metrics**
+
+| Replicate | Community | RMSE | Bray-Curtis |
+|---|---|---|---|
+| ERR1049996 | even | 0.0272 | 0.3143 |
+| ERR1049997 | even | 0.0254 | 0.305 |
+| ERR1049998 | even | 0.0257 | 0.312 |
+| ERR1049999 | staggered | 0.0304 | 0.2323 |
+| ERR1050000 | staggered | 0.035 | 0.2535 |
+| ERR1050001 | staggered | 0.0322 | 0.2453 |
+| **average** | **even** | **0.0261** | **0.3104** |
+| **average** | **staggered** | **0.0325** | **0.2437** |
+
+The pipeline correctly identified 13 of 16 expected genera in the even mock community (F1 = 0.81). Performance dropped in the staggered community (F1 = 0.47), meaning it has difficulty detecting rare taxa at low abundance. Precision remained high in both communities (~0.81–0.84), indicating that detections are generally correct.
+
+> **Known limitation:** Group A's Cutadapt step is hardcoded for the AGP 515F primer. PRJEB10949 dataset uses Vaiomer V3-V4 primers, so primers were not removed before DADA2 processing. Results are still within expected ranges, suggesting limited affect on classification accuracy.
+
+
 ---
 
 ### Contamination Filtering
@@ -153,50 +202,29 @@ contamination filtering Nextflow module and R script.
 
 ### Stress Testing
 
-Pipeline robustness is evaluated using targeted stress scenarios designed to test how the
-system behaves under abnormal, adverse, or extreme input conditions. The goal is not only
-to determine whether the pipeline completes successfully, but also whether it fails safely,
-reports clear errors, and avoids generating misleading downstream results.
+Stress testing evaluates the robustness of the Group C validation workflow under controlled adverse conditions. The final approach uses the PRJEB10949 BEI mock-community dataset, whose expected microbial composition is known, and applies stress perturbations directly to the processed ASV table. Each stressed dataset is then compared against the ground truth using the same validation framework applied in the main benchmarking step.
 
-This first stress-testing stage uses the current Group B outputs as input:
+The baseline scenario (`ST00_baseline`) corresponds to the unmodified PRJEB10949 ASV table. The quantitative stress scenarios include a zero-count biological sample (`ST01_zero_count_sample`), low sequencing depth (`ST02_low_depth`), single-taxon dominance (`ST04_single_taxon`) and biological contamination spike-in (`ST06b_contamination_biological`). These scenarios are evaluated with `validation_metrics.py` and compared against the baseline using precision, recall, F1-score, accuracy, RMSE and Bray-Curtis dissimilarity.
 
-- `asv_table.tsv`
-- `ASV_taxonomy.tsv`
-- `rep_seqs.fasta`
+Additional technical checks are included for cases that should not produce standard F1/recall metrics. These include an invalid count table with non-numeric values (`ST03_invalid_count_table`), a metadata/sample-ID mismatch (`ST05_metadata_mismatch`) and contamination enriched in H2O blank controls (`ST06a_contamination_blanks`). These checks are automatically evaluated as pass/fail tests by the stress-test summary script.
 
-These files are used to prepare small derived test inputs at the ASV table, taxonomy, and
-metadata level. This allows Group C modules to be tested before full end-to-end FASTQ-level
-stress tests are run on the cluster.
+The stress-testing workflow is automated through two scripts:
 
-The initial stress-test scenarios include:
+| Script                          | Purpose                                                                             |
+| ------------------------------- | ----------------------------------------------------------------------------------- |
+| `generate_asv_stress_inputs.py` | Regenerates the stress-test ASV tables from the baseline PRJEB10949 pipeline output |
+| `run_validation_metrics_all.sh` | Runs `validation_metrics.py` across the main quantitative stress scenarios          |
+| `summarize_stress_tests.py`     | Summarizes quantitative results, technical checks and generates a Markdown report   |
 
-| Test ID | Scenario | Purpose | Expected behaviour |
-|---|---|---|---|
-| `ST00` | Valid subset control | Confirm that a small valid input runs correctly | The module completes and generates expected outputs |
-| `ST01` | Zero-count sample | Test behaviour when one sample has no reads | The sample is excluded or clearly flagged |
-| `ST02` | Very low sequencing depth | Test robustness with samples downsampled to very few reads | Low-depth samples are flagged or removed during rarefaction/depth filtering |
-| `ST03` | Invalid count table | Test behaviour when the ASV table contains a non-numeric count | The module fails early with a clear parsing error |
-| `ST04` | Single-taxon dominance | Test biologically extreme but valid input | The module completes and reports very low diversity |
-| `ST05` | Metadata mismatch | Test sample identifier inconsistencies between metadata and ASV table | The mismatch is detected before downstream analysis |
-| `ST06` | Artificial contamination spike | Test whether control-enriched ASVs can be detected as potential contaminants | Spiked ASVs are flagged or reported as suspicious |
+The workflow can be executed from the stress-testing directory:
 
-For each stress test, the following information will be recorded:
+```bash
+cd modules/groupC/phase1_system_validation/stress_tests
+bash scripts/run_validation_metrics_all.sh
+python scripts/summarize_stress_tests.py
+```
 
-- input files used
-- expected behaviour
-- executed command or module
-- exit status
-- whether outputs were generated
-- whether the error or warning message was clear
-- whether any silent failure occurred
-- final status: `PASS`, `FAIL`, or `WARNING`
-
-A stress test can be considered successful even if the pipeline fails, as long as the failure
-is expected, occurs early, and produces an interpretable error message. The main failure mode
-to avoid is silent execution that produces apparently valid but biologically misleading outputs.
-
-This section includes a documented stress-test folder with scenario definitions, small 
-derived input files, scripts to regenerate the test inputs, and a results template.
+Final outputs are written under the Phase 1 results directory in `results/stress_test_outputs/`. These include per-scenario validation outputs, a quantitative summary table, a technical-check summary table and a short stress-test report.
 
 ### Validation Thresholds
 
@@ -207,20 +235,59 @@ The pipeline is considered validated only when predefined quality thresholds are
 - Low dissimilarity between expected and predicted profiles
 - Robustness across subsampling conditions
 
+---
 
-## Citations
+## 2. Diversity Analysis & Depth Optimization
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use nf-core/abgtemplate for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+### Objective
 
-<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
+Once the pipeline has been validated, Group C performs downstream diversity analyses
+on the processed outputs from Group B. This stage focuses on ensuring statistically fair and
+biologically meaningful comparisons between samples.
 
-An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
+### Input Data
 
-You can cite the `nf-core` publication as follows:
+| Description | Input |
+|---|---|
+| ASV/OTU abundance tables | table_counts.tsv |
+| Taxonomic profiles | rep_seqs.fasta |
+| Sample metadata | sample-metadata.tsv |
 
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
+### Alpha Diversity Analysis
+
+Within-sample diversity is measured using the following metrics:
+
+- Shannon Diversity Index
+- Simpson Index
+- Observed Features
+- Faith
+
+### Beta Diversity Analysis
+
+Between-sample community differences are evaluated using:
+
+- Bray-Curtis dissimilarity
+- UniFrac distances *(if phylogenetic information is available)*
+
+### Rarefaction & Subsampling
+
+Rarefaction analyses are conducted to:
+
+- Evaluate sequencing depth sufficiency
+- Identify optimal subsampling thresholds
+- Ensure fair comparisons across samples with uneven sequencing depth
+
+---
+
+## Outputs
+
+All deliverables generated by Group C are passed to **Group D** for visualization and
+clinical interpretation.
+
+| Deliverable | Format |
+|---|---|
+| Diversity metrics | Tabular (`.tsv`) |
+| Rarefaction curves | Figures |
+| Distance matrices | `.tsv` |
+
+<img width="1920" height="1080" alt="Flowchart_groupC" src="https://github.com/user-attachments/assets/f0ae4181-c42b-4acc-b561-e0ac62939d29" />
