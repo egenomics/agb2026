@@ -1,0 +1,6 @@
+sample-id	stress_test_id	sample_type	is_negative_control	notes
+ERR1459175_downsampled_100	ST02	sample	no	Artificially downsampled to 100 total reads
+ERR1458721_downsampled_100	ST02	sample	no	Artificially downsampled to 100 total reads
+ERR1459065_downsampled_100	ST02	sample	no	Artificially downsampled to 100 total reads
+ERR1459109_downsampled_100	ST02	sample	no	Artificially downsampled to 100 total reads
+ERR1459158_downsampled_100	ST02	sample	no	Artificially downsampled to 100 total reads

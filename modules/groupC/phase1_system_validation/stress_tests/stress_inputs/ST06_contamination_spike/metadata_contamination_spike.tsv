@@ -1,0 +1,9 @@
+sample-id	stress_test_id	sample_type	is_negative_control	notes
+ERR1459175	ST06	sample	no	Biological sample
+ERR1458721	ST06	sample	no	Biological sample
+ERR1459065	ST06	sample	no	Biological sample
+ERR1459109	ST06	sample	no	Biological sample
+ERR1459158	ST06	sample	no	Biological sample
+NC01	ST06	negative_control	yes	Negative control spiked with ASV11,ASV1,ASV9
+NC02	ST06	negative_control	yes	Negative control spiked with ASV11,ASV1,ASV9
+NC03	ST06	negative_control	yes	Negative control spiked with ASV11,ASV1,ASV9

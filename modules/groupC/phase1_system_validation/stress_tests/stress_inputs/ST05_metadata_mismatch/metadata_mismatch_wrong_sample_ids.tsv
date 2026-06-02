@@ -1,0 +1,6 @@
+sample-id	stress_test_id	sample_type	is_negative_control	notes
+ERR1459175_WRONG_ID	ST05	sample	no	Metadata sample IDs intentionally do not match ASV table columns
+ERR1458721_WRONG_ID	ST05	sample	no	Metadata sample IDs intentionally do not match ASV table columns
+ERR1459065_WRONG_ID	ST05	sample	no	Metadata sample IDs intentionally do not match ASV table columns
+ERR1459109_WRONG_ID	ST05	sample	no	Metadata sample IDs intentionally do not match ASV table columns
+ERR1459158_WRONG_ID	ST05	sample	no	Metadata sample IDs intentionally do not match ASV table columns

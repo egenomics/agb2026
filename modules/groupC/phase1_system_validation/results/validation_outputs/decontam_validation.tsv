@@ -1,0 +1,85 @@
+ASV_ID	Genus	Genus_clean	in_ground_truth	verdict	decontam_result
+ASV16	Pseudomonas	Pseudomonas	TRUE	FALSE POSITIVE — ground truth genus incorrectly flagged	Flagged
+ASV2	Aquabacterium	Aquabacterium	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV20	Brucella	Brucella	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV21	Burkholderia-Caballeronia-Paraburkholderia	Burkholderia	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV13	Flavobacterium	Flavobacterium	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV22	Roseateles	Roseateles	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV24	Stenotrophomonas	Stenotrophomonas	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV10	Undibacterium	Undibacterium	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV18	NA	NA	FALSE	Correctly flagged — not in ground truth	Flagged
+ASV12	Acinetobacter	Acinetobacter	TRUE	Correctly passed — ground truth genus	Passed
+ASV46	Acinetobacter	Acinetobacter	TRUE	Correctly passed — ground truth genus	Passed
+ASV50	Acinetobacter	Acinetobacter	TRUE	Correctly passed — ground truth genus	Passed
+ASV5	Bacillus	Bacillus	TRUE	Correctly passed — ground truth genus	Passed
+ASV7	Bacteroides	Bacteroides	TRUE	Correctly passed — ground truth genus	Passed
+ASV48	Bacteroides	Bacteroides	TRUE	Correctly passed — ground truth genus	Passed
+ASV76	Bacteroides	Bacteroides	TRUE	Correctly passed — ground truth genus	Passed
+ASV15	Clostridium	Clostridium	TRUE	Correctly passed — ground truth genus	Passed
+ASV23	Enterococcus	Enterococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV3	Escherichia-Shigella	Escherichia	TRUE	Correctly passed — ground truth genus	Passed
+ASV14	Helicobacter	Helicobacter	TRUE	Correctly passed — ground truth genus	Passed
+ASV8	Lactobacillus	Lactobacillus	TRUE	Correctly passed — ground truth genus	Passed
+ASV19	Listeria	Listeria	TRUE	Correctly passed — ground truth genus	Passed
+ASV17	Neisseria	Neisseria	TRUE	Correctly passed — ground truth genus	Passed
+ASV58	Neisseria	Neisseria	TRUE	Correctly passed — ground truth genus	Passed
+ASV9	Pseudomonas	Pseudomonas	TRUE	Correctly passed — ground truth genus	Passed
+ASV4	Staphylococcus	Staphylococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV32	Staphylococcus	Staphylococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV1	Streptococcus	Streptococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV6	Streptococcus	Streptococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV28	Streptococcus	Streptococcus	TRUE	Correctly passed — ground truth genus	Passed
+ASV53	Acidaminobacter	Acidaminobacter	FALSE	Passed — not in ground truth	Passed
+ASV37	Alkaliflexus	Alkaliflexus	FALSE	Passed — not in ground truth	Passed
+ASV41	Bdellovibrio	Bdellovibrio	FALSE	Passed — not in ground truth	Passed
+ASV55	Bdellovibrio	Bdellovibrio	FALSE	Passed — not in ground truth	Passed
+ASV51	Caulobacter	Caulobacter	FALSE	Passed — not in ground truth	Passed
+ASV11	Cereibacter	Cereibacter	FALSE	Passed — not in ground truth	Passed
+ASV38	Comamonas	Comamonas	FALSE	Passed — not in ground truth	Passed
+ASV29	Cupriavidus	Cupriavidus	FALSE	Passed — not in ground truth	Passed
+ASV33	Cupriavidus	Cupriavidus	FALSE	Passed — not in ground truth	Passed
+ASV36	Cupriavidus	Cupriavidus	FALSE	Passed — not in ground truth	Passed
+ASV47	Cupriavidus	Cupriavidus	FALSE	Passed — not in ground truth	Passed
+ASV60	Curvibacter	Curvibacter	FALSE	Passed — not in ground truth	Passed
+ASV56	Cutibacterium	Cutibacterium	FALSE	Passed — not in ground truth	Passed
+ASV27	Delftia	Delftia	FALSE	Passed — not in ground truth	Passed
+ASV34	Enterobacter	Enterobacter	FALSE	Passed — not in ground truth	Passed
+ASV39	Flavobacterium	Flavobacterium	FALSE	Passed — not in ground truth	Passed
+ASV43	Flavobacterium	Flavobacterium	FALSE	Passed — not in ground truth	Passed
+ASV57	Janthinobacterium	Janthinobacterium	FALSE	Passed — not in ground truth	Passed
+ASV42	Methylophilus	Methylophilus	FALSE	Passed — not in ground truth	Passed
+ASV54	Nemorincola	Nemorincola	FALSE	Passed — not in ground truth	Passed
+ASV74	Oscillatoria	Oscillatoria	FALSE	Passed — not in ground truth	Passed
+ASV59	Rhizobacter	Rhizobacter	FALSE	Passed — not in ground truth	Passed
+ASV31	Schaalia	Schaalia	FALSE	Passed — not in ground truth	Passed
+ASV25	Sphingomonas	Sphingomonas	FALSE	Passed — not in ground truth	Passed
+ASV30	Variovorax	Variovorax	FALSE	Passed — not in ground truth	Passed
+ASV26	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV35	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV40	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV44	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV45	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV49	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV52	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV61	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV62	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV63	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV64	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV65	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV66	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV67	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV68	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV69	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV70	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV71	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV72	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV73	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV75	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV77	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV78	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV79	NA	NA	FALSE	Passed — not in ground truth	Passed
+ASV80	NA	NA	FALSE	Passed — not in ground truth	Passed
+SUMMARY	NA	NA	NA	Ground truth genera (excl. Deinococcus): 19	NA
+SUMMARY	NA	NA	NA	Ground truth genera correctly passed: 21	NA
+SUMMARY	NA	NA	NA	Ground truth genera incorrectly flagged (FALSE POSITIVES): 1	NA
+SUMMARY	NA	NA	NA	Non-ground-truth ASVs correctly flagged: 8	NA
