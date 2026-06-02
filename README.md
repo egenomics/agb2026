@@ -1,17 +1,5 @@
-# Group C — System Validation & Diversity Analysis
-
-## Overview
-
-Group C ensures that the microbiome analysis system produces scientifically reliable,
-reproducible, and robust results before downstream clinical interpretation and visualization.
-
-Our work is divided into two major stages:
-
-1. [System validation](#1-system-validation)
-2. [Diversity Analysis & Depth Optimization](#2-diversity-analysis--depth-optimization)
-
----
-
+Repository for the AGB 2026 common class project.  
+**Paper:** [Short-Term Ingestion of Essential Amino Acid Based Nutritional Supplements or Whey Protein Improves the Physical Function of Older Adults Independently of Gut Microbiome](https://pubmed.ncbi.nlm.nih.gov/38426663/)
 ## 1. System Validation
 
 ### Objective
@@ -30,7 +18,7 @@ analytical conditions.
 **ENA accession:** [PRJEB10949](https://www.ebi.ac.uk/ena/browser/view/PRJEB10949)
 
 Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communities
-(even and staggered) and water-only negative controls.
+(even and staggered) and water-only negative controls. Selected on instructor recommendation.
 
 **Why this dataset:**
 - Known ground truth composition (20 bacterial species, concentrations documented in
@@ -119,43 +107,6 @@ Metrics are computed per replicate and averaged per community type (even and sta
 
 See `modules/groupC/phase1_system_validation/dataset_validation/validation_metrics.py`.
 
-### Validation Results
-
-The pipeline was run on 6 mock community samples (3 even, 3 staggered) from PRJEB10949 on the Pirineus cluster (30th of May 2026).
-Full  outputs are in
-`modules/groupC/phase1_system_validation/results/validation_outputs`.
-
-**Detection metrics (genus level)**
-
-| Replicate | Community | Precision | Recall | F1 | Accuracy |
-|---|---|---|---|---|---|
-| ERR1049996 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
-| ERR1049997 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
-| ERR1049998 | even | 0.8125 | 0.8125 | 0.8125 | 0.6842 |
-| ERR1049999 | staggered | 0.875 | 0.4375 | 0.5833 | 0.4118 |
-| ERR1050000 | staggered | 0.8333 | 0.3125 | 0.4545 | 0.2941 |
-| ERR1050001 | staggered | 0.8 | 0.25 | 0.381 | 0.2353 |
-| **average** | **even** | **0.8125** | **0.8125** | **0.8125** | **0.6842** |
-| **average** | **staggered** | **0.8361** | **0.3333** | **0.4729** | **0.3137** |
-
-**Abundance metrics**
-
-| Replicate | Community | RMSE | Bray-Curtis |
-|---|---|---|---|
-| ERR1049996 | even | 0.0272 | 0.3143 |
-| ERR1049997 | even | 0.0254 | 0.305 |
-| ERR1049998 | even | 0.0257 | 0.312 |
-| ERR1049999 | staggered | 0.0304 | 0.2323 |
-| ERR1050000 | staggered | 0.035 | 0.2535 |
-| ERR1050001 | staggered | 0.0322 | 0.2453 |
-| **average** | **even** | **0.0261** | **0.3104** |
-| **average** | **staggered** | **0.0325** | **0.2437** |
-
-The pipeline correctly identified 13 of 16 expected genera in the even mock community (F1 = 0.81). Performance dropped in the staggered community (F1 = 0.47), meaning it has difficulty detecting rare taxa at low abundance. Precision remained high in both communities (~0.81–0.84), indicating that detections are generally correct.
-
-> **Known limitation:** Group A's Cutadapt step is hardcoded for the AGP 515F primer. PRJEB10949 dataset uses Vaiomer V3-V4 primers, so primers were not removed before DADA2 processing. Results are still within expected ranges, suggesting limited affect on classification accuracy.
-
-
 ---
 
 ### Contamination Filtering
@@ -235,59 +186,20 @@ The pipeline is considered validated only when predefined quality thresholds are
 - Low dissimilarity between expected and predicted profiles
 - Robustness across subsampling conditions
 
----
 
-## 2. Diversity Analysis & Depth Optimization
+## Citations
 
-### Objective
+<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
+<!-- If you use nf-core/abgtemplate for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-Once the pipeline has been validated, Group C performs downstream diversity analyses
-on the processed outputs from Group B. This stage focuses on ensuring statistically fair and
-biologically meaningful comparisons between samples.
+<!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
-### Input Data
+An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
-| Description | Input |
-|---|---|
-| ASV/OTU abundance tables | table_counts.tsv |
-| Taxonomic profiles | rep_seqs.fasta |
-| Sample metadata | sample-metadata.tsv |
+You can cite the `nf-core` publication as follows:
 
-### Alpha Diversity Analysis
-
-Within-sample diversity is measured using the following metrics:
-
-- Shannon Diversity Index
-- Simpson Index
-- Observed Features
-- Faith
-
-### Beta Diversity Analysis
-
-Between-sample community differences are evaluated using:
-
-- Bray-Curtis dissimilarity
-- UniFrac distances *(if phylogenetic information is available)*
-
-### Rarefaction & Subsampling
-
-Rarefaction analyses are conducted to:
-
-- Evaluate sequencing depth sufficiency
-- Identify optimal subsampling thresholds
-- Ensure fair comparisons across samples with uneven sequencing depth
-
----
-
-## Outputs
-
-All deliverables generated by Group C are passed to **Group D** for visualization and
-clinical interpretation.
-
-| Deliverable | Format |
-|---|---|
-| Diversity metrics | Tabular (`.tsv`) |
-| Rarefaction curves | Figures |
-| Distance matrices | `.tsv` |
-
-<img width="1920" height="1080" alt="Flowchart_groupC" src="https://github.com/user-attachments/assets/f0ae4181-c42b-4acc-b561-e0ac62939d29" />
+> **The nf-core framework for community-curated bioinformatics pipelines.**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+>
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
