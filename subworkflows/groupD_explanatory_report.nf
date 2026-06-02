@@ -45,7 +45,7 @@ workflow EXPLANATORY_REPORT{
 
     // ---------------------------------------------------------
     // 4. Prepare and run the Virulence plot
-    // -----------------P----------------------------------------
+    // ---------------------------------------------------------
     // 3 arguments (meta, counts, taxonomy)
     VIRULENCE_PLOT(ch_metadata, ch_counts, ch_taxonomy)
 

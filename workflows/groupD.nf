@@ -74,6 +74,8 @@ workflow GROUPD {
             EXPLORATORY_REPORT.out.heatmap_plot,
             EXPLORATORY_REPORT.out.volcano_plot,
             EXPLORATORY_REPORT.out.beta_tree,
+            ch_rarefaction,
+            ch_summary,
             EXPLANATORY_REPORT.out.overview_table,
             EXPLANATORY_REPORT.out.alpha_plots,
             EXPLANATORY_REPORT.out.pcoa_plots,
