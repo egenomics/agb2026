@@ -24,6 +24,11 @@
 // include { MODULE_NAME } from '../modules/groupD/module_name/main'
 // include { SUBWORKFLOW_NAME } from '../subworkflows/local/groupD_subworkflow'
 
+include { EXPLANATORY_REPORT }         from '../subworkflows/groupD_explanatory_report'
+include { EXPLORATORY_REPORT }         from '../subworkflows/groupD_exploratory_report'
+include { MICROSEE_REPORT }    from '../modules/groupD/reporting_module/report'
+include { MICROSEE_PATIENT_REPORT }    from '../modules/groupD/reporting_module/report'
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     WORKFLOW DEFINITION
@@ -33,38 +38,58 @@
 workflow GROUPD {
 
     take:
-    ch_validated_results    // channel: Validated results from Group C
-    ch_analysis_data        // channel: Analysis data (if needed for visualization)
+    ch_metadata  // channel: Metadata from Group A
+    ch_alpha_tuple    // channel: alpha_div Metrics
+    ch_beta_tuple  // channel: beta_div Metrics
+    ch_rarefaction // channel: the plots from rarefaction
+    ch_annotated_counts // channel: Path to "annotated_table_counts.tsv"
+    ch_annotated_taxonomy // channel: Path to "annotated_taxonomy.tsv"
+    ch_summary // channel: Path to "contamination_summary.tsv"
 
     main:
 
-    ch_versions = channel.empty()
+    // Extract only the Bray Diversity
+    ch_bray = ch_beta_tuple.map { it[0] }
 
-    /*
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        PLACEHOLDER: Add your team's workflow logic here
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    */
+    EXPLORATORY_REPORT(ch_metadata, ch_annotated_counts, ch_annotated_taxonomy, ch_bray)
 
-    // Example structure (replace with your actual modules):
-    //
-    // VISUALIZATION_MODULE(ch_validated_results)
-    // ch_versions = ch_versions.mix(VISUALIZATION_MODULE.out.versions.first())
-    //
-    // REPORT_GENERATION(VISUALIZATION_MODULE.out.plots, ch_validated_results)
-    // ch_versions = ch_versions.mix(REPORT_GENERATION.out.versions.first())
-    //
-    // DASHBOARD_MODULE(ch_validated_results, VISUALIZATION_MODULE.out.plots)
-    // ch_versions = ch_versions.mix(DASHBOARD_MODULE.out.versions.first())
+    EXPLANATORY_REPORT(
+        ch_metadata,
+        ch_annotated_counts,                      // Counts for each sample
+        ch_annotated_taxonomy,                    // Taxonomies in counts
+        ch_alpha_tuple,                           // tuple with all alphas
+        EXPLORATORY_REPORT.out.pca_object,        // PCA RDS path
+        EXPLORATORY_REPORT.out.pca_genus_counts   // PCA genus counts
+    )
 
+
+    // ---------------------------------------------------------
+    // 3. Prepare and report building process
+    // ---------------------------------------------------------
+    // This will need a collection of all the plot dirs and files
+    ch_all_plots = channel.empty()
+        .mix(
+            EXPLORATORY_REPORT.out.pca_results,
+            EXPLORATORY_REPORT.out.parallel_plot,
+            EXPLORATORY_REPORT.out.heatmap_plot,
+            EXPLORATORY_REPORT.out.volcano_plot,
+            EXPLORATORY_REPORT.out.beta_tree,
+            ch_rarefaction,
+            ch_summary,
+            EXPLANATORY_REPORT.out.overview_table,
+            EXPLANATORY_REPORT.out.alpha_plots,
+            EXPLANATORY_REPORT.out.pcoa_plots,
+            EXPLANATORY_REPORT.out.patogeny_plots,
+            EXPLANATORY_REPORT.out.violin_plots
+        )
+        .collect()
+
+    MICROSEE_REPORT(ch_all_plots)
+    
     emit:
-
-    // TODO: Define your team's final outputs
-    // html_report = REPORT_GENERATION.out.html             // channel: HTML report
-    // plots = VISUALIZATION_MODULE.out.plots               // channel: Visualization files
-    // dashboard = DASHBOARD_MODULE.out.dashboard           // channel: Interactive dashboard
-
-    versions = ch_versions                                   // channel: Software versions
+    alpha_plots = EXPLANATORY_REPORT.out.alpha_plots
+    pcoa_plots  = EXPLANATORY_REPORT.out.pcoa_plots
+    html_report = MICROSEE_REPORT.out.report
 
 }
 

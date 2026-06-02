@@ -27,3 +27,76 @@ nextflow_master_*.err
 .DS_Store
 assets/samplesheet.csv
 assets/samplesheet_smoke.csv
+
+# ── Python ────────────────────────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+*.egg/
+*.whl
+
+# Type-checking / lint caches
+.mypy_cache/
+.ruff_cache/
+.pytype/
+
+# Test caches
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# ── Nextflow ──────────────────────────────────────────────────────────────────
+.nextflow/
+.nextflow.log*
+work/
+results/
+trace.txt
+timeline.html
+report.html
+pipeline_info/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# ── Editor / tooling ─────────────────────────────────────────────────────────
+.vscode/
+.idea/
+
+# ── Claude Code (AI assistant — local settings, never shared) ─────────────────
+.claude/
+
+# ── VS Code workspace file (local developer convenience — not shared) ─────────
+*.code-workspace
+
+# ── pip-compile lock files (pyproject.toml is the authoritative pin) ──────────
+requirements.lock
+requirements-dev.txt
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+.docker/
+*sif
+*def
+
+# ── Test / temp outputs ───────────────────────────────────────────────────────
+/tmp/microsee_report*.html
+
+# ── plotly.min.js MUST be committed — do NOT ignore it ───────────────────────
+# Run: curl -fsSL https://cdn.plot.ly/plotly-2.35.2.min.js \
+#      -o modules/groupD/microsee_report/report_generator/charts/plotly.min.js
+!report_generator/charts/plotly.min.js
+
+
+nextflow.config.test
+test_run.nf

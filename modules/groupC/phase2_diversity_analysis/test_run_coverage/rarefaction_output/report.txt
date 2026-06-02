@@ -1,0 +1,19 @@
+=== Rarefaction threshold selection report ===
+Date             : 2026-05-20T10:20:25.673980
+Method           : coverage
+Curve metric     : observed_features
+Threshold        : 316 reads
+  (depth at which 90.0% of samples have plateaued)
+Samples total    : 31
+Samples retained : 28
+Samples excluded : 3 (9.7%)
+  of which too shallow: 0
+
+Output files:
+  rarefaction_threshold.txt          — depth for qiime feature-table rarefy
+  samples_to_keep.tsv                — sample list for qiime filter-samples
+  sample_qc.tsv                      — per-sample plateau depth + pass/fail
+  summary.json
+  rarefaction_curves.pdf             — curves with per-sample plateau markers
+  plateau_depth_distribution.pdf     — justifies the chosen threshold
+  module1_diversity_by_retention.pdf — Module 1 diversity: retained vs excluded

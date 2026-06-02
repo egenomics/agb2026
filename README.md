@@ -1,94 +1,212 @@
-<h1>
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/images/nf-core-abgtemplate_logo_dark.png">
-    <img alt="nf-core/abgtemplate" src="docs/images/nf-core-abgtemplate_logo_light.png">
-  </picture>
-</h1>
+Repository for the AGB 2026 common class project.  
+**Paper:** [Short-Term Ingestion of Essential Amino Acid Based Nutritional Supplements or Whey Protein Improves the Physical Function of Older Adults Independently of Gut Microbiome](https://pubmed.ncbi.nlm.nih.gov/38426663/)
+## 1. System Validation
 
-[![Open in GitHub Codespaces](https://img.shields.io/badge/Open_In_GitHub_Codespaces-black?labelColor=grey&logo=github)](https://github.com/codespaces/new/nf-core/abgtemplate)
-[![GitHub Actions CI Status](https://github.com/nf-core/abgtemplate/actions/workflows/nf-test.yml/badge.svg)](https://github.com/nf-core/abgtemplate/actions/workflows/nf-test.yml)
-[![GitHub Actions Linting Status](https://github.com/nf-core/abgtemplate/actions/workflows/linting.yml/badge.svg)](https://github.com/nf-core/abgtemplate/actions/workflows/linting.yml)[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/abgtemplate/results)[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
-[![nf-test](https://img.shields.io/badge/unit_tests-nf--test-337ab7.svg)](https://www.nf-test.com)
+### Objective
 
-[![Nextflow](https://img.shields.io/badge/version-%E2%89%A525.04.0-green?style=flat&logo=nextflow&logoColor=white&color=%230DC09D&link=https%3A%2F%2Fnextflow.io)](https://www.nextflow.io/)
-[![nf-core template version](https://img.shields.io/badge/nf--core_template-3.5.2-green?style=flat&logo=nfcore&logoColor=white&color=%2324B064&link=https%3A%2F%2Fnf-co.re)](https://github.com/nf-core/tools/releases/tag/3.5.2)
-[![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
-[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
-[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
-[![Launch on Seqera Platform](https://img.shields.io/badge/Launch%20%F0%9F%9A%80-Seqera%20Platform-%234256e7)](https://cloud.seqera.io/launch?pipeline=https://github.com/nf-core/abgtemplate)
+Evaluate the performance and reliability of the microbiome analysis pipeline developed by
+Group B using datasets with known microbial composition. This stage ensures that the pipeline
+can accurately identify microbial taxa, estimate abundances, and remain stable under different
+analytical conditions.
 
-[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23abgtemplate-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/abgtemplate)[![Follow on Bluesky](https://img.shields.io/badge/bluesky-%40nf__core-1185fe?labelColor=000000&logo=bluesky)](https://bsky.app/profile/nf-co.re)[![Follow on Mastodon](https://img.shields.io/badge/mastodon-nf__core-6364ff?labelColor=FFFFFF&logo=mastodon)](https://mstdn.science/@nf_core)[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
+### Validation Datasets
 
-## Introduction
+#### Primary Dataset — BEI Mock Communities (PRJEB10949)
 
-**nf-core/abgtemplate** is a bioinformatics pipeline that ...
+**Source:** Lluch et al. 2015, *PLoS ONE*  
+**DOI:** https://doi.org/10.1371/journal.pone.0142334  
+**ENA accession:** [PRJEB10949](https://www.ebi.ac.uk/ena/browser/view/PRJEB10949)
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+Illumina MiSeq 16S V3-V4 paired-end sequencing of two BEI Resources mock communities
+(even and staggered) and water-only negative controls. Selected on instructor recommendation.
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+**Why this dataset:**
+- Known ground truth composition (20 bacterial species, concentrations documented in
+  Supplementary Table S1 of the paper)
+- Even community tests baseline detection accuracy (all species at 5%)
+- Staggered community tests performance under realistic abundance imbalance (0.03%–27.3%)
+- Negative controls (H2O blanks) enable contamination filtering validation
 
-## Usage
+**Runs selected:**
 
-> [!NOTE]
-> If you are new to Nextflow and nf-core, please refer to [this page](https://nf-co.re/docs/usage/installation) on how to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline) with `-profile test` before running the workflow on actual data.
+| Run accession | Sample type | Read count | Purpose |
+|---|---|---|---|
+| ERR1049996 | BEI even mock — rep 1 | ~145,000 | Benchmarking |
+| ERR1049997 | BEI even mock — rep 2 | ~151,000 | Benchmarking |
+| ERR1049998 | BEI even mock — rep 3 | ~167,000 | Benchmarking |
+| ERR1049999 | BEI staggered mock — rep 1 | ~163,000 | Adversarial test |
+| ERR1050000 | BEI staggered mock — rep 2 | ~157,000 | Adversarial test |
+| ERR1050001 | BEI staggered mock — rep 3 | ~146,000 | Adversarial test |
+| ERR1049992 | H2O negative control 1 | ~156,000 | Contamination filtering |
+| ERR1049993 | H2O negative control 2 | ~169,000 | Contamination filtering |
+| ERR1049994 | H2O negative control 3 | ~153,000 | Contamination filtering |
+| ERR1049995 | H2O negative control 4 | ~127,000 | Contamination filtering |
+| ERR1049938 | H2O negative control 5 | ~8,500 | Contamination + low-depth stress test |
+| ERR1049939 | H2O negative control 6 | ~17,000 | Contamination + low-depth stress test |
+| ERR1049940 | H2O negative control 7 | ~17,000 | Contamination + low-depth stress test |
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
+**Ground truth file:** `data/ground_truth_PRJEB10949.tsv`
 
-First, prepare a samplesheet with your input data that looks as follows:
+> **Known limitation:** *Deinococcus radiodurans* cannot be amplified by the primers
+> used in this study. A result of 0% for this species is expected and does not indicate
+> pipeline failure (confirmed in the original paper).
 
-`samplesheet.csv`:
+> **Known limitation:** Group B's pipeline classifies ASVs to genus level only. Species-level
+> metrics are therefore not computed. Genus names containing hyphens (e.g. `Escherichia-Shigella`)
+> are truncated to the first component before matching against the ground truth.
 
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-```
+For download instructions see the [project wiki](https://github.com/egenomics/agb2026/wiki/Pipeline-Validation-Datasets).
 
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
+---
 
--->
+### Validation Workflow
 
-Now, you can run the pipeline using:
+#### Step 1 — Pipeline Execution
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+Validation datasets are processed using the complete microbiome analysis pipeline developed
+by Group B.
 
-```bash
-nextflow run nf-core/abgtemplate \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
-```
+#### Step 2 — Taxonomic Validation
 
-> [!WARNING]
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_; see [docs](https://nf-co.re/docs/usage/getting_started/configuration#custom-configuration-files).
+Pipeline outputs are compared against the expected microbial composition. Validation includes:
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/abgtemplate/usage) and the [parameter documentation](https://nf-co.re/abgtemplate/parameters).
+- Presence/absence of taxa at genus level
+- Relative abundance estimation at genus level
+- Taxonomic classification accuracy
 
-## Pipeline output
+#### Step 3 — Performance Metrics
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/abgtemplate/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/abgtemplate/output).
+Quantitative metrics are computed to evaluate pipeline performance across two categories:
 
-## Credits
+**Taxonomic Detection**
 
-nf-core/abgtemplate was originally written by AGB-UPF2026.
+| Metric | Description |
+|---|---|
+| Accuracy | Overall classification correctness |
+| Precision | True positive rate among predicted positives |
+| Recall | True positive rate among actual positives |
+| F1-score | Harmonic mean of precision and recall |
 
-We thank the following people for their extensive assistance in the development of this pipeline:
+Metrics are computed per replicate and averaged per community type (even and staggered).
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+**Abundance Estimation**
 
-## Contributions and Support
+| Metric | Description |
+|---|---|
+| Bray-Curtis dissimilarity | Compositional distance between observed and expected profiles |
+| RMSE | Root Mean Square Error of abundance estimates |
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+#### Outputs
 
-For further information or help, don't hesitate to get in touch on the [Slack `#abgtemplate` channel](https://nfcore.slack.com/channels/abgtemplate) (you can join with [this invite](https://nf-co.re/join/slack)).
+| File | Description |
+|---|---|
+| `detection_metrics.tsv` | Precision, recall, F1, accuracy per replicate and averaged per community type |
+| `abundance_metrics.tsv` | RMSE and Bray-Curtis per replicate and averaged per community type |
+
+#### Script
+
+See `modules/groupC/phase1_system_validation/dataset_validation/validation_metrics.py`.
+
+---
+
+### Contamination Filtering
+
+To reduce false-positive detections caused by laboratory or reagent contamination
+("kit-ome"), filtering procedures are applied in two steps:
+
+1. **Statistical filtering (decontam):** ASVs are flagged as contaminants if they are
+   significantly more prevalent in negative controls than in real samples, using the
+   prevalence method with a threshold of 0.1.
+
+2. **Taxonomic filtering (Kraken2):** ASVs are flagged if they are classified as known
+   biological contaminants, currently *Homo sapiens* and *Thermus aquaticus*, based on
+   the Kraken2 database at `/data/upfagb/u269238/kraken2_db`.
+
+> **Known limitation:** The Kraken2 database does not include Chloroplast, Mitochondria,
+> or Halomonas sequences. Detection of these contaminants is therefore not possible with
+> the current database.
+
+ASVs are not removed but annotated with a `Contamination_Flag` column:
+
+| Flag | Meaning |
+|---|---|
+| `Passed` | Not flagged by either method |
+| `Flagged_Kitome` | Flagged by decontam only |
+| `Flagged_Alien` | Flagged by Kraken2 only |
+| `Flagged_Both` | Flagged by both methods |
+
+#### Outputs
+
+| File | Description |
+|---|---|
+| `annotated_table_counts.tsv` | ASV count table with contamination flags |
+| `annotated_taxonomy.tsv` | Taxonomy table with contamination flags |
+| `contamination_summary.tsv` | Per-sample summary of flagged ASV counts and percentages, classified by sample type (Blank / Healthy / Non-healthy) |
+
+#### Modules
+
+See `modules/groupC/phase1_system_validation/module_kraken2/` for the Kraken2 Nextflow module
+and `modules/groupC/phase1_system_validation/module_contamination_filter/` for the
+contamination filtering Nextflow module and R script.
+
+---
+
+### Stress Testing
+
+Pipeline robustness is evaluated using targeted stress scenarios designed to test how the
+system behaves under abnormal, adverse, or extreme input conditions. The goal is not only
+to determine whether the pipeline completes successfully, but also whether it fails safely,
+reports clear errors, and avoids generating misleading downstream results.
+
+This first stress-testing stage uses the current Group B outputs as input:
+
+- `asv_table.tsv`
+- `ASV_taxonomy.tsv`
+- `rep_seqs.fasta`
+
+These files are used to prepare small derived test inputs at the ASV table, taxonomy, and
+metadata level. This allows Group C modules to be tested before full end-to-end FASTQ-level
+stress tests are run on the cluster.
+
+The initial stress-test scenarios include:
+
+| Test ID | Scenario | Purpose | Expected behaviour |
+|---|---|---|---|
+| `ST00` | Valid subset control | Confirm that a small valid input runs correctly | The module completes and generates expected outputs |
+| `ST01` | Zero-count sample | Test behaviour when one sample has no reads | The sample is excluded or clearly flagged |
+| `ST02` | Very low sequencing depth | Test robustness with samples downsampled to very few reads | Low-depth samples are flagged or removed during rarefaction/depth filtering |
+| `ST03` | Invalid count table | Test behaviour when the ASV table contains a non-numeric count | The module fails early with a clear parsing error |
+| `ST04` | Single-taxon dominance | Test biologically extreme but valid input | The module completes and reports very low diversity |
+| `ST05` | Metadata mismatch | Test sample identifier inconsistencies between metadata and ASV table | The mismatch is detected before downstream analysis |
+| `ST06` | Artificial contamination spike | Test whether control-enriched ASVs can be detected as potential contaminants | Spiked ASVs are flagged or reported as suspicious |
+
+For each stress test, the following information will be recorded:
+
+- input files used
+- expected behaviour
+- executed command or module
+- exit status
+- whether outputs were generated
+- whether the error or warning message was clear
+- whether any silent failure occurred
+- final status: `PASS`, `FAIL`, or `WARNING`
+
+A stress test can be considered successful even if the pipeline fails, as long as the failure
+is expected, occurs early, and produces an interpretable error message. The main failure mode
+to avoid is silent execution that produces apparently valid but biologically misleading outputs.
+
+This section includes a documented stress-test folder with scenario definitions, small 
+derived input files, scripts to regenerate the test inputs, and a results template.
+
+### Validation Thresholds
+
+The pipeline is considered validated only when predefined quality thresholds are met, including:
+
+- High precision and recall for taxonomic detection
+- Stable abundance estimation across replicates
+- Low dissimilarity between expected and predicted profiles
+- Robustness across subsampling conditions
+
 
 ## Citations
 

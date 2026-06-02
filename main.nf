@@ -81,7 +81,15 @@ workflow NFCORE_ABGTEMPLATE {
     //
     // GROUP D: Reporting — Re-enable once Group D implements its outputs
     //
-    // GROUPD(GROUPC.out.validated_results, GROUPB.out.table_counts)
+        GROUPD(
+            GROUPA.out.metadata, // channel: Metadata from Group A
+            GROUPC.out.OutputMetricResultsAlpha,
+            GROUPC.out.OutputMetricResultsBeta,
+            GROUPC.out.OutputMetricResultsRarefaction,
+            GROUPC.out.annotated_counts,
+            GROUPC.out.annotated_taxonomy,
+            GROUPC.out.contamination_summary /// channel: Path to "contamination_summary.tsv"
+        )
 
     emit:
     multiqc_report = GROUPA.out.quality_report // channel: Group A MultiQC (until Group D produces the final report)

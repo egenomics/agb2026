@@ -1,0 +1,149 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PACKAGE_DIR: modules/groupD/microsee_report
+
+jobs:
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ${{ env.PACKAGE_DIR }}/pyproject.toml
+
+      - name: Install linting tools
+        run: pip install "ruff>=0.4"
+
+      - name: ruff check
+        run: ruff check ${{ env.PACKAGE_DIR }}/report_generator/
+
+      - name: ruff format --check
+        run: ruff format --check ${{ env.PACKAGE_DIR }}/report_generator/
+
+  typecheck:
+    name: Typecheck (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: ${{ env.PACKAGE_DIR }}/pyproject.toml
+
+      - name: Install package with dev extras
+        run: pip install -e "${{ env.PACKAGE_DIR }}[dev]"
+
+      - name: mypy
+        run: mypy ${{ env.PACKAGE_DIR }}/report_generator/
+
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: modules/groupD/microsee_report
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: modules/groupD/microsee_report/pyproject.toml
+
+      - name: Install package with dev extras
+        run: pip install -e ".[dev]"
+
+      - name: Run unit tests (integration excluded)
+        run: pytest tests/ -v --tb=short --cov=report_generator --cov-report=xml --cov-report=term-missing
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: modules/groupD/microsee_report/coverage.xml
+          retention-days: 7
+
+  integration:
+    name: Integration (HTML + CLI smoke)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: modules/groupD/microsee_report
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: modules/groupD/microsee_report/pyproject.toml
+
+      - name: Install package with dev extras
+        run: pip install -e ".[dev]"
+
+      - name: Verify bundled Plotly.js is in the repo
+        run: test -f report_generator/charts/plotly.min.js
+
+      - name: Run integration tests (4-sample fixtures, per-test timeout)
+        run: pytest tests/ -v --tb=short -m integration --timeout=300
+
+  nextflow:
+    name: Nextflow smoke (test,conda)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -el {0}   # conda-incubator/setup-miniconda requires login shell
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
+        with:
+          miniconda-version: "latest"
+          auto-activate-base: true
+          activate-environment: ""
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Nextflow
+        run: |
+          curl -fsSL https://get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run Group D workflow with bundled fixtures
+        run: nextflow run workflows/groupD.nf -profile test,conda -ansi-log false
+
+      - name: Verify cohort report published
+        run: |
+          test -f results/test/microsee_report.html
+          python3 -c "
+          html = open('results/test/microsee_report.html').read()
+          assert 'Plotly.newPlot' in html, 'No Plotly charts rendered in report'
+          assert 'src=\"https://cdn.plot.ly' not in html, 'Report loads Plotly from CDN (not self-contained)'
+          assert len(html) >= 1_000_000, f'Report too small ({len(html):,} bytes) — Plotly.js may not be embedded'
+          print(f'Report OK: {len(html):,} bytes')
+          "
