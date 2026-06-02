@@ -19,9 +19,11 @@ process MICROSEE_REPORT {
     // Publish the final compiled website to your results directory
     publishDir "${params.outdir}", mode: 'copy'
 
+    label "groupD"
+
     input:
     // This catches an aggregated list of all plot directories
-    path(plot_dirs, stageAs: 'staged_inputs/*')
+    path plot_dirs, stageAs: 'plot_dir*/*'
 
     output:
     // The outputs created by build_album.py
@@ -29,7 +31,7 @@ process MICROSEE_REPORT {
 
     script:
     """
-    build_report.sh report staged_inputs/*
+    build_report.sh report $plot_dirs
     """
 }
 

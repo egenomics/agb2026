@@ -44,7 +44,19 @@ done
 mkdir -p build_input
 for d in "${PLOT_DIRS[@]}"; do
     [ -e "$d" ] || continue
-    cp -rL "$d" build_input/ 2>/dev/null || true
+    base=$(basename "$d")
+
+    clean_base=$(echo "$base" | sed -E 's/\.[0-9]+$//')
+
+    if [ -d "$d" ]; then
+        mkdir -p "build_input/$clean_base"
+        if [ "$(ls -A "$d")" ]; then
+            cp -rL "$d"/. "build_input/$clean_base/" 2>/dev/null || true
+        fi
+    else
+        # If it's a standalone file, copy it directly under the clean name
+        cp -rL "$d" "build_input/$clean_base" 2>/dev/null || true
+    fi
 done
 
 if [ -n "$PATIENT_ID" ]; then
