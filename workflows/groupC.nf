@@ -69,7 +69,8 @@ workflow PHASE2_DIVERSITY {
         }
     )
 
-    ch_alpha = RAREFACTION_THRESHOLD.out.shannon
+    // ── Alpha: post-rarefaction OR pre-rarefaction fallback ──────────────────
+    ch_alpha_rarefied = RAREFACTION_THRESHOLD.out.shannon
         .join(RAREFACTION_THRESHOLD.out.observed_features)
         .join(RAREFACTION_THRESHOLD.out.faith_pd)
         .join(RAREFACTION_THRESHOLD.out.simpson)
@@ -77,12 +78,34 @@ workflow PHASE2_DIVERSITY {
             tuple(shannon, observed, faith, simpson)
         }
 
-    ch_beta = RAREFACTION_THRESHOLD.out.weighted_unifrac
+    ch_alpha_skip = DIVERSITY_METRICS.out.shannon
+        .combine(DIVERSITY_METRICS.out.observed)
+        .combine(DIVERSITY_METRICS.out.faith)
+        .combine(DIVERSITY_METRICS.out.simpson)
+        .map { shannon, observed, faith, simpson ->
+            tuple(shannon, observed, faith, simpson)
+        }
+
+    ch_alpha = ch_alpha_rarefied.mix(ch_alpha_skip)
+
+    // ── Beta: post-rarefaction OR pre-rarefaction fallback ───────────────────
+    ch_beta_rarefied = RAREFACTION_THRESHOLD.out.weighted_unifrac
         .join(RAREFACTION_THRESHOLD.out.bray_curtis)
         .map { meta, unifrac, bray -> tuple(unifrac, bray) }
 
+    ch_beta_skip = DIVERSITY_METRICS.out.weighted_unifrac
+        .combine(DIVERSITY_METRICS.out.bray_curtis)
+        .map { unifrac, bray -> tuple(unifrac, bray) }
+
+    ch_beta = ch_beta_rarefied.mix(ch_beta_skip)
+
+    // ── Rarefaction: plots OR skip report ────────────────────────────────────
     ch_rarefaction = RAREFACTION_THRESHOLD.out.plots
         .map { meta, plots -> plots }
+        .mix(
+            SKIP_RAREFACTION.out.report
+                .map { meta, report -> report }
+        )
 
     emit:
     OutputMetricResultsAlpha       = ch_alpha
