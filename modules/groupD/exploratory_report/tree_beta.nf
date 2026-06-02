@@ -1,6 +1,8 @@
 process BETA_DIVERSITY_TREE {
     publishDir "${params.outdir}/exploratory", mode: 'copy'
 
+    label "groupD"
+
     input:
     
     tuple path (metadata), path (bray)

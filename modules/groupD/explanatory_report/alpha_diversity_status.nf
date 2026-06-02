@@ -2,7 +2,7 @@ process alpha_diversity_status{
 
     publishDir "${params.outdir}/explanatory", mode: 'copy'
 
-    container "containers/groupD.sif"
+    label "groupD"
 
     input:
     tuple path(metadata), path(faith), path(observed), path(shannon), path(simpson)

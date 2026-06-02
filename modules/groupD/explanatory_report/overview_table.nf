@@ -2,7 +2,7 @@ process overview_table{
 
     publishDir "${params.outdir}/explanatory", mode: 'copy'
     
-    container "containers/groupD.sif"
+    label "groupD"
 
     input:
     tuple path(metadata), path(pca), path(z_scores), path(genus_counts)

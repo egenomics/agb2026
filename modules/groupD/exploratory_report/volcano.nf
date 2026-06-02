@@ -1,6 +1,8 @@
 process VOLCANO_PLOT {
     publishDir "${params.outdir}/exploratory", mode: 'copy'
 
+    label "groupD"
+
     input:
     path(metadata)  
     path(asv_table)

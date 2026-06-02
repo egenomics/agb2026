@@ -1,6 +1,8 @@
 process DEMOGRAPHIC_SUMMARY {
     publishDir "${params.outdir}/exploratory", mode: 'copy'
 
+    label "groupD"
+
     input:
     path(metadata)
 

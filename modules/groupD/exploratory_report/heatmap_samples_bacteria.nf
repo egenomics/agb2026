@@ -2,6 +2,8 @@ process HEATMAP_MICROBIOME {
 
     tag "${metadata.baseName}"
 
+    label "groupD"
+
     publishDir "${params.outdir}/exploratory",
         mode: 'copy'
 

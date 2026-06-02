@@ -1,6 +1,8 @@
 process METADATA_REPORT {
     publishDir "${params.outdir}/exploratory", mode: 'copy'
 
+    label "groupD"
+
     input:
     path(metadata)
 

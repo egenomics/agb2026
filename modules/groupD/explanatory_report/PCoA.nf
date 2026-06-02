@@ -2,7 +2,7 @@ process PCoA_plots{
 
     publishDir "${params.outdir}/explanatory", mode: 'copy'
     
-    container "containers/groupD.sif"
+    label "groupD"
 
     input:
     tuple path(pca), path(metadata)
