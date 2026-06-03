@@ -8,8 +8,6 @@ Additional subworkflows are contained in the subworkflows folder.
 
 Please find additional information of each group pipeline in the README.md files at the modules folder.
 
-For the input data, please check the files at the following directory of pirineus cluster:
-
-/data/upfagb/u269432/data
+Check the wiki for an explanation of the pipeline usage.
 
 Feel free to modify the initial samplesheet. Nevertheless, we encourage to keep the structure proposed in the samplesheet example, mantaining the sequences in a subfolder called /seqs inside the /data folder.
